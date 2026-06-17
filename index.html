@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Udyam Social Development Foundation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,600&family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════ PRELOADER ═══════════════════ -->
+  <div class="preloader" id="preloader">
+    <div class="curtain curtain-left"></div>
+    <div class="curtain curtain-right"></div>
+    <div class="preloader-logo">
+      <img src="images/logo.jpg" alt="Udyam Logo">
+    </div>
+  </div>
+
+  <!-- ═══════════════════ NAVBAR ═══════════════════ -->
+  <header class="navbar" id="navbar">
+    <div class="nav-container">
+
+      <div class="nav-logo">
+        <img src="images/logo.jpg" alt="Udyam Logo" class="nav-logo-img">
+        <div class="logo-text">
+          <span class="logo-name">Udyam</span>
+          <span class="logo-sub">Social Development Foundation</span>
+        </div>
+      </div>
+
+      <nav class="nav-links" id="navLinks">
+        <a href="#home" class="nav-link active">Home</a>
+        <a href="#about" class="nav-link">About Us</a>
+        <a href="#whatwedo" class="nav-link">What We Do</a>
+        <a href="#getinvolved" class="nav-link">Get Involved</a>
+        <a href="#contact" class="nav-link">Contact Us</a>
+        <a href="donate.html" class="btn-donate">Donate Now</a>
+      </nav>
+
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+
+    </div>
+  </header>
+
+  <!-- ═══════════════════ HERO ═══════════════════ -->
+  <section class="hero" id="home">
+    <!-- Assamese-inspired decorative pattern -->
+    <div class="hero-pattern" aria-hidden="true">
+      <svg class="pattern-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <!-- Muga silk-inspired geometric motif rows -->
+        <defs>
+          <pattern id="mugaMotif" x="0" y="0" width="120" height="80" patternUnits="userSpaceOnUse">
+            <path d="M60 10 L110 40 L60 70 L10 40 Z" stroke="rgba(249,115,22,0.12)" stroke-width="1" fill="none"/>
+            <circle cx="60" cy="40" r="6" stroke="rgba(249,115,22,0.1)" stroke-width="1" fill="none"/>
+            <path d="M10 40 L110 40" stroke="rgba(249,115,22,0.06)" stroke-width="0.5"/>
+            <path d="M60 10 L60 70" stroke="rgba(249,115,22,0.06)" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="1440" height="900" fill="url(#mugaMotif)"/>
+      </svg>
+    </div>
+
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <span class="eyebrow-dot"></span>
+        Golaghat, Assam · Est. 2022
+        <span class="eyebrow-dot"></span>
+      </div>
+
+      <h1 class="hero-headline">
+        Empowering Youth,<br/>
+        <em>Transforming</em> Communities<br/>
+        in Golaghat.
+      </h1>
+
+      <p class="hero-sub">
+        Udyam Social Development Foundation is dedicated to driving grassroots change through education, mentorship, and civic welfare — one life, one community at a time.
+      </p>
+
+      <div class="hero-cta-group">
+        <a href="#getinvolved" class="btn-primary">Support Our Mission</a>
+        <a href="#whatwedo" class="btn-ghost">See What We Do ↓</a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat-item">
+          <span class="stat-num" data-target="500">0</span><span class="stat-plus">+</span>
+          <span class="stat-label">Youth Reached</span>
+        </div>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat-item">
+          <span class="stat-num" data-target="12">0</span>
+          <span class="stat-label">Programs Running</span>
+        </div>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat-item">
+          <span class="stat-num" data-target="3">0</span><span class="stat-plus">+</span>
+          <span class="stat-label">Years of Impact</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual" aria-hidden="true">
+      <div class="hero-logo-large">
+        <img src="images/logo.jpg" alt="Udyam Logo" class="hero-logo-img">
+      </div>
+    </div>
+
+    <!-- Wave divider -->
+    <div class="hero-wave" aria-hidden="true">
+      <svg viewBox="0 0 1440 90" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <path d="M0,40 C180,80 360,0 540,40 C720,80 900,0 1080,40 C1260,80 1440,30 1440,30 L1440,90 L0,90 Z" fill="#FDF6EC"/>
+      </svg>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ ABOUT ═══════════════════ -->
+  <section class="about-strip" id="about">
+    <div class="container">
+      <div class="about-grid">
+        <div class="about-text reveal">
+          <span class="section-eyebrow">About Udyam</span>
+          <h2 class="section-heading">Born from the Heart of Golaghat</h2>
+          <p>Founded in 2022, Udyam Social Development Foundation emerged from a simple belief: that local problems deserve local solutions, driven by people who have lived them. We are young, we are rooted, and we are relentless.</p>
+          <p>We operate at the intersection of education, community welfare, and youth empowerment — building a Golaghat where ambition finds a path and every child has a fair start.</p>
+          <a href="#getinvolved" class="btn-primary" style="margin-top:1.5rem; display:inline-block;">Join the Movement</a>
+        </div>
+        <div class="about-pillars reveal">
+          <div class="pillar-card">
+            <div class="pillar-icon">🌱</div>
+            <h4>Grassroots First</h4>
+            <p>We solve hyper-local problems, not distant ones.</p>
+          </div>
+          <div class="pillar-card">
+            <div class="pillar-icon">🤝</div>
+            <h4>Community-Led</h4>
+            <p>Every program is shaped by the people it serves.</p>
+          </div>
+          <div class="pillar-card">
+            <div class="pillar-icon">🔥</div>
+            <h4>Youth-Driven</h4>
+            <p>Young energy, experienced empathy, real results.</p>
+          </div>
+          <div class="pillar-card">
+            <div class="pillar-icon">📍</div>
+            <h4>Locally Anchored</h4>
+            <p>Golaghat is not a location — it's our purpose.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ WHAT WE DO ═══════════════════ -->
+  <section class="what-we-do" id="whatwedo">
+    <div class="wwd-bg-accent" aria-hidden="true"></div>
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-eyebrow">Our Work</span>
+        <h2 class="section-heading">What We Do</h2>
+        <p class="section-intro">Three pillars of action, one unified mission: a more equitable Golaghat.</p>
+      </div>
+
+      <!-- Pillar 1 -->
+      <div class="program-block reveal" id="prog1">
+        <div class="program-number">01</div>
+        <div class="program-content">
+          <div class="program-header">
+            <div class="program-icon-wrap">
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+                <path d="M24 4L44 16V32L24 44L4 32V16L24 4Z" stroke="currentColor" stroke-width="2.5" fill="none"/>
+                <path d="M24 14V34M14 19L24 24L34 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="program-title">Youth Empowerment & Guidance</h3>
+              <p class="program-tagline">Turning ambition into action — one young person at a time.</p>
+            </div>
+          </div>
+          <div class="program-cards">
+            <div class="sub-card">
+              <span class="sub-icon">🛠️</span>
+              <div>
+                <strong>Mentorship & Skill Training</strong>
+                <p>Hands-on workshops that bridge formal education and real-world job readiness, giving local youth the practical toolkit they need to compete.</p>
+              </div>
+            </div>
+            <div class="sub-card">
+              <span class="sub-icon">💰</span>
+              <div>
+                <strong>Financial Literacy</strong>
+                <p>Budgeting, saving, and financial planning sessions designed to break cycles of instability and build a foundation for economic independence.</p>
+              </div>
+            </div>
+            <div class="sub-card">
+              <span class="sub-icon">🧠</span>
+              <div>
+                <strong>Mental Health Awareness</strong>
+                <p>Counseling resources, peer support groups, and motivational sessions to build emotional resilience in young people facing real pressure.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pillar 2 -->
+      <div class="program-block reveal alt" id="prog2">
+        <div class="program-number">02</div>
+        <div class="program-content">
+          <div class="program-header">
+            <div class="program-icon-wrap">
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+                <path d="M8 38L8 18L24 8L40 18V38H28V28H20V38H8Z" stroke="currentColor" stroke-width="2.5" fill="none"/>
+                <circle cx="24" cy="20" r="3" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="program-title">Basic Education & Child Support</h3>
+              <p class="program-tagline">No child left behind because of poverty.</p>
+            </div>
+          </div>
+          <div class="program-cards">
+            <div class="sub-card">
+              <span class="sub-icon">📚</span>
+              <div>
+                <strong>Learning Resources</strong>
+                <p>We supply books, stationery, and tutoring support to children from marginalized backgrounds who are at risk of dropping out due to expenses.</p>
+              </div>
+            </div>
+            <div class="sub-card">
+              <span class="sub-icon">🏛️</span>
+              <div>
+                <strong>Community Libraries</strong>
+                <p>Organizing neighbourhood libraries — quiet, resourceful spaces where children can study, read, and discover a world beyond their circumstances.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pillar 3 -->
+      <div class="program-block reveal" id="prog3">
+        <div class="program-number">03</div>
+        <div class="program-content">
+          <div class="program-header">
+            <div class="program-icon-wrap">
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+                <circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="2.5"/>
+                <path d="M12 24C12 24 16 18 24 18C32 18 36 24 36 24C36 24 32 30 24 30C16 30 12 24 12 24Z" stroke="currentColor" stroke-width="2" fill="none"/>
+                <circle cx="24" cy="24" r="4" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="program-title">Community Welfare & Infrastructure</h3>
+              <p class="program-tagline">Improving everyday life at the ground level.</p>
+            </div>
+          </div>
+          <div class="program-cards">
+            <div class="sub-card">
+              <span class="sub-icon">🏥</span>
+              <div>
+                <strong>Health & Sanitization Drives</strong>
+                <p>Free health check-up camps for low-income families and awareness campaigns on clean water access and basic sanitation practices.</p>
+              </div>
+            </div>
+            <div class="sub-card">
+              <span class="sub-icon">👩</span>
+              <div>
+                <strong>Women Empowerment Networks</strong>
+                <p>Organizing local women into self-reliance circles, connecting them with small-scale livelihood skills and peer support systems.</p>
+              </div>
+            </div>
+            <div class="sub-card">
+              <span class="sub-icon">🐾</span>
+              <div>
+                <strong>Animal Welfare & Civic Duties</strong>
+                <p>Volunteer-led drives for local stray animal care, rescue missions, and cultural and environmental preservation programs across the district.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ GET INVOLVED ═══════════════════ -->
+  <section class="get-involved" id="getinvolved">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-eyebrow">Take Action</span>
+        <h2 class="section-heading">Get Involved</h2>
+        <p class="section-intro">Whether you have time, skills, or resources — there is a place for you in Udyam.</p>
+      </div>
+
+      <div class="involved-grid">
+
+        <!-- Volunteer Form -->
+        <div class="involved-card volunteer-card reveal">
+          <div class="card-badge">For Individuals</div>
+          <h3 class="card-title">Volunteer With Us</h3>
+          <p class="card-pitch">"Give back to your community. Join Udyam as a volunteer and be the change Golaghat deserves."</p>
+
+          <div class="volunteer-form" id="volunteerForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="fullName">Full Name <span class="req">*</span></label>
+                <input type="text" id="fullName" placeholder="Your full name" autocomplete="name" />
+              </div>
+              <div class="form-group">
+                <label for="phone">Contact Number <span class="req">*</span></label>
+                <input type="tel" id="phone" placeholder="+91 XXXXX XXXXX" autocomplete="tel" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="email">Email Address <span class="req">*</span></label>
+              <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+            </div>
+            <div class="form-group">
+              <label for="status">Profession / Student Status</label>
+              <input type="text" id="status" placeholder="e.g. B.Tech Student, Teacher, Working Professional" />
+            </div>
+            <div class="form-group">
+              <label for="helpType">How would you like to help? <span class="req">*</span></label>
+              <div class="select-wrap">
+                <select id="helpType">
+                  <option value="" disabled selected>Select your area of contribution</option>
+                  <option value="teaching">Teaching & Tutoring</option>
+                  <option value="events">Event Management</option>
+                  <option value="social">Social Media & Digital</option>
+                  <option value="ground">Ground Management & Outreach</option>
+                  <option value="other">Other / Multiple Areas</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn-primary btn-full" id="volunteerSubmit" type="button">
+              Register as Volunteer
+            </button>
+            <div class="form-success" id="formSuccess">
+              <span>🎉</span> Thank you! We'll be in touch within 2 working days.
+            </div>
+          </div>
+        </div>
+
+        <!-- CSR / Corporate -->
+        <div class="involved-card csr-card reveal">
+          <div class="card-badge csr-badge">For Organizations</div>
+          <h3 class="card-title">Partner & CSR</h3>
+          <p class="card-pitch">"Partner with us for sustainable, measurable community impact. Let's build Golaghat together."</p>
+
+          <div class="csr-benefits">
+            <div class="csr-item">
+              <div class="csr-dot"></div>
+              <div>
+                <strong>CSR Compliance</strong>
+                <p>We help businesses fulfill Section 135 CSR obligations through structured, documented community programs.</p>
+              </div>
+            </div>
+            <div class="csr-item">
+              <div class="csr-dot"></div>
+              <div>
+                <strong>Joint Campaigns</strong>
+                <p>Co-branded drives, local outreach events, and skill workshops that put your brand in front of Golaghat's most engaged residents.</p>
+              </div>
+            </div>
+            <div class="csr-item">
+              <div class="csr-dot"></div>
+              <div>
+                <strong>Impact Reports</strong>
+                <p>Transparent reporting on every rupee spent and every life touched — so you can measure what matters.</p>
+              </div>
+            </div>
+            <div class="csr-item">
+              <div class="csr-dot"></div>
+              <div>
+                <strong>Startups Welcome</strong>
+                <p>You don't need a large CSR budget to make a difference. Small digital agencies, local shops, and early-stage startups are all invited.</p>
+              </div>
+            </div>
+          </div>
+
+          <a href="mailto:udyamfoundation@gmail.com" class="btn-outline btn-full">
+            Reach Out for Partnership →
+          </a>
+
+          <div class="trust-bar">
+            <span>🏢 Local Businesses</span>
+            <span>💻 Digital Agencies</span>
+            <span>🚀 Startups</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ CONTACT ═══════════════════ -->
+  <section class="contact-section" id="contact">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-eyebrow">Reach Us</span>
+        <h2 class="section-heading">Contact Us</h2>
+      </div>
+
+      <div class="contact-grid">
+        <div class="contact-info reveal">
+          <div class="contact-item">
+            <span class="contact-icon">📍</span>
+            <div>
+              <strong>Location</strong>
+              <p>Golaghat, Assam, India</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <span class="contact-icon">✉️</span>
+            <div>
+              <strong>Email</strong>
+              <p><a href="mailto:udyamfoundation@gmail.com">udyamfoundation@gmail.com</a></p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <span class="contact-icon">📱</span>
+            <div>
+              <strong>Social Media</strong>
+              <p>Follow us for updates on our work</p>
+              <div class="social-links">
+                <a href="#" class="social-btn">Instagram</a>
+                <a href="#" class="social-btn">Facebook</a>
+                <a href="#" class="social-btn">YouTube</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-cta reveal">
+          <div class="donate-card">
+            <div class="donate-icon">❤️</div>
+            <h3>Every Rupee Counts</h3>
+            <p>Your donation directly funds skill workshops, learning materials, health camps, and community programs in Golaghat.</p>
+            <div class="donate-amounts">
+              <button class="amount-btn" data-amount="500">₹500</button>
+              <button class="amount-btn" data-amount="1000">₹1,000</button>
+              <button class="amount-btn" data-amount="2500">₹2,500</button>
+              <button class="amount-btn" data-amount="5000">₹5,000</button>
+            </div>
+            <a href="donate.html" class="btn-primary btn-full btn-donate-big">Donate Now</a>
+            <p class="donate-note">All donations are acknowledged. Contact us for 80G tax exemption details.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ FOOTER ═══════════════════ -->
+  <footer class="footer">
+    <div class="footer-wave" aria-hidden="true">
+      <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <path d="M0,30 C360,60 720,0 1080,30 C1260,45 1380,20 1440,30 L1440,60 L0,60 Z" fill="#1B4332"/>
+      </svg>
+    </div>
+    <div class="footer-body">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <img src="images/logo.jpg" alt="Udyam Logo" class="footer-logo-img">
+          <div>
+            <span class="footer-name">Udyam Social Development Foundation</span>
+            <span class="footer-estd">Est. 2022 · Golaghat, Assam</span>
+          </div>
+        </div>
+        <p class="footer-tagline">Empowering Youth. Transforming Communities.</p>
+      </div>
+
+      <div class="footer-links-grid">
+        <div class="footer-col">
+          <h5>Navigate</h5>
+          <a href="#home">Home</a>
+          <a href="#about">About Us</a>
+          <a href="#whatwedo">What We Do</a>
+          <a href="#getinvolved">Get Involved</a>
+          <a href="#contact">Contact</a>
+        </div>
+        <div class="footer-col">
+          <h5>Programs</h5>
+          <a href="#prog1">Youth Empowerment</a>
+          <a href="#prog2">Education Support</a>
+          <a href="#prog3">Community Welfare</a>
+        </div>
+        <div class="footer-col">
+          <h5>Participate</h5>
+          <a href="#getinvolved">Volunteer</a>
+          <a href="#getinvolved">Partner with Us</a>
+          <a href="#contact">Donate</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>© 2024 Udyam Social Development Foundation. All rights reserved.</p>
+      <p>Made with ❤️ for Golaghat</p>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════ PAGE TRANSITION ═══════════════════ -->
+  <div class="page-transition" id="pageTransition">
+    <div class="transition-panel panel-1"></div>
+    <div class="transition-panel panel-2"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
