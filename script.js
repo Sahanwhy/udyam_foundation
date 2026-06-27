@@ -338,20 +338,88 @@ document.addEventListener('DOMContentLoaded', () => {
       donateSubmitBtn.disabled = true;
       donateSubmitBtn.textContent = 'Processing...';
 
-      // Here you will integrate Razorpay later
-      // For now, simulate success
-      setTimeout(() => {
-        donateSubmitBtn.style.display = 'none';
-        const successMsg = document.getElementById('donateSuccess');
-        if(successMsg) successMsg.classList.add('show');
-        console.log('Proceeding to Razorpay with:', {
-          name: fName.value,
-          phone: phone.value,
-          email: email.value,
-          address: address.value,
-          amount: amount.value
+      const amountInPaise = amount.value * 100;
+
+      fetch('http://localhost:3000/api/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: amountInPaise })
+      })
+      .then(res => res.json())
+      .then(order => {
+        if (!order || !order.id) {
+          throw new Error('Order creation failed');
+        }
+        
+        const options = {
+          key: 'rzp_live_T6WpzWVVSdMVDS', // KEY_ID is safe on frontend
+          amount: order.amount,
+          currency: order.currency,
+          name: 'Udyam Foundation',
+          description: 'Donation',
+          order_id: order.id,
+          prefill: {
+            name: fName.value,
+            email: email.value,
+            contact: phone.value
+          },
+          handler: function (response) {
+            // Verify payment
+            fetch('http://localhost:3000/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                donateSubmitBtn.style.display = 'none';
+                const successMsg = document.getElementById('donateSuccess');
+                if(successMsg) {
+                  successMsg.textContent = '💚 Payment Successful! Thank you for your donation.';
+                  successMsg.classList.add('show');
+                }
+              } else {
+                alert('Payment verification failed!');
+                donateSubmitBtn.disabled = false;
+                donateSubmitBtn.textContent = 'Proceed to Payment';
+              }
+            })
+            .catch(err => {
+              console.error(err);
+              alert('Verification error. Please contact support.');
+              donateSubmitBtn.disabled = false;
+              donateSubmitBtn.textContent = 'Proceed to Payment';
+            });
+          },
+          modal: {
+            ondismiss: function() {
+              donateSubmitBtn.disabled = false;
+              donateSubmitBtn.textContent = 'Proceed to Payment';
+            }
+          }
+        };
+
+        const rzp = new window.Razorpay(options);
+        
+        rzp.on('payment.failed', function (response){
+          alert('Payment Failed: ' + response.error.description);
+          donateSubmitBtn.disabled = false;
+          donateSubmitBtn.textContent = 'Proceed to Payment';
         });
-      }, 800);
+
+        rzp.open();
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Failed to initialize payment. Please check if the server is running.');
+        donateSubmitBtn.disabled = false;
+        donateSubmitBtn.textContent = 'Proceed to Payment';
+      });
     });
 
     ['donFullName', 'donPhone', 'donEmail', 'donAddress', 'donAmount'].forEach(id => {
