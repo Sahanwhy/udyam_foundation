@@ -38,6 +38,7 @@
         <a href="programs.html" class="nav-link">What We Do</a>
         <a href="getinvolved.html" class="nav-link">Get Involved</a>
         <a href="index.html#contact" class="nav-link">Contact Us</a>
+        <a href="admin.html" class="btn-admin">Admin</a>
         <a href="donate.html" class="btn-donate active">Donate Now</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Toggle menu">
@@ -74,6 +75,32 @@
           <div class="form-group">
             <label for="donAddress">Address <span class="req">*</span></label>
             <input type="text" id="donAddress" placeholder="Your complete address" required />
+          </div>
+
+          <div class="form-group">
+            <label for="donPan">PAN Card <span class="req pan-req" style="display: none;">*</span></label>
+            <input type="text" id="donPan" placeholder="ABCDE1234F" maxlength="10" style="text-transform: uppercase;" />
+            <small class="field-hint" id="donPanHint" style="font-size: 0.75rem; color: #6B7280; margin-top: 0.2rem;">Required only if you need an 80G tax exemption certificate</small>
+          </div>
+
+          <div class="form-group">
+            <label>Certificate Type <span class="req">*</span></label>
+            <div class="cert-type-options" style="display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.25rem;">
+              <label class="cert-type-label" style="display: flex; align-items: flex-start; gap: 0.6rem; cursor: pointer; padding: 0.75rem 1rem; border: 1.5px solid #D1D5DB; border-radius: 8px; transition: border-color 0.2s, background 0.2s;">
+                <input type="radio" name="certType" value="normal" checked style="margin-top: 0.2rem;" />
+                <span>
+                  <strong style="display: block; font-size: 0.9rem;">Without 80G Certificate</strong>
+                  <span style="font-size: 0.8rem; color: #6B7280;">Standard donation receipt</span>
+                </span>
+              </label>
+              <label class="cert-type-label" style="display: flex; align-items: flex-start; gap: 0.6rem; cursor: pointer; padding: 0.75rem 1rem; border: 1.5px solid #D1D5DB; border-radius: 8px; transition: border-color 0.2s, background 0.2s;">
+                <input type="radio" name="certType" value="80g" style="margin-top: 0.2rem;" />
+                <span>
+                  <strong style="display: block; font-size: 0.9rem;">With 80G Certificate</strong>
+                  <span style="font-size: 0.8rem; color: #6B7280;">Tax exemption receipt (PAN required)</span>
+                </span>
+              </label>
+            </div>
           </div>
 
           <div class="form-group" style="margin-top: 1rem;">
@@ -156,6 +183,8 @@
   </div>
 
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="certificate.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

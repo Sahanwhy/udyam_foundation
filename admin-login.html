@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login | Udyam Foundation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin-auth.css">
+</head>
+<body>
+  <div class="auth-container">
+    <a href="index.html" class="back-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      Back to Website
+    </a>
+
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1>Admin Login</h1>
+        <p>Sign in to access the Udyam Foundation admin dashboard</p>
+      </div>
+
+      <div id="alertBox" class="alert" role="alert"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email">Gmail</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+            <button type="button" class="toggle-password" id="togglePassword" aria-label="Show password"></button>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">Sign In</button>
+      </form>
+
+      <div class="auth-footer">
+        Don't have an account? <a href="admin-signup.html">Sign Up</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin-auth.js"></script>
+  <script>
+    redirectIfAuthenticated();
+
+    const form = document.getElementById('loginForm');
+    const alertBox = document.getElementById('alertBox');
+    const submitBtn = document.getElementById('submitBtn');
+    const passwordInput = document.getElementById('password');
+    const toggleBtn = document.getElementById('togglePassword');
+
+    toggleBtn.innerHTML = eyeIcon();
+    initPasswordToggle(toggleBtn, passwordInput);
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAlert(alertBox);
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Signing in...';
+
+      try {
+        const data = await apiRequest('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: document.getElementById('email').value.trim(),
+            password: passwordInput.value
+          })
+        });
+
+        setAuthSession(data.token, data.user);
+        window.location.href = 'admin.html';
+      } catch (err) {
+        showAlert(alertBox, err.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign In';
+      }
+    });
+  </script>
+</body>
+</html>

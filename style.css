@@ -208,6 +208,23 @@ select { font-family: inherit; }
   background: var(--saffron-dark);
   transform: translateY(-1px);
 }
+.btn-admin {
+  font-family: var(--font-label);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  background: transparent;
+  padding: 0.55rem 1.2rem;
+  border-radius: 50px;
+  margin-left: 0.5rem;
+  border: 1.5px solid rgba(255,255,255,0.35);
+  transition: var(--transition);
+}
+.btn-admin:hover, .btn-admin.active {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.6);
+  color: var(--white);
+}
 .hamburger {
   display: none;
   flex-direction: column;
@@ -1074,6 +1091,7 @@ select { font-family: inherit; }
   }
   .nav-links.open { display: flex; }
   .nav-link { padding: 0.85rem 1rem; font-size: 1rem; border-radius: var(--radius-sm); }
+  .btn-admin { margin: 0.5rem 0 0; padding: 0.85rem 1rem; border-radius: var(--radius-sm); text-align: center; }
   .btn-donate { margin: 0.5rem 0 0; padding: 0.85rem 1rem; border-radius: var(--radius-sm); text-align: center; }
 
   .hero-visual { display: none; }

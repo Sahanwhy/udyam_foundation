@@ -317,14 +317,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const donateSubmitBtn = document.getElementById('donateSubmitBtn');
   if (donateSubmitBtn) {
+    const donPanInput = document.getElementById('donPan');
+    const panReqMarker = document.querySelector('.pan-req');
+    const certTypeRadios = document.querySelectorAll('input[name="certType"]');
+    const certTypeLabels = document.querySelectorAll('.cert-type-label');
+
+    function is80GSelected() {
+      const selected = document.querySelector('input[name="certType"]:checked');
+      return selected && selected.value === '80g';
+    }
+
+    function updateCertTypeUI() {
+      const with80G = is80GSelected();
+      if (panReqMarker) panReqMarker.style.display = with80G ? 'inline' : 'none';
+      if (donPanInput) donPanInput.required = with80G;
+
+      certTypeLabels.forEach(label => {
+        const radio = label.querySelector('input[type="radio"]');
+        const isActive = radio && radio.checked;
+        label.style.borderColor = isActive ? 'var(--green-deep, #1B4332)' : '#D1D5DB';
+        label.style.background = isActive ? 'rgba(27, 67, 50, 0.05)' : 'transparent';
+      });
+    }
+
+    certTypeRadios.forEach(radio => {
+      radio.addEventListener('change', updateCertTypeUI);
+    });
+    updateCertTypeUI();
+
+    function isValidPan(pan) {
+      return /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan.toUpperCase());
+    }
+
     donateSubmitBtn.addEventListener('click', () => {
       const fName = document.getElementById('donFullName');
       const phone = document.getElementById('donPhone');
       const email = document.getElementById('donEmail');
       const address = document.getElementById('donAddress');
       const amount = document.getElementById('donAmount');
+      const pan = donPanInput;
 
-      [fName, phone, email, address, amount].forEach(clearError);
+      [fName, phone, email, address, amount, pan].forEach(el => { if (el) clearError(el); });
       let hasErr = false;
 
       if (!fName.value.trim()) { showError(fName, 'Please enter your full name.'); hasErr = true; }
@@ -332,6 +365,19 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!email.value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) { showError(email, 'Valid email required.'); hasErr = true; }
       if (!address.value.trim()) { showError(address, 'Please enter your address.'); hasErr = true; }
       if (!amount.value || amount.value < 1) { showError(amount, 'Please select or enter a valid amount.'); hasErr = true; }
+
+      if (is80GSelected()) {
+        if (!pan || !pan.value.trim()) {
+          showError(pan, 'PAN card is required for 80G certificate.');
+          hasErr = true;
+        } else if (!isValidPan(pan.value.trim())) {
+          showError(pan, 'Please enter a valid PAN (e.g. ABCDE1234F).');
+          hasErr = true;
+        }
+      } else if (pan && pan.value.trim() && !isValidPan(pan.value.trim())) {
+        showError(pan, 'Please enter a valid PAN (e.g. ABCDE1234F).');
+        hasErr = true;
+      }
 
       if (hasErr) return;
 
@@ -364,6 +410,17 @@ document.addEventListener('DOMContentLoaded', () => {
             contact: phone.value
           },
           handler: function (response) {
+            const donorDetails = {
+              fullName: fName.value.trim(),
+              email: email.value.trim(),
+              phone: phone.value.trim(),
+              address: address.value.trim(),
+              pan: pan ? pan.value.trim().toUpperCase() : '',
+              amount: parseFloat(amount.value),
+              with80G: is80GSelected(),
+              receiptNo: order.receipt
+            };
+            
             // Verify payment
             fetch('http://localhost:3000/api/verify-payment', {
               method: 'POST',
@@ -371,7 +428,8 @@ document.addEventListener('DOMContentLoaded', () => {
               body: JSON.stringify({
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature
+                razorpay_signature: response.razorpay_signature,
+                donorDetails: donorDetails
               })
             })
             .then(res => res.json())
@@ -379,8 +437,20 @@ document.addEventListener('DOMContentLoaded', () => {
               if (data.success) {
                 donateSubmitBtn.style.display = 'none';
                 const successMsg = document.getElementById('donateSuccess');
+                if (typeof window.generateDonationCertificate === 'function') {
+                  window.generateDonationCertificate({
+                    fullName: fName.value.trim(),
+                    email: email.value.trim(),
+                    phone: phone.value.trim(),
+                    address: address.value.trim(),
+                    pan: pan ? pan.value.trim().toUpperCase() : '',
+                    amount: parseFloat(amount.value),
+                    paymentId: response.razorpay_payment_id,
+                    with80G: is80GSelected(),
+                  });
+                }
                 if(successMsg) {
-                  successMsg.textContent = '💚 Payment Successful! Thank you for your donation.';
+                  successMsg.innerHTML = '<span>💚</span> Payment Successful! Your donation receipt has been downloaded. Thank you for your generosity.';
                   successMsg.classList.add('show');
                 }
               } else {
@@ -422,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    ['donFullName', 'donPhone', 'donEmail', 'donAddress', 'donAmount'].forEach(id => {
+    ['donFullName', 'donPhone', 'donEmail', 'donAddress', 'donAmount', 'donPan'].forEach(id => {
       const el = document.getElementById(id);
       if(el) el.addEventListener('input', () => clearError(el));
     });
