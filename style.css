@@ -208,7 +208,7 @@ select { font-family: inherit; }
   background: var(--saffron-dark);
   transform: translateY(-1px);
 }
-.btn-admin {
+.btn-admin, .btn-register {
   font-family: var(--font-label);
   font-size: 0.875rem;
   font-weight: 600;
@@ -220,7 +220,7 @@ select { font-family: inherit; }
   border: 1.5px solid rgba(255,255,255,0.35);
   transition: var(--transition);
 }
-.btn-admin:hover, .btn-admin.active {
+.btn-admin:hover, .btn-admin.active, .btn-register:hover, .btn-register.active {
   background: rgba(255,255,255,0.12);
   border-color: rgba(255,255,255,0.6);
   color: var(--white);
@@ -1854,6 +1854,339 @@ select { font-family: inherit; }
   font-size: 0.9rem;
   color: var(--muted);
   line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════════════
+   OFFICERS SECTION
+   ═══════════════════════════════════════════════ */
+.officers-section {
+  padding: 6rem 0;
+  background: linear-gradient(180deg, var(--cream) 0%, #f0ebe0 50%, var(--cream) 100%);
+  position: relative;
+  overflow: hidden;
+}
+.officers-section::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  right: -120px;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(45,106,79,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.officers-section::after {
+  content: '';
+  position: absolute;
+  bottom: -80px;
+  left: -80px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── FEATURED PRESIDENT CARD ── */
+.officer-featured {
+  margin-bottom: 3.5rem;
+}
+.officer-featured-card {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s ease;
+}
+.officer-featured-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--green-deep), var(--saffron), var(--green-light));
+  z-index: 2;
+}
+.officer-featured-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 30px 80px rgba(27,67,50,0.2);
+}
+.officer-featured-img-wrap {
+  flex: 0 0 320px;
+  height: 380px;
+  position: relative;
+  overflow: hidden;
+}
+.officer-featured-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.officer-featured-card:hover .officer-featured-img-wrap img {
+  transform: scale(1.05);
+}
+.officer-featured-badge {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: linear-gradient(135deg, var(--green-deep), var(--green-mid));
+  color: var(--white);
+  font-family: var(--font-label);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  padding: 0.5rem 1.2rem;
+  border-radius: 50px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(27,67,50,0.35);
+}
+.officer-featured-info {
+  flex: 1;
+  padding: 2.5rem 3rem 2.5rem 0;
+}
+.officer-featured-info h3 {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  font-weight: 700;
+  color: var(--green-deep);
+  margin-bottom: 0.5rem;
+  line-height: 1.2;
+}
+.officer-featured-info .officer-role-tag {
+  display: inline-block;
+  background: var(--saffron-glow);
+  color: var(--saffron-dark);
+  font-family: var(--font-label);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 0.4rem 1rem;
+  border-radius: 50px;
+  margin-bottom: 1.2rem;
+}
+.officer-bio {
+  font-size: 1.05rem;
+  color: var(--muted);
+  line-height: 1.75;
+  margin-bottom: 1.5rem;
+}
+.officer-decorative-line {
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--saffron), var(--green-light));
+  border-radius: 3px;
+}
+
+/* ── OFFICERS GRID ── */
+.officers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+/* ── OFFICER CARD ── */
+.officer-card {
+  perspective: 800px;
+}
+.officer-card-inner {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.45s ease;
+  position: relative;
+}
+.officer-card-inner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  padding: 2px;
+  background: linear-gradient(135deg, transparent 40%, var(--saffron) 50%, var(--green-light) 60%, transparent 70%);
+  background-size: 300% 300%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+.officer-card-inner:hover::after {
+  opacity: 1;
+  animation: borderShimmer 2s ease infinite;
+}
+@keyframes borderShimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.officer-card-inner:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 50px rgba(27,67,50,0.18);
+}
+
+/* ── CARD IMAGE ── */
+.officer-img-wrap {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+}
+.officer-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), filter 0.4s ease;
+}
+.officer-card-inner:hover .officer-img-wrap img {
+  transform: scale(1.08);
+}
+
+/* ── HOVER OVERLAY ── */
+.officer-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 30%, rgba(27,67,50,0.85) 100%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1.5rem;
+}
+.officer-card-inner:hover .officer-overlay {
+  opacity: 1;
+}
+.officer-contact-links {
+  display: flex;
+  gap: 0.75rem;
+  transform: translateY(20px);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.1s;
+}
+.officer-card-inner:hover .officer-contact-links {
+  transform: translateY(0);
+}
+.officer-contact-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  transition: all 0.3s ease;
+}
+.officer-contact-btn:hover {
+  background: var(--saffron);
+  border-color: var(--saffron);
+  transform: scale(1.15);
+  box-shadow: 0 4px 15px rgba(249,115,22,0.4);
+}
+
+/* ── CARD INFO ── */
+.officer-info {
+  padding: 1.5rem 1.5rem 1.8rem;
+  text-align: center;
+}
+.officer-info h3 {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--green-deep);
+  margin-bottom: 0.4rem;
+}
+.officer-info .officer-role-tag {
+  display: inline-block;
+  background: var(--saffron-glow);
+  color: var(--saffron-dark);
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.35rem 0.9rem;
+  border-radius: 50px;
+  margin-bottom: 0.8rem;
+}
+.officer-contact-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+.officer-contact-details span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-family: var(--font-label);
+}
+.officer-contact-details svg {
+  color: var(--green-light);
+  flex-shrink: 0;
+}
+
+/* ── STAGGERED REVEAL ANIMATIONS ── */
+.officers-grid .officer-card:nth-child(1) { transition-delay: 0.1s; }
+.officers-grid .officer-card:nth-child(2) { transition-delay: 0.2s; }
+.officers-grid .officer-card:nth-child(3) { transition-delay: 0.3s; }
+.officers-grid .officer-card:nth-child(4) { transition-delay: 0.4s; }
+.officers-grid .officer-card:nth-child(5) { transition-delay: 0.5s; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .officer-featured-card {
+    flex-direction: column;
+  }
+  .officer-featured-img-wrap {
+    flex: none;
+    width: 100%;
+    height: 280px;
+  }
+  .officer-featured-info {
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+  .officer-decorative-line {
+    margin: 0 auto;
+  }
+  .officers-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+  }
+  .officer-img-wrap {
+    height: 220px;
+  }
+  .officer-info h3 {
+    font-size: 1.05rem;
+  }
+  .officer-contact-details span {
+    font-size: 0.7rem;
+  }
+}
+@media (max-width: 480px) {
+  .officers-grid {
+    grid-template-columns: 1fr;
+    max-width: 340px;
+    margin: 0 auto;
+  }
+  .officer-img-wrap {
+    height: 280px;
+  }
 }
 
 

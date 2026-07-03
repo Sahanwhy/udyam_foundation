@@ -6,6 +6,9 @@ const crypto = require('crypto');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 
 const app = express();
 app.use(cors());
@@ -45,13 +48,43 @@ const adminUserSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }, { collection: 'users' });
 
-let AdminUser;
+const volunteerSchema = new mongoose.Schema({
+  fullName: String,
+  phone: String,
+  email: String,
+  idProofs: [String],
+  addressProofs: [String],
+  photo: String,
+  status: { type: String, enum: ['pending', 'accepted', 'rejected', 'forwarded'], default: 'pending' },
+  assignedToRole: { type: String, default: 'Secretary' },
+  date: { type: Date, default: Date.now }
+}, { collection: 'volunteer' });
+
+const employeeSchema = new mongoose.Schema({
+  fullName: String,
+  phone: String,
+  email: String,
+  panCard: String,
+  aadharCard: String,
+  dobProof: String,
+  educationDocs: [String],
+  photo: String,
+  status: { type: String, enum: ['pending', 'accepted', 'rejected', 'forwarded'], default: 'pending' },
+  assignedToRole: { type: String, default: 'Secretary' },
+  date: { type: Date, default: Date.now }
+}, { collection: 'employee' });
+
+let AdminUser, Volunteer, Employee;
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('Connected to MongoDB');
     const superAdminDb = mongoose.connection.useDb('Super_admin');
     AdminUser = superAdminDb.model('AdminUser', adminUserSchema);
+    
+    const registrationDb = mongoose.connection.useDb('Registration');
+    Volunteer = registrationDb.model('Volunteer', volunteerSchema);
+    Employee = registrationDb.model('Employee', employeeSchema);
   })
   .catch(err => console.error('MongoDB connection error:', err));
 
@@ -72,6 +105,65 @@ const authMiddleware = (req, res, next) => {
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'udyam_foundation',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
+  },
+});
+const upload = multer({ storage: storage });
+
+app.post('/api/register/volunteer', upload.fields([
+  { name: 'idProofs', maxCount: 5 },
+  { name: 'addressProofs', maxCount: 5 },
+  { name: 'photo', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    if (!Volunteer) return res.status(503).json({ error: 'Database not ready' });
+    
+    const { fullName, phone, email } = req.body;
+    const idProofs = req.files['idProofs'] ? req.files['idProofs'].map(f => f.path) : [];
+    const addressProofs = req.files['addressProofs'] ? req.files['addressProofs'].map(f => f.path) : [];
+    const photo = req.files['photo'] ? req.files['photo'][0].path : '';
+
+    const newVolunteer = new Volunteer({ fullName, phone, email, idProofs, addressProofs, photo });
+    await newVolunteer.save();
+    
+    res.status(201).json({ success: true, message: 'Volunteer registered successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to register volunteer' });
+  }
+});
+
+app.post('/api/register/employee', upload.fields([
+  { name: 'panCard', maxCount: 1 },
+  { name: 'aadharCard', maxCount: 1 },
+  { name: 'dobProof', maxCount: 1 },
+  { name: 'educationDocs', maxCount: 5 },
+  { name: 'photo', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    if (!Employee) return res.status(503).json({ error: 'Database not ready' });
+    
+    const { fullName, phone, email } = req.body;
+    const panCard = req.files['panCard'] ? req.files['panCard'][0].path : '';
+    const aadharCard = req.files['aadharCard'] ? req.files['aadharCard'][0].path : '';
+    const dobProof = req.files['dobProof'] ? req.files['dobProof'][0].path : '';
+    const educationDocs = req.files['educationDocs'] ? req.files['educationDocs'].map(f => f.path) : [];
+    const photo = req.files['photo'] ? req.files['photo'][0].path : '';
+
+    const newEmployee = new Employee({ fullName, phone, email, panCard, aadharCard, dobProof, educationDocs, photo });
+    await newEmployee.save();
+    
+    res.status(201).json({ success: true, message: 'Employee registered successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to register employee' });
+  }
 });
 
 app.post('/api/create-order', async (req, res) => {
@@ -254,6 +346,81 @@ app.get('/api/donations', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error fetching payments:', error);
     res.status(500).json({ error: 'Failed to fetch payments' });
+  }
+});
+
+app.get('/api/admin/registrations', authMiddleware, async (req, res) => {
+  try {
+    if (!Volunteer || !Employee) return res.status(503).json({ error: 'Database not ready' });
+    const volunteers = await Volunteer.find().lean();
+    const employees = await Employee.find().lean();
+    
+    const formattedVolunteers = volunteers.map(v => ({ ...v, type: 'volunteer' }));
+    const formattedEmployees = employees.map(e => ({ ...e, type: 'employee' }));
+    
+    const allRegistrations = [...formattedVolunteers, ...formattedEmployees].sort((a, b) => b.date - a.date);
+    res.json(allRegistrations);
+  } catch (error) {
+    console.error('Error fetching registrations:', error);
+    res.status(500).json({ error: 'Failed to fetch registrations' });
+  }
+});
+
+app.patch('/api/admin/registrations/:type/:id/status', authMiddleware, async (req, res) => {
+  try {
+    const { type, id } = req.params;
+    const { status } = req.body;
+    
+    if (!['pending', 'accepted', 'rejected', 'forwarded'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+    
+    let updatedDoc;
+    if (type === 'volunteer') {
+      updatedDoc = await Volunteer.findByIdAndUpdate(id, { status }, { new: true });
+    } else if (type === 'employee') {
+      updatedDoc = await Employee.findByIdAndUpdate(id, { status }, { new: true });
+    } else {
+      return res.status(400).json({ error: 'Invalid type' });
+    }
+    
+    if (!updatedDoc) {
+      return res.status(404).json({ error: 'Registration not found' });
+    }
+    
+    res.json({ success: true, message: 'Status updated successfully', data: updatedDoc });
+  } catch (error) {
+    console.error('Error updating status:', error);
+    res.status(500).json({ error: 'Failed to update status' });
+  }
+});
+
+app.patch('/api/admin/registrations/:type/:id/forward', authMiddleware, async (req, res) => {
+  try {
+    const { type, id } = req.params;
+    const { newRole } = req.body;
+    
+    if (!ADMIN_ROLES.includes(newRole)) {
+      return res.status(400).json({ error: 'Invalid role for forwarding' });
+    }
+    
+    let updatedDoc;
+    if (type === 'volunteer') {
+      updatedDoc = await Volunteer.findByIdAndUpdate(id, { assignedToRole: newRole, status: 'forwarded' }, { new: true });
+    } else if (type === 'employee') {
+      updatedDoc = await Employee.findByIdAndUpdate(id, { assignedToRole: newRole, status: 'forwarded' }, { new: true });
+    } else {
+      return res.status(400).json({ error: 'Invalid type' });
+    }
+    
+    if (!updatedDoc) {
+      return res.status(404).json({ error: 'Registration not found' });
+    }
+    
+    res.json({ success: true, message: 'Forwarded successfully', data: updatedDoc });
+  } catch (error) {
+    console.error('Error forwarding registration:', error);
+    res.status(500).json({ error: 'Failed to forward' });
   }
 });
 
