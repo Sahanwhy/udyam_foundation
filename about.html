@@ -51,6 +51,7 @@
 
   <!-- ═══════════════════ ABOUT HERO BANNER ═══════════════════ -->
   <section class="about-hero" id="aboutHero">
+    <canvas id="heroParticles" class="hero-particles-canvas"></canvas>
     <div class="about-hero-overlay"></div>
     <div class="about-hero-content">
       <span class="section-eyebrow" style="color: rgba(255,255,255,0.6);">
@@ -62,6 +63,12 @@
       <p class="hero-sub" style="max-width: 620px;">
         Empowering communities, transforming lives — since 2022, from the heart of Golaghat, Assam.
       </p>
+      <div class="hero-scroll-indicator">
+        <div class="scroll-mouse">
+          <div class="scroll-wheel"></div>
+        </div>
+        <span>Scroll to explore</span>
+      </div>
     </div>
   </section>
 
@@ -106,6 +113,46 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ IMPACT STATS ═══════════════════ -->
+  <section class="about-impact-stats" id="aboutImpact">
+    <div class="container">
+      <div class="impact-stats-grid">
+        <div class="impact-stat-item reveal">
+          <div class="impact-stat-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <span class="impact-stat-num" data-target="500">0</span>
+          <span class="impact-stat-suffix">+</span>
+          <p>Lives Impacted</p>
+        </div>
+        <div class="impact-stat-item reveal">
+          <div class="impact-stat-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22c4-4 8-7.5 8-12a8 8 0 1 0-16 0c0 4.5 4 8 8 12z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <span class="impact-stat-num" data-target="15">0</span>
+          <span class="impact-stat-suffix">+</span>
+          <p>Communities Served</p>
+        </div>
+        <div class="impact-stat-item reveal">
+          <div class="impact-stat-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <span class="impact-stat-num" data-target="30">0</span>
+          <span class="impact-stat-suffix">+</span>
+          <p>Programs Launched</p>
+        </div>
+        <div class="impact-stat-item reveal">
+          <div class="impact-stat-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          </div>
+          <span class="impact-stat-num" data-target="4">0</span>
+          <span class="impact-stat-suffix"></span>
+          <p>Years of Service</p>
         </div>
       </div>
     </div>
@@ -301,6 +348,18 @@
           </div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ PARALLAX QUOTE DIVIDER ═══════════════════ -->
+  <section class="parallax-quote-divider" id="quoteBreak">
+    <div class="parallax-quote-overlay"></div>
+    <div class="parallax-quote-content reveal">
+      <svg class="quote-mark" width="48" height="48" viewBox="0 0 24 24" fill="currentColor" opacity="0.3"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10H0z"/></svg>
+      <blockquote>
+        "The best way to find yourself is to lose yourself in the service of others."
+      </blockquote>
+      <cite>— Mahatma Gandhi</cite>
     </div>
   </section>
 
@@ -567,6 +626,13 @@
     </div>
   </footer>
 
+  <!-- ═══════════════════ SCROLL TO TOP ═══════════════════ -->
+  <button class="scroll-top-btn" id="scrollTopBtn" aria-label="Scroll to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="18 15 12 9 6 15"/>
+    </svg>
+  </button>
+
   <!-- ═══════════════════ PAGE TRANSITION ═══════════════════ -->
   <div class="page-transition" id="pageTransition">
     <div class="transition-panel panel-1"></div>
@@ -574,5 +640,162 @@
   </div>
 
   <script src="script.js"></script>
+
+  <!-- ═══════════════════ ABOUT-PAGE ANIMATIONS ═══════════════════ -->
+  <script>
+  (function() {
+    /* ── HERO PARTICLE SYSTEM ── */
+    const canvas = document.getElementById('heroParticles');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+      let animFrame;
+
+      function resize() {
+        const hero = canvas.parentElement;
+        canvas.width = hero.offsetWidth;
+        canvas.height = hero.offsetHeight;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      class Particle {
+        constructor() { this.reset(); }
+        reset() {
+          this.x = Math.random() * canvas.width;
+          this.y = Math.random() * canvas.height;
+          this.size = Math.random() * 3 + 1;
+          this.speedX = (Math.random() - 0.5) * 0.6;
+          this.speedY = (Math.random() - 0.5) * 0.6;
+          this.opacity = Math.random() * 0.5 + 0.1;
+          this.color = Math.random() > 0.5 ? 'rgba(249,115,22,' : 'rgba(82,183,136,';
+        }
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
+        }
+        draw() {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color + this.opacity + ')';
+          ctx.fill();
+        }
+      }
+
+      for (let i = 0; i < 60; i++) particles.push(new Particle());
+
+      function drawLines() {
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 120) {
+              ctx.beginPath();
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.strokeStyle = 'rgba(255,255,255,' + (0.06 * (1 - dist / 120)) + ')';
+              ctx.lineWidth = 0.8;
+              ctx.stroke();
+            }
+          }
+        }
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => { p.update(); p.draw(); });
+        drawLines();
+        animFrame = requestAnimationFrame(animate);
+      }
+      animate();
+
+      // Pause when not visible
+      const heroObs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) { if (!animFrame) animate(); }
+          else { cancelAnimationFrame(animFrame); animFrame = null; }
+        });
+      });
+      heroObs.observe(canvas.parentElement);
+    }
+
+    /* ── IMPACT STAT COUNTERS ── */
+    const impactNums = document.querySelectorAll('.impact-stat-num[data-target]');
+    if (impactNums.length) {
+      function animateImpact(el) {
+        const target = parseInt(el.dataset.target, 10);
+        const duration = 2200;
+        const start = performance.now();
+        function tick(now) {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 4);
+          el.textContent = Math.round(eased * target);
+          if (progress < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      }
+      const impactObs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            impactNums.forEach(animateImpact);
+            impactObs.disconnect();
+          }
+        });
+      }, { threshold: 0.4 });
+      const impactSection = document.getElementById('aboutImpact');
+      if (impactSection) impactObs.observe(impactSection);
+    }
+
+    /* ── SCROLL-TO-TOP BUTTON ── */
+    const scrollBtn = document.getElementById('scrollTopBtn');
+    if (scrollBtn) {
+      window.addEventListener('scroll', () => {
+        scrollBtn.classList.toggle('visible', window.scrollY > 400);
+      }, { passive: true });
+      scrollBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+
+    /* ── PARALLAX ON SCROLL ── */
+    const parallaxDiv = document.querySelector('.parallax-quote-divider');
+    if (parallaxDiv) {
+      window.addEventListener('scroll', () => {
+        const rect = parallaxDiv.getBoundingClientRect();
+        const speed = 0.3;
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+          const offset = (window.innerHeight - rect.top) * speed;
+          parallaxDiv.style.backgroundPositionY = -offset + 'px';
+        }
+      }, { passive: true });
+    }
+
+    /* ── TILT EFFECT ON HOVER (Value Cards) ── */
+    document.querySelectorAll('.value-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width - 0.5) * 8;
+        const y = ((e.clientY - rect.top) / rect.height - 0.5) * -8;
+        card.style.transform = 'perspective(600px) rotateY(' + x + 'deg) rotateX(' + y + 'deg) translateY(-5px)';
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+      });
+    });
+
+    /* ── GLOW FOLLOW ON SECTION HEADERS ── */
+    document.querySelectorAll('.section-header').forEach(header => {
+      header.addEventListener('mousemove', e => {
+        const rect = header.getBoundingClientRect();
+        header.style.setProperty('--glow-x', (e.clientX - rect.left) + 'px');
+        header.style.setProperty('--glow-y', (e.clientY - rect.top) + 'px');
+      });
+    });
+
+  })();
+  </script>
 </body>
 </html>
