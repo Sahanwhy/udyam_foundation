@@ -47,7 +47,7 @@
 
     /* Sidebar */
     .sidebar {
-      width: 260px;
+      width: 200px;
       background-color: var(--primary);
       color: white;
       display: flex;
@@ -99,7 +99,7 @@
     /* Main Content */
     .main-content {
       flex: 1;
-      margin-left: 260px;
+      margin-left: 200px;
       padding: 2rem 3rem;
       display: flex;
       flex-direction: column;
@@ -341,6 +341,160 @@
       color: var(--text-muted);
     }
 
+    /* Dashboard Upgrades */
+    body {
+      background-image: radial-gradient(rgba(27, 67, 50, 0.05) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 2rem;
+    }
+    @media (max-width: 1024px) {
+      .dashboard-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .welcome-banner {
+      background: linear-gradient(135deg, rgba(27,67,50,0.9), rgba(64,145,108,0.8)), url('assets/admin_banner_bg.png');
+      background-size: cover;
+      background-position: center;
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      color: white;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      margin-bottom: 2rem;
+    }
+    
+    .welcome-banner::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0; bottom: 0; left: 0;
+      background: inherit;
+      filter: blur(10px);
+      z-index: 0;
+      opacity: 0.3;
+    }
+    
+    .welcome-content {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .welcome-content h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .welcome-content p {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 1.5rem;
+    }
+    
+    .quick-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .btn-glass {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      font-family: var(--font-family);
+    }
+    
+    .btn-glass:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
+
+    .activity-timeline {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .activity-timeline h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-main);
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+
+    .timeline-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: 15px;
+      top: 32px;
+      bottom: -1.5rem;
+      width: 2px;
+      background: var(--border);
+    }
+    .timeline-item:last-child::before {
+      display: none;
+    }
+
+    .timeline-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+
+    .timeline-content {
+      padding-top: 4px;
+    }
+
+    .timeline-content p {
+      font-size: 0.875rem;
+      color: var(--text-main);
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .timeline-content span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+
   </style>
 </head>
 <body>
@@ -372,8 +526,8 @@
   </aside>
 
   <main class="main-content">
-    <header class="header">
-      <h1>Dashboard Overview</h1>
+    <header class="header" style="border:none; padding-bottom: 0;">
+      <h1>Admin Dashboard</h1>
       <div class="user-profile">
         <div class="user-info">
           <div class="user-name" id="userName">Admin</div>
@@ -384,78 +538,134 @@
       </div>
     </header>
 
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <div class="stat-info">
-          <h3>Total Donations</h3>
-          <p id="totalAmount">₹0</p>
-        </div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-        </div>
-        <div class="stat-info">
-          <h3>Total Donors</h3>
-          <p id="totalDonors">0</p>
+    <div id="dashboardSection">
+      <div class="welcome-banner">
+        <div class="welcome-content">
+          <h2 id="dynamicGreeting">Welcome back, Admin!</h2>
+          <p>Here's what's happening with Udyam Foundation today.</p>
+          <div class="quick-actions">
+            <button class="btn-glass" onclick="alert('Exporting Donations Report...')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              Export Report
+            </button>
+            <button class="btn-glass" onclick="alert('Opening System Settings...')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              Settings
+            </button>
+          </div>
         </div>
       </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+
+      <div class="dashboard-layout">
+        <div class="main-column" style="display:flex; flex-direction:column; gap:2rem;">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="stat-info">
+                <h3>Total Donations</h3>
+                <p id="totalAmount">₹0</p>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div class="stat-info">
+                <h3>Total Donors</h3>
+                <p id="totalDonors">0</p>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="stat-info">
+                <h3>Recent Transactions</h3>
+                <p id="recentCount">0 (Last 7 days)</p>
+              </div>
+            </div>
+          </div>
+
+          <section class="data-section">
+            <div class="data-section-header">
+              <h2>Donation Records</h2>
+              <button class="refresh-btn" id="refreshBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh Data
+              </button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Donor Name</th>
+                    <th>Contact</th>
+                    <th>Amount</th>
+                    <th>PAN / 80G</th>
+                    <th>Payment ID</th>
+                    <th>Status</th>
+                    <th>Receipt</th>
+                  </tr>
+                </thead>
+                <tbody id="donationsTableBody">
+                  <tr>
+                    <td colspan="7" class="loading">
+                      <div class="spinner"></div> Loading donation records...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
-        <div class="stat-info">
-          <h3>Recent Transactions</h3>
-          <p id="recentCount">0 (Last 7 days)</p>
+
+        <div class="side-column">
+          <div class="activity-timeline">
+            <h3>Recent Activity</h3>
+            <div class="timeline-item">
+              <div class="timeline-icon" style="background:var(--success)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <div class="timeline-content">
+                <p>Donation Received</p>
+                <span>₹50 from Tanjimul Haque</span>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-icon" style="background:var(--primary)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              </div>
+              <div class="timeline-content">
+                <p>New Registration</p>
+                <span>Volunteer application submitted</span>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-icon" style="background:#3B82F6">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              </div>
+              <div class="timeline-content">
+                <p>System Backup</p>
+                <span>Automated backup completed</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-
-    <section class="data-section">
-      <div class="data-section-header">
-        <h2>Donation Records</h2>
-        <button class="refresh-btn" id="refreshBtn">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Refresh Data
-        </button>
-      </div>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Donor Name</th>
-              <th>Contact</th>
-              <th>Amount</th>
-              <th>PAN / 80G</th>
-              <th>Payment ID</th>
-              <th>Status</th>
-              <th>Receipt</th>
-            </tr>
-          </thead>
-          <tbody id="donationsTableBody">
-            <tr>
-              <td colspan="7" class="loading">
-                <div class="spinner"></div> Loading donation records...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
 
     <!-- Registrations Section -->
     <section id="registrationsSection" class="data-section" style="display: none;">
