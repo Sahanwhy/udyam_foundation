@@ -2287,6 +2287,7 @@ select { font-family: inherit; }
   background: linear-gradient(135deg, transparent 40%, var(--saffron) 50%, var(--green-light) 60%, transparent 70%);
   background-size: 300% 300%;
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   opacity: 0;

@@ -21,6 +21,8 @@
     "mongoose": "^9.7.3",
     "multer": "^2.2.0",
     "multer-storage-cloudinary": "^4.0.0",
+    "nodemailer": "^9.0.3",
+    "pdfkit": "^0.19.1",
     "razorpay": "^2.9.6"
   }
 }

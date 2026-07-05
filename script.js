@@ -450,7 +450,11 @@ document.addEventListener('DOMContentLoaded', () => {
                   });
                 }
                 if(successMsg) {
-                  successMsg.innerHTML = '<span>💚</span> Payment Successful! Your donation receipt has been downloaded. Thank you for your generosity.';
+                  successMsg.innerHTML = `
+                    <span>💚</span> Payment Successful! Your donation receipt has been downloaded &amp; emailed to <strong>${email.value.trim()}</strong>. Thank you for your generosity!
+                    <div style="margin-top:10px;padding:10px 14px;background:rgba(232,136,58,0.12);border-left:3px solid #E8883A;border-radius:6px;font-size:0.82rem;color:#7c4a00;line-height:1.5;">
+                      📬 <strong>Didn't receive the email?</strong> Sometimes our emails may land in your <strong>Spam</strong> or <strong>Junk</strong> folder — please check there once and mark it as "Not Spam" to receive future updates in your inbox.
+                    </div>`;
                   successMsg.classList.add('show');
                 }
               } else {
