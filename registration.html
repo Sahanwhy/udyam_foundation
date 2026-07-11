@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -90,13 +90,93 @@
         <p class="card-pitch">"Become a part of the Udyam family. Choose how you would like to register with us."</p>
 
         <div class="registration-type-select">
+          <button class="reg-btn active" id="btnMember">Apply for Member</button>
           <button class="reg-btn" id="btnVolunteer">Apply for Volunteer</button>
           <button class="reg-btn" id="btnEmployee">Apply for Employee</button>
         </div>
 
+        <!-- Member Registration Form -->
+        <div id="formMember" class="reg-form-container active" style="display: block;">
+          <form class="volunteer-form" id="memberForm">
+            <h4 style="margin-bottom: 1rem; color: var(--green-deep);">Member Registration</h4>
+            
+            <div class="form-group">
+              <label for="memName">Full Name <span class="req">*</span></label>
+              <input type="text" id="memName" placeholder="Your full name" required />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="memContact">Contact No <span class="req">*</span></label>
+                <input type="tel" id="memContact" placeholder="+91 XXXXX XXXXX" required />
+              </div>
+              <div class="form-group">
+                <label for="memWhatsapp">WhatsApp No <span class="req">*</span></label>
+                <input type="tel" id="memWhatsapp" placeholder="+91 XXXXX XXXXX" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="memEmail">Email Address <span class="req">*</span></label>
+                <input type="email" id="memEmail" placeholder="you@example.com" required />
+              </div>
+              <div class="form-group">
+                <label for="memBloodGroup">Blood Group <span class="req">*</span></label>
+                <select id="memBloodGroup" required style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-family: inherit;">
+                  <option value="">Select Blood Group</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="memAddress1">Address Line 1 <span class="req">*</span></label>
+              <input type="text" id="memAddress1" placeholder="House/Flat No., Street" required />
+            </div>
+            <div class="form-group">
+              <label for="memAddress2">Address Line 2</label>
+              <input type="text" id="memAddress2" placeholder="Landmark, Area, etc." />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="memDistrict">District <span class="req">*</span></label>
+                <input type="text" id="memDistrict" placeholder="Your District" required />
+              </div>
+              <div class="form-group">
+                <label for="memPin">PIN Code <span class="req">*</span></label>
+                <input type="text" id="memPin" placeholder="e.g. 785621" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="memValidity">Member Validity & Fees <span class="req">*</span></label>
+              <select id="memValidity" required style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-family: inherit;">
+                <option value="">Select Validity</option>
+                <option value="1 Year|200">1 Year - ₹200</option>
+                <option value="2 Year|300">2 Year - ₹300</option>
+                <option value="3 Year|500">3 Year - ₹500</option>
+                <option value="1 Day (Testing)|1">1 Day (Testing) - ₹1</option>
+              </select>
+            </div>
+
+            <button class="btn-primary btn-full" type="submit" id="submitMemberBtn" style="margin-top: 1.5rem; font-size: 1.1rem; padding: 1rem;">
+              Pay & Register
+            </button>
+          </form>
+        </div>
+
         <!-- Volunteer Registration Form -->
-        <div id="formVolunteer" class="reg-form-container">
-          <form class="volunteer-form">
+        <div id="formVolunteer" class="reg-form-container" style="display: none;">
+          <form class="volunteer-form" id="volForm">
             <h4 style="margin-bottom: 1rem; color: var(--green-deep);">Volunteer Registration</h4>
             
             <div class="form-group">
@@ -247,33 +327,148 @@
     <div class="transition-panel panel-2"></div>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="certificate.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script src="script.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
+      const btnMember = document.getElementById('btnMember');
       const btnVolunteer = document.getElementById('btnVolunteer');
       const btnEmployee = document.getElementById('btnEmployee');
+      
+      const formMemberContainer = document.getElementById('formMember');
       const formVolunteerContainer = document.getElementById('formVolunteer');
       const formEmployeeContainer = document.getElementById('formEmployee');
       
+      const memberForm = formMemberContainer.querySelector('form');
       const volForm = formVolunteerContainer.querySelector('form');
       const empForm = formEmployeeContainer.querySelector('form');
 
-      btnVolunteer.addEventListener('click', () => {
-        btnVolunteer.classList.add('active');
-        btnEmployee.classList.remove('active');
-        formVolunteerContainer.classList.add('active');
-        formEmployeeContainer.classList.remove('active');
-      });
+      const tabs = [
+        { btn: btnMember, container: formMemberContainer },
+        { btn: btnVolunteer, container: formVolunteerContainer },
+        { btn: btnEmployee, container: formEmployeeContainer }
+      ];
 
-      btnEmployee.addEventListener('click', () => {
-        btnEmployee.classList.add('active');
-        btnVolunteer.classList.remove('active');
-        formEmployeeContainer.classList.add('active');
-        formVolunteerContainer.classList.remove('active');
+      tabs.forEach(tab => {
+        tab.btn.addEventListener('click', () => {
+          tabs.forEach(t => {
+            t.btn.classList.remove('active');
+            t.container.style.display = 'none';
+          });
+          tab.btn.classList.add('active');
+          tab.container.style.display = 'block';
+        });
       });
       
-      // Default to Volunteer
-      btnVolunteer.click();
+      // Default to Member
+      btnMember.click();
+
+      // Member Form Submit with Razorpay
+      memberForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitMemberBtn');
+        const validityVal = document.getElementById('memValidity').value;
+        if (!validityVal) {
+          alert('Please select member validity');
+          return;
+        }
+
+        const [validityText, amountStr] = validityVal.split('|');
+        const amount = parseInt(amountStr, 10);
+        
+        submitBtn.textContent = 'Processing...';
+        submitBtn.disabled = true;
+
+        const memberDetails = {
+          fullName: document.getElementById('memName').value,
+          phone: document.getElementById('memContact').value,
+          whatsapp: document.getElementById('memWhatsapp').value,
+          email: document.getElementById('memEmail').value,
+          bloodGroup: document.getElementById('memBloodGroup').value,
+          address1: document.getElementById('memAddress1').value,
+          address2: document.getElementById('memAddress2').value,
+          district: document.getElementById('memDistrict').value,
+          pin: document.getElementById('memPin').value,
+          validity: validityText,
+          amount: amount
+        };
+
+        try {
+          // 1. Create Order
+          const orderRes = await fetch('http://localhost:3000/api/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: amount * 100 }) // Razorpay expects paise
+          });
+          const orderData = await orderRes.json();
+          if (orderData.error) throw new Error(orderData.error);
+
+          // 2. Open Razorpay Checkout
+          const options = {
+            key: "rzp_live_T6WpzWVVSdMVDS",
+            amount: orderData.amount,
+            currency: orderData.currency,
+            name: "Udyam Foundation",
+            description: "Member Registration Fee",
+            order_id: orderData.id,
+            handler: async function (response) {
+              try {
+                // 3. Verify Payment
+                const verifyRes = await fetch('http://localhost:3000/api/verify-payment', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature,
+                    memberDetails: memberDetails
+                  })
+                });
+                const verifyData = await verifyRes.json();
+                if (verifyData.success) {
+                  alert('Registration successful! Downloading receipt...');
+                  if (typeof window.generateMembershipCertificate === 'function') {
+                    window.generateMembershipCertificate({
+                      ...memberDetails,
+                      paymentId: response.razorpay_payment_id,
+                      orderId: response.razorpay_order_id
+                    });
+                  }
+                  memberForm.reset();
+                } else {
+                  alert(verifyData.error || 'Payment verification failed');
+                }
+              } catch (err) {
+                console.error(err);
+                alert('An error occurred during verification.');
+              } finally {
+                submitBtn.textContent = 'Pay & Register';
+                submitBtn.disabled = false;
+              }
+            },
+            prefill: {
+              name: memberDetails.fullName,
+              email: memberDetails.email,
+              contact: memberDetails.phone
+            },
+            theme: { color: "#1B4332" }
+          };
+          const rzp = new Razorpay(options);
+          rzp.on('payment.failed', function (response){
+            alert('Payment failed: ' + response.error.description);
+            submitBtn.textContent = 'Pay & Register';
+            submitBtn.disabled = false;
+          });
+          rzp.open();
+        } catch (err) {
+          console.error(err);
+          alert('Failed to initialize payment.');
+          submitBtn.textContent = 'Pay & Register';
+          submitBtn.disabled = false;
+        }
+      });
 
       // Volunteer Form Submit
       volForm.addEventListener('submit', async (e) => {

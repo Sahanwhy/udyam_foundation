@@ -39,11 +39,14 @@ const ADMIN_ROLES = [
   'President',
   'Office Secretary',
   'Secretary',
-  'Board Member'
+  'Program Incharge',
+  'Treasurer',
+  'Communication Public Relations Officer'
 ];
 
 const adminUserSchema = new mongoose.Schema({
   fullName: { type: String, required: true, trim: true },
+  phone: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true },
   role: { type: String, required: true, enum: ADMIN_ROLES },
@@ -59,8 +62,11 @@ const volunteerSchema = new mongoose.Schema({
   idProofs: [String],
   addressProofs: [String],
   photo: String,
-  status: { type: String, enum: ['pending', 'accepted', 'rejected', 'forwarded'], default: 'pending' },
+  status: { type: String, enum: ['pending', 'accepted', 'rejected', 'forwarded', 'verified', 'issue_reported'], default: 'pending' },
   assignedToRole: { type: String, default: 'Secretary' },
+  forwardAttachments: [mongoose.Schema.Types.Mixed],
+  verifiedBy: [{ name: String, role: String, date: { type: Date, default: Date.now } }],
+  issueText: String,
   date: { type: Date, default: Date.now }
 }, { collection: 'volunteer' });
 
@@ -73,22 +79,48 @@ const employeeSchema = new mongoose.Schema({
   dobProof: String,
   educationDocs: [String],
   photo: String,
-  status: { type: String, enum: ['pending', 'accepted', 'rejected', 'forwarded'], default: 'pending' },
+  status: { type: String, enum: ['pending', 'accepted', 'rejected', 'forwarded', 'verified', 'issue_reported'], default: 'pending' },
   assignedToRole: { type: String, default: 'Secretary' },
+  forwardAttachments: [mongoose.Schema.Types.Mixed],
+  verifiedBy: [{ name: String, role: String, date: { type: Date, default: Date.now } }],
+  issueText: String,
   date: { type: Date, default: Date.now }
 }, { collection: 'employee' });
 
-let AdminUser, Volunteer, Employee;
+const memberSchema = new mongoose.Schema({
+  fullName: String,
+  phone: String,
+  whatsapp: String,
+  email: String,
+  bloodGroup: String,
+  address1: String,
+  address2: String,
+  district: String,
+  pin: String,
+  validity: String,
+  amount: Number,
+  paymentId: String,
+  orderId: String,
+  status: { type: String, enum: ['pending', 'accepted', 'rejected', 'forwarded', 'verified', 'issue_reported'], default: 'pending' },
+  assignedToRole: { type: String, default: 'Secretary' },
+  forwardAttachments: [mongoose.Schema.Types.Mixed],
+  verifiedBy: [{ name: String, role: String, date: { type: Date, default: Date.now } }],
+  issueText: String,
+  date: { type: Date, default: Date.now }
+}, { collection: 'member' });
+
+let AdminUser, Volunteer, Employee, Member;
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('Connected to MongoDB');
     const superAdminDb = mongoose.connection.useDb('Super_admin');
     AdminUser = superAdminDb.model('AdminUser', adminUserSchema);
-    
+
     const registrationDb = mongoose.connection.useDb('Registration');
     Volunteer = registrationDb.model('Volunteer', volunteerSchema);
     Employee = registrationDb.model('Employee', employeeSchema);
+    Member = registrationDb.model('Member', memberSchema);
   })
   .catch(err => console.error('MongoDB connection error:', err));
 
@@ -115,10 +147,20 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'udyam_foundation',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
+    allowed_formats: ['jpg', 'jpeg', 'png', 'pdf', 'heic', 'webp'],
   },
 });
 const upload = multer({ storage: storage });
+
+// Separate storage for admin forward attachments (PDF + images)
+const forwardAttachmentStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'udyam_foundation/forward_attachments',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'pdf', 'heic', 'webp']
+  },
+});
+const uploadForwardAttachments = multer({ storage: forwardAttachmentStorage });
 
 app.post('/api/register/volunteer', upload.fields([
   { name: 'idProofs', maxCount: 5 },
@@ -127,7 +169,7 @@ app.post('/api/register/volunteer', upload.fields([
 ]), async (req, res) => {
   try {
     if (!Volunteer) return res.status(503).json({ error: 'Database not ready' });
-    
+
     const { fullName, phone, email } = req.body;
     const idProofs = req.files['idProofs'] ? req.files['idProofs'].map(f => f.path) : [];
     const addressProofs = req.files['addressProofs'] ? req.files['addressProofs'].map(f => f.path) : [];
@@ -135,7 +177,7 @@ app.post('/api/register/volunteer', upload.fields([
 
     const newVolunteer = new Volunteer({ fullName, phone, email, idProofs, addressProofs, photo });
     await newVolunteer.save();
-    
+
     res.status(201).json({ success: true, message: 'Volunteer registered successfully' });
   } catch (error) {
     console.error(error);
@@ -152,7 +194,7 @@ app.post('/api/register/employee', upload.fields([
 ]), async (req, res) => {
   try {
     if (!Employee) return res.status(503).json({ error: 'Database not ready' });
-    
+
     const { fullName, phone, email } = req.body;
     const panCard = req.files['panCard'] ? req.files['panCard'][0].path : '';
     const aadharCard = req.files['aadharCard'] ? req.files['aadharCard'][0].path : '';
@@ -162,7 +204,7 @@ app.post('/api/register/employee', upload.fields([
 
     const newEmployee = new Employee({ fullName, phone, email, panCard, aadharCard, dobProof, educationDocs, photo });
     await newEmployee.save();
-    
+
     res.status(201).json({ success: true, message: 'Employee registered successfully' });
   } catch (error) {
     console.error(error);
@@ -174,7 +216,7 @@ app.post('/api/create-order', async (req, res) => {
   try {
     const uniqueReceipt = `rcpt_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const { amount, currency = 'INR', receipt = uniqueReceipt } = req.body;
-    
+
     if (!amount || amount < 100) {
       return res.status(400).json({ error: 'Amount must be at least 100 paise' });
     }
@@ -190,21 +232,21 @@ app.post('/api/create-order', async (req, res) => {
   } catch (error) {
     console.error(error);
     if (error.statusCode === 401) {
-       return res.status(401).json({ error: 'Authentication failed' });
+      return res.status(401).json({ error: 'Authentication failed' });
     }
     res.status(500).json({ error: 'Failed to create order' });
   }
 });
 
 app.post('/api/verify-payment', async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, donorDetails } = req.body;
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, donorDetails, memberDetails } = req.body;
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
   const sign = razorpay_order_id + '|' + razorpay_payment_id;
-  
+
   const expectedSign = crypto
     .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
     .update(sign.toString())
@@ -227,6 +269,14 @@ app.post('/api/verify-payment', async (req, res) => {
           paymentId: razorpay_payment_id,
           orderId: razorpay_order_id,
         }).catch(emailErr => console.error('Email send error:', emailErr));
+      } else if (memberDetails) {
+        if (!Member) return res.status(503).json({ error: 'Database not ready' });
+        const newMember = new Member({
+          ...memberDetails,
+          paymentId: razorpay_payment_id,
+          orderId: razorpay_order_id,
+        });
+        await newMember.save();
       }
       return res.json({ success: true, message: 'Payment verified successfully' });
     } catch (err) {
@@ -245,9 +295,9 @@ app.post('/api/auth/signup', async (req, res) => {
       return res.status(503).json({ error: 'Database not ready. Please try again.' });
     }
 
-    const { fullName, email, password, role } = req.body;
+    const { fullName, phone, email, password, role } = req.body;
 
-    if (!fullName?.trim() || !email?.trim() || !password || !role) {
+    if (!fullName?.trim() || !phone?.trim() || !email?.trim() || !password || !role) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
@@ -272,6 +322,7 @@ app.post('/api/auth/signup', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new AdminUser({
       fullName: fullName.trim(),
+      phone: phone.trim(),
       email: email.toLowerCase().trim(),
       password: hashedPassword,
       role
@@ -385,20 +436,20 @@ function generateReceiptPDF(donor) {
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    const GREEN_DEEP  = '#1B4332';
-    const GREEN_MID   = '#2D6A4F';
-    const SAFFRON     = '#E8883A';
-    const CREAM       = '#FDF8F0';
-    const LIGHT_GRAY  = '#F3F4F6';
-    const MID_GRAY    = '#6B7280';
-    const DARK        = '#1F2937';
-    const WHITE       = '#FFFFFF';
-    const pageWidth   = doc.page.width;
-    const margin      = 50;
-    const contentW    = pageWidth - margin * 2;
-    const now         = new Date();
-    const receiptNo   = donor.receiptNo || `RCPT-${Date.now()}`;
-    const with80G     = Boolean(donor.with80G);
+    const GREEN_DEEP = '#1B4332';
+    const GREEN_MID = '#2D6A4F';
+    const SAFFRON = '#E8883A';
+    const CREAM = '#FDF8F0';
+    const LIGHT_GRAY = '#F3F4F6';
+    const MID_GRAY = '#6B7280';
+    const DARK = '#1F2937';
+    const WHITE = '#FFFFFF';
+    const pageWidth = doc.page.width;
+    const margin = 50;
+    const contentW = pageWidth - margin * 2;
+    const now = new Date();
+    const receiptNo = donor.receiptNo || `RCPT-${Date.now()}`;
+    const with80G = Boolean(donor.with80G);
 
     // ── Header Banner ──────────────────────────────────────────────────────────
     doc.rect(0, 0, pageWidth, 90).fill(GREEN_DEEP);
@@ -711,12 +762,12 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     await user.save();
 
     const resetUrl = `${req.protocol}://${req.get('host')}/admin-reset-password.html?token=${resetToken}`;
-    
+
     // Fallback for localhost relative path (if accessed differently)
-    const finalResetUrl = resetUrl.includes('localhost:3000') 
+    const finalResetUrl = resetUrl.includes('localhost:3000')
       ? `http://localhost/Udyam%20Foundation/admin-reset-password.html?token=${resetToken}`
       : `http://localhost/Udyam%20Foundation/admin-reset-password.html?token=${resetToken}`;
-      // In production, you would configure the exact FRONTEND_URL in .env
+    // In production, you would configure the exact FRONTEND_URL in .env
 
     const htmlContent = `
       <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
@@ -819,14 +870,16 @@ app.get('/api/donations', authMiddleware, async (req, res) => {
 
 app.get('/api/admin/registrations', authMiddleware, async (req, res) => {
   try {
-    if (!Volunteer || !Employee) return res.status(503).json({ error: 'Database not ready' });
+    if (!Volunteer || !Employee || !Member) return res.status(503).json({ error: 'Database not ready' });
     const volunteers = await Volunteer.find().lean();
     const employees = await Employee.find().lean();
-    
+    const members = await Member.find().lean();
+
     const formattedVolunteers = volunteers.map(v => ({ ...v, type: 'volunteer' }));
     const formattedEmployees = employees.map(e => ({ ...e, type: 'employee' }));
-    
-    const allRegistrations = [...formattedVolunteers, ...formattedEmployees].sort((a, b) => b.date - a.date);
+    const formattedMembers = members.map(m => ({ ...m, type: 'member' }));
+
+    const allRegistrations = [...formattedVolunteers, ...formattedEmployees, ...formattedMembers].sort((a, b) => b.date - a.date);
     res.json(allRegistrations);
   } catch (error) {
     console.error('Error fetching registrations:', error);
@@ -838,24 +891,26 @@ app.patch('/api/admin/registrations/:type/:id/status', authMiddleware, async (re
   try {
     const { type, id } = req.params;
     const { status } = req.body;
-    
+
     if (!['pending', 'accepted', 'rejected', 'forwarded'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
     }
-    
+
     let updatedDoc;
     if (type === 'volunteer') {
       updatedDoc = await Volunteer.findByIdAndUpdate(id, { status }, { new: true });
     } else if (type === 'employee') {
       updatedDoc = await Employee.findByIdAndUpdate(id, { status }, { new: true });
+    } else if (type === 'member') {
+      updatedDoc = await Member.findByIdAndUpdate(id, { status }, { new: true });
     } else {
       return res.status(400).json({ error: 'Invalid type' });
     }
-    
+
     if (!updatedDoc) {
       return res.status(404).json({ error: 'Registration not found' });
     }
-    
+
     res.json({ success: true, message: 'Status updated successfully', data: updatedDoc });
   } catch (error) {
     console.error('Error updating status:', error);
@@ -863,34 +918,193 @@ app.patch('/api/admin/registrations/:type/:id/status', authMiddleware, async (re
   }
 });
 
-app.patch('/api/admin/registrations/:type/:id/forward', authMiddleware, async (req, res) => {
+app.patch(
+  '/api/admin/registrations/:type/:id/forward',
+  authMiddleware,
+  uploadForwardAttachments.array('attachments', 10),
+  async (req, res) => {
+    try {
+      const { type, id } = req.params;
+      const { newRole } = req.body;
+
+      if (!ADMIN_ROLES.includes(newRole)) {
+        return res.status(400).json({ error: 'Invalid role for forwarding' });
+      }
+
+      // Collect Cloudinary URLs for any uploaded attachments
+      const attachmentUrls = req.files ? req.files.map(f => ({ url: f.path, uploadedBy: req.user.fullName || 'Admin' })) : [];
+
+      const updateFields = {
+        assignedToRole: newRole,
+        status: 'forwarded',
+        ...(attachmentUrls.length > 0 && { $push: { forwardAttachments: { $each: attachmentUrls } } }),
+      };
+
+      // Separate $set and $push to avoid conflict
+      const setFields = { assignedToRole: newRole, status: 'forwarded' };
+      const pushFields = attachmentUrls.length > 0 ? { forwardAttachments: { $each: attachmentUrls } } : null;
+
+      let updatedDoc;
+      if (type === 'volunteer') {
+        updatedDoc = await Volunteer.findByIdAndUpdate(
+          id,
+          { $set: setFields, ...(pushFields && { $push: pushFields }) },
+          { new: true }
+        );
+      } else if (type === 'employee') {
+        updatedDoc = await Employee.findByIdAndUpdate(
+          id,
+          { $set: setFields, ...(pushFields && { $push: pushFields }) },
+          { new: true }
+        );
+      } else if (type === 'member') {
+        updatedDoc = await Member.findByIdAndUpdate(
+          id,
+          { $set: setFields, ...(pushFields && { $push: pushFields }) },
+          { new: true }
+        );
+      } else {
+        return res.status(400).json({ error: 'Invalid type' });
+      }
+
+      if (!updatedDoc) {
+        return res.status(404).json({ error: 'Registration not found' });
+      }
+
+      res.json({ success: true, message: 'Forwarded successfully', data: updatedDoc });
+    } catch (error) {
+      console.error('Error forwarding registration:', error);
+      res.status(500).json({ error: 'Failed to forward' });
+    }
+  }
+);
+
+app.patch('/api/admin/registrations/:type/:id/verify', authMiddleware, async (req, res) => {
   try {
     const { type, id } = req.params;
-    const { newRole } = req.body;
-    
-    if (!ADMIN_ROLES.includes(newRole)) {
-      return res.status(400).json({ error: 'Invalid role for forwarding' });
-    }
-    
+    const userName = req.user.fullName || 'Unknown Member';
+    const userRole = req.user.role || 'Member';
+
     let updatedDoc;
+    const updateData = { 
+      status: 'verified', 
+      $push: { verifiedBy: { name: userName, role: userRole } } 
+    };
+
     if (type === 'volunteer') {
-      updatedDoc = await Volunteer.findByIdAndUpdate(id, { assignedToRole: newRole, status: 'forwarded' }, { new: true });
+      updatedDoc = await Volunteer.findByIdAndUpdate(id, updateData, { new: true });
     } else if (type === 'employee') {
-      updatedDoc = await Employee.findByIdAndUpdate(id, { assignedToRole: newRole, status: 'forwarded' }, { new: true });
+      updatedDoc = await Employee.findByIdAndUpdate(id, updateData, { new: true });
+    } else if (type === 'member') {
+      updatedDoc = await Member.findByIdAndUpdate(id, updateData, { new: true });
     } else {
       return res.status(400).json({ error: 'Invalid type' });
     }
-    
+
     if (!updatedDoc) {
       return res.status(404).json({ error: 'Registration not found' });
     }
-    
-    res.json({ success: true, message: 'Forwarded successfully', data: updatedDoc });
+
+    res.json({ success: true, message: 'Verified successfully', data: updatedDoc });
   } catch (error) {
-    console.error('Error forwarding registration:', error);
-    res.status(500).json({ error: 'Failed to forward' });
+    console.error('Error verifying registration:', error);
+    res.status(500).json({ error: 'Failed to verify' });
   }
 });
+
+app.patch(
+  '/api/admin/registrations/:type/:id/verify_and_forward',
+  authMiddleware,
+  uploadForwardAttachments.array('attachments', 10),
+  async (req, res) => {
+    try {
+      const { type, id } = req.params;
+      const { newRole } = req.body;
+      const userName = req.user.fullName || 'Unknown Member';
+      const userRole = req.user.role || 'Member';
+
+      if (!ADMIN_ROLES.includes(newRole)) {
+        return res.status(400).json({ error: 'Invalid role for forwarding' });
+      }
+
+      const attachmentUrls = req.files ? req.files.map(f => ({ url: f.path, uploadedBy: userName })) : [];
+
+      // When forwarding TO Secretary/President it means the review chain is complete.
+      // Set status 'verified' so it leaves the forwarded section and lands in Secretary's
+      // verified tab where they can take the final accept/reject decision.
+      // For all other intermediate roles, keep status as 'forwarded'.
+      const isFinalVerify = newRole === 'Secretary' || newRole === 'President';
+      const status = isFinalVerify ? 'verified' : 'forwarded';
+
+      const pushFields = {
+        verifiedBy: { name: userName, role: userRole }
+      };
+
+      if (attachmentUrls.length > 0) {
+        pushFields.forwardAttachments = { $each: attachmentUrls };
+      }
+
+      const updateData = {
+        $set: { status, assignedToRole: newRole },
+        $push: pushFields
+      };
+
+      let updatedDoc;
+      if (type === 'volunteer') {
+        updatedDoc = await Volunteer.findByIdAndUpdate(id, updateData, { new: true });
+      } else if (type === 'employee') {
+        updatedDoc = await Employee.findByIdAndUpdate(id, updateData, { new: true });
+      } else if (type === 'member') {
+        updatedDoc = await Member.findByIdAndUpdate(id, updateData, { new: true });
+      } else {
+        return res.status(400).json({ error: 'Invalid type' });
+      }
+
+      if (!updatedDoc) {
+        return res.status(404).json({ error: 'Registration not found' });
+      }
+
+      res.json({ success: true, message: 'Verified and forwarded successfully', data: updatedDoc });
+    } catch (error) {
+      console.error('Error verifying and forwarding registration:', error);
+      res.status(500).json({ error: 'Failed to verify and forward' });
+    }
+  }
+);
+
+app.patch('/api/admin/registrations/:type/:id/report-issue', authMiddleware, async (req, res) => {
+  try {
+    const { type, id } = req.params;
+    const { issueText } = req.body;
+
+    if (!issueText || issueText.trim() === '') {
+      return res.status(400).json({ error: 'Issue text is required' });
+    }
+
+    let updatedDoc;
+    const updateData = { status: 'issue_reported', issueText };
+
+    if (type === 'volunteer') {
+      updatedDoc = await Volunteer.findByIdAndUpdate(id, updateData, { new: true });
+    } else if (type === 'employee') {
+      updatedDoc = await Employee.findByIdAndUpdate(id, updateData, { new: true });
+    } else if (type === 'member') {
+      updatedDoc = await Member.findByIdAndUpdate(id, updateData, { new: true });
+    } else {
+      return res.status(400).json({ error: 'Invalid type' });
+    }
+
+    if (!updatedDoc) {
+      return res.status(404).json({ error: 'Registration not found' });
+    }
+
+    res.json({ success: true, message: 'Issue reported successfully', data: updatedDoc });
+  } catch (error) {
+    console.error('Error reporting issue:', error);
+    res.status(500).json({ error: 'Failed to report issue' });
+  }
+});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

@@ -201,4 +201,49 @@ function generateDonationCertificate(data) {
   doc.save(filename);
 }
 
+function generateMembershipCertificate(data) {
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    console.error('jsPDF is not loaded');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const margin = 20;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const contentWidth = pageWidth - margin * 2;
+  const now = new Date();
+  const receiptNo = generateReceiptNumber();
+
+  let y = drawHeader(doc, 'MEMBERSHIP RECEIPT', false);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(80, 80, 80);
+  doc.text(`Receipt Number: ${receiptNo}`, margin, y);
+  doc.text(`Date & Time: ${formatDateTime(now)}`, pageWidth - margin, y, { align: 'right' });
+
+  y += 12;
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.2);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 10;
+
+  y = drawField(doc, 'Member Name:', data.fullName, y, margin, contentWidth);
+  y = drawField(doc, 'Contact Number:', data.phone, y + 3, margin, contentWidth);
+  y = drawField(doc, 'Email Address:', data.email, y + 3, margin, contentWidth);
+  y = drawField(doc, 'Validity Period:', data.validity, y + 3, margin, contentWidth);
+
+  y = drawField(doc, 'Payment ID:', data.paymentId, y + 3, margin, contentWidth);
+  y = drawField(doc, 'Fees Paid:', formatIndianAmount(data.amount), y + 3, margin, contentWidth);
+
+  drawFooter(doc, Math.min(y + 14, 250));
+
+  const safeId = (data.paymentId || receiptNo).replace(/[^a-zA-Z0-9_-]/g, '');
+  const filename = `Udyam_Membership_Receipt_${safeId}.pdf`;
+
+  doc.save(filename);
+}
+
 window.generateDonationCertificate = generateDonationCertificate;
+window.generateMembershipCertificate = generateMembershipCertificate;
