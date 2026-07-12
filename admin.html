@@ -719,6 +719,20 @@
   <script src="admin-auth.js"></script>
   <script src="admin.js"></script>
 
+  <!-- Photo Lightbox Modal -->
+  <div id="photoLightbox" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(6px); flex-direction:column; gap:1rem;" onclick="if(event.target===this) closePhotoLightbox()">
+    <div style="position:relative; max-width:90vw; max-height:85vh; display:flex; flex-direction:column; align-items:center; gap:1rem;">
+      <!-- Close button -->
+      <button onclick="closePhotoLightbox()" style="position:absolute; top:-14px; right:-14px; width:36px; height:36px; border-radius:50%; background:white; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:10; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="#374151" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <!-- Image -->
+      <img id="lightboxImg" src="" alt="Profile Photo" style="max-width:90vw; max-height:78vh; border-radius:12px; box-shadow:0 24px 60px rgba(0,0,0,0.5); object-fit:contain; display:block;" />
+      <!-- Name caption -->
+      <div id="lightboxCaption" style="color:white; font-size:1rem; font-weight:600; letter-spacing:0.02em; text-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>
+    </div>
+  </div>
+
   <!-- Forward Modal -->
   <div id="forwardModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
     <div style="background: white; padding: 2rem; border-radius: 16px; width: 100%; max-width: 480px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto;">

@@ -190,8 +190,29 @@
                 <input type="tel" id="volPhone" placeholder="+91 XXXXX XXXXX" required />
               </div>
               <div class="form-group">
+                <label for="volWhatsapp">WhatsApp No <span class="req">*</span></label>
+                <input type="tel" id="volWhatsapp" placeholder="+91 XXXXX XXXXX" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
                 <label for="volEmail">Email Address <span class="req">*</span></label>
                 <input type="email" id="volEmail" placeholder="you@example.com" required />
+              </div>
+              <div class="form-group">
+                <label for="volBloodGroup">Blood Group <span class="req">*</span></label>
+                <select id="volBloodGroup" required style="width:100%; padding:0.75rem 1rem; border:1px solid var(--border); border-radius:8px; font-family:inherit; background:#fff; color:inherit;">
+                  <option value="">Select Blood Group</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
               </div>
             </div>
 
@@ -234,8 +255,29 @@
                 <input type="tel" id="empPhone" placeholder="+91 XXXXX XXXXX" required />
               </div>
               <div class="form-group">
+                <label for="empWhatsapp">WhatsApp No <span class="req">*</span></label>
+                <input type="tel" id="empWhatsapp" placeholder="+91 XXXXX XXXXX" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
                 <label for="empEmail">Email Address <span class="req">*</span></label>
                 <input type="email" id="empEmail" placeholder="you@example.com" required />
+              </div>
+              <div class="form-group">
+                <label for="empBloodGroup">Blood Group <span class="req">*</span></label>
+                <select id="empBloodGroup" required style="width:100%; padding:0.75rem 1rem; border:1px solid var(--border); border-radius:8px; font-family:inherit; background:#fff; color:inherit;">
+                  <option value="">Select Blood Group</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
               </div>
             </div>
 
@@ -480,7 +522,9 @@
         const formData = new FormData();
         formData.append('fullName', document.getElementById('volName').value);
         formData.append('phone', document.getElementById('volPhone').value);
+        formData.append('whatsapp', document.getElementById('volWhatsapp').value);
         formData.append('email', document.getElementById('volEmail').value);
+        formData.append('bloodGroup', document.getElementById('volBloodGroup').value);
 
         const idProofs = document.getElementById('volIdProof').files;
         for (let i = 0; i < idProofs.length; i++) {
@@ -526,7 +570,9 @@
         const formData = new FormData();
         formData.append('fullName', document.getElementById('empName').value);
         formData.append('phone', document.getElementById('empPhone').value);
+        formData.append('whatsapp', document.getElementById('empWhatsapp').value);
         formData.append('email', document.getElementById('empEmail').value);
+        formData.append('bloodGroup', document.getElementById('empBloodGroup').value);
 
         const panCard = document.getElementById('empPan').files[0];
         if (panCard) formData.append('panCard', panCard);

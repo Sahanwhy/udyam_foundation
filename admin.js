@@ -230,6 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isSecretaryOrPresident = user && (user.role === 'Secretary' || user.role === 'President');
     
     if (isSecretaryOrPresident) {
+      // Pending badge
       const pendingCount = allRegistrations.filter(r => (r.status || 'pending') === 'pending').length;
       if (pendingCount > 0) {
         const pendingNav = document.getElementById('nav-pending');
@@ -239,6 +240,19 @@ document.addEventListener('DOMContentLoaded', () => {
           badge.style.cssText = 'background: #EF4444; color: white; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-left: auto; display: flex; align-items: center; justify-content: center; height: 18px; min-width: 18px;';
           badge.textContent = pendingCount;
           pendingNav.appendChild(badge);
+        }
+      }
+
+      // Verified badge — applications that completed the review chain, awaiting Secretary's final decision
+      const verifiedCount = allRegistrations.filter(r => r.status === 'verified').length;
+      if (verifiedCount > 0) {
+        const verifiedNav = document.getElementById('nav-verified');
+        if (verifiedNav) {
+          const badge = document.createElement('span');
+          badge.className = 'sidebar-badge';
+          badge.style.cssText = 'background: #10B981; color: white; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-left: auto; display: flex; align-items: center; justify-content: center; height: 18px; min-width: 18px;';
+          badge.textContent = verifiedCount;
+          verifiedNav.appendChild(badge);
         }
       }
     } else {
@@ -411,9 +425,13 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       if (isVol) {
+        docsHtml += formatDetail('Blood Group', reg.bloodGroup || 'N/A');
+        docsHtml += formatDetail('WhatsApp', reg.whatsapp || 'N/A');
         docsHtml += formatDetail('ID Proofs', reg.idProofs && reg.idProofs.length ? reg.idProofs.map(p => `<a href="${formatPdfUrl(p)}" target="_blank" style="${linkStyle}" ${linkHover}>View</a>`).join('') : '<span style="color:#9CA3AF; font-size:0.85rem;">None</span>');
         docsHtml += formatDetail('Address Proofs', reg.addressProofs && reg.addressProofs.length ? reg.addressProofs.map(p => `<a href="${formatPdfUrl(p)}" target="_blank" style="${linkStyle}" ${linkHover}>View</a>`).join('') : '<span style="color:#9CA3AF; font-size:0.85rem;">None</span>');
       } else if (isEmp) {
+        docsHtml += formatDetail('Blood Group', reg.bloodGroup || 'N/A');
+        docsHtml += formatDetail('WhatsApp', reg.whatsapp || 'N/A');
         docsHtml += formatDetail('PAN Card', reg.panCard ? `<a href="${formatPdfUrl(reg.panCard)}" target="_blank" style="${linkStyle}" ${linkHover}>View</a>` : '<span style="color:#9CA3AF; font-size:0.85rem;">None</span>');
         docsHtml += formatDetail('Aadhar Card', reg.aadharCard ? `<a href="${formatPdfUrl(reg.aadharCard)}" target="_blank" style="${linkStyle}" ${linkHover}>View</a>` : '<span style="color:#9CA3AF; font-size:0.85rem;">None</span>');
         docsHtml += formatDetail('DOB Proof', reg.dobProof ? `<a href="${formatPdfUrl(reg.dobProof)}" target="_blank" style="${linkStyle}" ${linkHover}>View</a>` : '<span style="color:#9CA3AF; font-size:0.85rem;">None</span>');
@@ -463,7 +481,21 @@ document.addEventListener('DOMContentLoaded', () => {
              onmouseout="this.style.boxShadow='0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'; this.style.transform='translateY(0)'">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
             <div style="display: flex; gap: 1.25rem; align-items: center;">
-              ${reg.photo ? `<img src="${reg.photo}" alt="Photo" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid white; box-shadow: 0 0 0 2px var(--primary);" />` : `<div style="width: 64px; height: 64px; border-radius: 50%; background: #F3F4F6; color: #9CA3AF; font-size: 0.8rem; font-weight: 500; display: flex; align-items:center; justify-content:center; border: 2px solid white; box-shadow: 0 0 0 2px #D1D5DB;">No Photo</div>`}
+              ${reg.photo
+                ? `<div style="position:relative; width:64px; height:64px; flex-shrink:0; cursor:pointer;" onclick="window.openPhotoLightbox('${reg.photo.replace(/'/g, "&apos;")}', '${reg.fullName.replace(/'/g, "&apos;")}')"
+                     title="Click to view full photo">
+                    <img src="${reg.photo}" alt="Photo" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid white; box-shadow:0 0 0 2px var(--primary); display:block; transition:filter 0.2s;" />
+                    <div style="position:absolute; inset:0; border-radius:50%; background:rgba(0,0,0,0); display:flex; align-items:center; justify-content:center; transition:background 0.2s;"
+                         onmouseover="this.style.background='rgba(0,0,0,0.38)'; this.previousElementSibling.style.filter='brightness(0.7)'"
+                         onmouseout="this.style.background='rgba(0,0,0,0)'; this.previousElementSibling.style.filter='none'">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0; transition:opacity 0.2s;"
+                           onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+                      </svg>
+                    </div>
+                  </div>`
+                : `<div style="width:64px; height:64px; border-radius:50%; background:#F3F4F6; color:#9CA3AF; font-size:0.8rem; font-weight:500; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 0 0 2px #D1D5DB; flex-shrink:0;">No Photo</div>`}
               <div>
                 <h3 style="margin: 0 0 0.35rem 0; font-size: 1.2rem; font-weight: 700; color: #111827; display: flex; align-items: center; gap: 0.75rem;">
                   ${index + 1}. ${reg.fullName} 
@@ -495,7 +527,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isSecretaryForwardedView = (user.role === 'Secretary' || user.role === 'President') && currentRegFilter === 'forwarded';
                 if (isSecretaryForwardedView) {
                   // Build the Review Chain: verified roles (✓ green) + current in-progress role (⏳ amber)
-                  const verifiedList = reg.verifiedBy && reg.verifiedBy.length > 0 ? reg.verifiedBy : [];
+                  // Normalize verifiedBy — old DB docs may have a plain object instead of an array
+                  const verifiedList = Array.isArray(reg.verifiedBy) ? reg.verifiedBy : (reg.verifiedBy ? [reg.verifiedBy] : []);
                   const verifiedRoleNames = verifiedList.map(v => v.role);
                   const currentRole = reg.assignedToRole;
 
@@ -545,17 +578,21 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           ${forwardAttachmentsHtml}
           
-          ${reg.verifiedBy && reg.verifiedBy.length > 0 ? `
+          ${(() => {
+            // Normalize verifiedBy — old DB docs may store a plain object instead of an array
+            const verifiedByList = Array.isArray(reg.verifiedBy) ? reg.verifiedBy : (reg.verifiedBy ? [reg.verifiedBy] : []);
+            return verifiedByList.length > 0 ? `
             <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); padding: 1rem 1.25rem; border-radius: 8px; margin-top: 1rem;">
               <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.6rem;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#059669" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#059669;">Verification History (${reg.verifiedBy.length})</span>
+                <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#059669;">Verification History (${verifiedByList.length})</span>
               </div>
               <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">
-                ${reg.verifiedBy.map(v => `<span style="display:inline-flex; align-items:center; background:#10B981; color:white; padding:4px 10px; border-radius:50px; font-size:0.75rem; font-weight:600;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg> ${v.name} (${v.role})</span>`).join('')}
+                ${verifiedByList.map(v => `<span style="display:inline-flex; align-items:center; background:#10B981; color:white; padding:4px 10px; border-radius:50px; font-size:0.75rem; font-weight:600;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg> ${v.name} (${v.role})</span>`).join('')}
               </div>
             </div>
-          ` : ''}
+          ` : '';
+          })()}
 
           ${reg.status === 'issue_reported' ? `
             <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 1rem; border-radius: 8px; margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; color: #B91C1C; font-weight: 500; font-size: 0.9rem;">
@@ -722,4 +759,37 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Fetch registrations initially to populate badges
   fetchRegistrations();
+
+  // ── Photo Lightbox ──────────────────────────────────────────────────────────
+  window.openPhotoLightbox = (src, name) => {
+    const lb = document.getElementById('photoLightbox');
+    const img = document.getElementById('lightboxImg');
+    const caption = document.getElementById('lightboxCaption');
+    if (!lb || !img) return;
+    img.src = src;
+    caption.textContent = name || '';
+    lb.style.display = 'flex';
+    // Animate in
+    lb.style.opacity = '0';
+    requestAnimationFrame(() => {
+      lb.style.transition = 'opacity 0.22s ease';
+      lb.style.opacity = '1';
+    });
+  };
+
+  window.closePhotoLightbox = () => {
+    const lb = document.getElementById('photoLightbox');
+    if (!lb) return;
+    lb.style.transition = 'opacity 0.18s ease';
+    lb.style.opacity = '0';
+    setTimeout(() => { lb.style.display = 'none'; lb.style.opacity = '1'; }, 190);
+  };
+
+  // Close lightbox with Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const lb = document.getElementById('photoLightbox');
+      if (lb && lb.style.display !== 'none') window.closePhotoLightbox();
+    }
+  });
 });

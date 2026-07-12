@@ -58,7 +58,9 @@ const adminUserSchema = new mongoose.Schema({
 const volunteerSchema = new mongoose.Schema({
   fullName: String,
   phone: String,
+  whatsapp: String,
   email: String,
+  bloodGroup: String,
   idProofs: [String],
   addressProofs: [String],
   photo: String,
@@ -73,7 +75,9 @@ const volunteerSchema = new mongoose.Schema({
 const employeeSchema = new mongoose.Schema({
   fullName: String,
   phone: String,
+  whatsapp: String,
   email: String,
+  bloodGroup: String,
   panCard: String,
   aadharCard: String,
   dobProof: String,
@@ -170,12 +174,12 @@ app.post('/api/register/volunteer', upload.fields([
   try {
     if (!Volunteer) return res.status(503).json({ error: 'Database not ready' });
 
-    const { fullName, phone, email } = req.body;
+    const { fullName, phone, whatsapp, email, bloodGroup } = req.body;
     const idProofs = req.files['idProofs'] ? req.files['idProofs'].map(f => f.path) : [];
     const addressProofs = req.files['addressProofs'] ? req.files['addressProofs'].map(f => f.path) : [];
     const photo = req.files['photo'] ? req.files['photo'][0].path : '';
 
-    const newVolunteer = new Volunteer({ fullName, phone, email, idProofs, addressProofs, photo });
+    const newVolunteer = new Volunteer({ fullName, phone, whatsapp, email, bloodGroup, idProofs, addressProofs, photo });
     await newVolunteer.save();
 
     res.status(201).json({ success: true, message: 'Volunteer registered successfully' });
@@ -195,14 +199,14 @@ app.post('/api/register/employee', upload.fields([
   try {
     if (!Employee) return res.status(503).json({ error: 'Database not ready' });
 
-    const { fullName, phone, email } = req.body;
+    const { fullName, phone, whatsapp, email, bloodGroup } = req.body;
     const panCard = req.files['panCard'] ? req.files['panCard'][0].path : '';
     const aadharCard = req.files['aadharCard'] ? req.files['aadharCard'][0].path : '';
     const dobProof = req.files['dobProof'] ? req.files['dobProof'][0].path : '';
     const educationDocs = req.files['educationDocs'] ? req.files['educationDocs'].map(f => f.path) : [];
     const photo = req.files['photo'] ? req.files['photo'][0].path : '';
 
-    const newEmployee = new Employee({ fullName, phone, email, panCard, aadharCard, dobProof, educationDocs, photo });
+    const newEmployee = new Employee({ fullName, phone, whatsapp, email, bloodGroup, panCard, aadharCard, dobProof, educationDocs, photo });
     await newEmployee.save();
 
     res.status(201).json({ success: true, message: 'Employee registered successfully' });
@@ -1037,7 +1041,7 @@ app.patch(
       const status = isFinalVerify ? 'verified' : 'forwarded';
 
       const pushFields = {
-        verifiedBy: { name: userName, role: userRole }
+        verifiedBy: { $each: [{ name: userName, role: userRole }] }
       };
 
       if (attachmentUrls.length > 0) {
