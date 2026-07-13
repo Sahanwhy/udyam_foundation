@@ -61,7 +61,6 @@ const volunteerSchema = new mongoose.Schema({
   whatsapp: String,
   email: String,
   bloodGroup: String,
-  idProofs: [String],
   addressProofs: [String],
   photo: String,
   status: { type: String, enum: ['pending', 'accepted', 'rejected', 'forwarded', 'verified', 'issue_reported'], default: 'pending' },
@@ -167,7 +166,6 @@ const forwardAttachmentStorage = new CloudinaryStorage({
 const uploadForwardAttachments = multer({ storage: forwardAttachmentStorage });
 
 app.post('/api/register/volunteer', upload.fields([
-  { name: 'idProofs', maxCount: 5 },
   { name: 'addressProofs', maxCount: 5 },
   { name: 'photo', maxCount: 1 }
 ]), async (req, res) => {
@@ -175,11 +173,10 @@ app.post('/api/register/volunteer', upload.fields([
     if (!Volunteer) return res.status(503).json({ error: 'Database not ready' });
 
     const { fullName, phone, whatsapp, email, bloodGroup } = req.body;
-    const idProofs = req.files['idProofs'] ? req.files['idProofs'].map(f => f.path) : [];
     const addressProofs = req.files['addressProofs'] ? req.files['addressProofs'].map(f => f.path) : [];
     const photo = req.files['photo'] ? req.files['photo'][0].path : '';
 
-    const newVolunteer = new Volunteer({ fullName, phone, whatsapp, email, bloodGroup, idProofs, addressProofs, photo });
+    const newVolunteer = new Volunteer({ fullName, phone, whatsapp, email, bloodGroup, addressProofs, photo });
     await newVolunteer.save();
 
     res.status(201).json({ success: true, message: 'Volunteer registered successfully' });

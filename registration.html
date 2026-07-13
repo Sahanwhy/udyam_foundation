@@ -217,19 +217,13 @@
             </div>
 
             <div class="form-group">
-              <label for="volIdProof">ID Proof (Pan Card / Voter ID / Driving licence) <span class="req">*</span></label>
-              <small class="field-hint" style="display:block; margin-bottom:0.5rem; color:#666;">You can select multiple photos</small>
-              <input type="file" id="volIdProof" accept="image/*,.pdf" multiple required />
-            </div>
-
-            <div class="form-group">
               <label for="volAddressProof">Address Proof <span class="req">*</span></label>
               <small class="field-hint" style="display:block; margin-bottom:0.5rem; color:#666;">You can select multiple photos</small>
               <input type="file" id="volAddressProof" accept="image/*,.pdf" multiple required />
             </div>
 
             <div class="form-group">
-              <label for="volPhoto">Colour Photo <span class="req">*</span></label>
+              <label for="volPhoto">Colour Photo (Passport Size) <span class="req">*</span></label>
               <input type="file" id="volPhoto" accept="image/*" required />
             </div>
 
@@ -525,11 +519,6 @@
         formData.append('whatsapp', document.getElementById('volWhatsapp').value);
         formData.append('email', document.getElementById('volEmail').value);
         formData.append('bloodGroup', document.getElementById('volBloodGroup').value);
-
-        const idProofs = document.getElementById('volIdProof').files;
-        for (let i = 0; i < idProofs.length; i++) {
-          formData.append('idProofs', idProofs[i]);
-        }
 
         const addressProofs = document.getElementById('volAddressProof').files;
         for (let i = 0; i < addressProofs.length; i++) {

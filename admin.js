@@ -427,7 +427,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isVol) {
         docsHtml += formatDetail('Blood Group', reg.bloodGroup || 'N/A');
         docsHtml += formatDetail('WhatsApp', reg.whatsapp || 'N/A');
-        docsHtml += formatDetail('ID Proofs', reg.idProofs && reg.idProofs.length ? reg.idProofs.map(p => `<a href="${formatPdfUrl(p)}" target="_blank" style="${linkStyle}" ${linkHover}>View</a>`).join('') : '<span style="color:#9CA3AF; font-size:0.85rem;">None</span>');
         docsHtml += formatDetail('Address Proofs', reg.addressProofs && reg.addressProofs.length ? reg.addressProofs.map(p => `<a href="${formatPdfUrl(p)}" target="_blank" style="${linkStyle}" ${linkHover}>View</a>`).join('') : '<span style="color:#9CA3AF; font-size:0.85rem;">None</span>');
       } else if (isEmp) {
         docsHtml += formatDetail('Blood Group', reg.bloodGroup || 'N/A');
