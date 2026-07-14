@@ -1592,6 +1592,28 @@ select {
   padding-top: 90px;
 }
 
+#aboutHero {
+  min-height: 90vh;
+  background: linear-gradient(rgba(15, 46, 34, 0.75), rgba(15, 46, 34, 0.85)), url('images/executive_body.jpg') top center/cover no-repeat fixed;
+  align-items: flex-start;
+}
+
+@media (max-width: 768px) {
+  #aboutHero {
+    align-items: flex-start;
+    min-height: auto;
+    padding-top: 100px;
+    padding-bottom: 65vw; /* Creates space for the uncropped image at the bottom */
+    background: 
+      url('images/executive_body.jpg') bottom center / 100% auto no-repeat,
+      linear-gradient(135deg, var(--green-deep) 0%, #0F2E22 100%);
+  }
+  
+  #aboutHero .about-hero-content {
+    padding-bottom: 2rem;
+  }
+}
+
 .about-hero::before {
   content: '';
   position: absolute;
@@ -1643,6 +1665,10 @@ select {
   position: relative;
   z-index: 2;
   padding: clamp(3rem, 6vw, 5rem) clamp(1rem, 4vw, 3rem);
+}
+
+#aboutHero .about-hero-content {
+  padding: 1rem clamp(1rem, 4vw, 3rem) 3rem;
 }
 
 .about-hero-content .hero-headline {
@@ -2197,7 +2223,7 @@ select {
 
 /* ─── VISION SECTION ──────────────────── */
 .vision-section {
-  background: var(--cream);
+  background: linear-gradient(rgba(253, 246, 236, 0.6), rgba(253, 246, 236, 0.85)), url('images/vision_bg.png') center/cover no-repeat fixed;
   padding: clamp(4rem, 8vw, 7rem) 0;
 }
 
