@@ -503,36 +503,29 @@ select {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   object-fit: cover;
-}
-
-.photo-1 {
   width: 65%;
   height: 50%;
-  top: 0;
-  right: 0;
-  z-index: 10;
   border: 6px solid var(--cream);
-  transform: rotate(4deg);
+  animation: collageSlideshow 15s infinite cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.photo-2 {
-  width: 65%;
-  height: 50%;
-  top: 25%;
-  left: 0;
-  z-index: 2;
-  border: 6px solid var(--cream);
-  transform: rotate(-3deg);
-}
+.photo-1 { animation-delay: 0s; }
+.photo-2 { animation-delay: -10s; }
+.photo-3 { animation-delay: -5s; }
 
-.photo-3 {
-  width: 65%;
-  height: 50%;
-  bottom: 0;
-  right: 5%;
-  z-index: 1;
-  border: 6px solid var(--cream);
-  transform: rotate(2deg);
+@keyframes collageSlideshow {
+  0%, 25% {
+    top: 0; left: 35%; z-index: 10; transform: rotate(4deg);
+  }
+  33.33%, 58.33% {
+    top: 50%; left: 30%; z-index: 1; transform: rotate(2deg);
+  }
+  66.66%, 91.66% {
+    top: 25%; left: 0; z-index: 2; transform: rotate(-3deg);
+  }
+  100% {
+    top: 0; left: 35%; z-index: 10; transform: rotate(4deg);
+  }
 }
 
 /* Wave bottom */
