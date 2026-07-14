@@ -347,24 +347,55 @@ select { font-family: inherit; }
 /* Hero right side visual */
 .hero-visual {
   position: absolute;
-  right: clamp(2rem, 8vw, 10rem);
+  right: clamp(1rem, 5vw, 5rem);
   top: 50%;
   transform: translateY(-50%);
   z-index: 1;
-  opacity: 0.35;
   pointer-events: none;
-  width: clamp(200px, 28vw, 400px);
-  animation: heroPulse 6s ease-in-out infinite;
+  width: clamp(320px, 42vw, 620px);
+  animation: heroPulsePhotos 8s ease-in-out infinite;
 }
-@keyframes heroPulse {
-  0%, 100% { opacity: 0.35; transform: translateY(-50%) scale(1); }
-  50%       { opacity: 0.45; transform: translateY(-50%) scale(1.03); }
+@keyframes heroPulsePhotos {
+  0%, 100% { transform: translateY(-50%) scale(1); }
+  50%       { transform: translateY(-50%) scale(1.02); }
 }
-.hero-logo-img {
+.hero-collage {
+  position: relative;
   width: 100%;
-  height: auto;
-  border-radius: 50%;
-  box-shadow: 0 0 40px rgba(0,0,0,0.3);
+  padding-bottom: 125%;
+}
+.hero-photo {
+  position: absolute;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  object-fit: cover;
+}
+.photo-1 {
+  width: 65%;
+  height: 50%;
+  top: 0;
+  right: 0;
+  z-index: 10;
+  border: 6px solid var(--cream);
+  transform: rotate(4deg);
+}
+.photo-2 {
+  width: 65%;
+  height: 50%;
+  top: 25%;
+  left: 0;
+  z-index: 2;
+  border: 6px solid var(--cream);
+  transform: rotate(-3deg);
+}
+.photo-3 {
+  width: 65%;
+  height: 50%;
+  bottom: 0;
+  right: 5%;
+  z-index: 1;
+  border: 6px solid var(--cream);
+  transform: rotate(2deg);
 }
 
 /* Wave bottom */
