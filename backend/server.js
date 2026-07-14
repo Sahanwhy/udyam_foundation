@@ -112,7 +112,15 @@ const memberSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now }
 }, { collection: 'member' });
 
-let AdminUser, Volunteer, Employee, Member;
+const galleryPhotoSchema = new mongoose.Schema({
+  title: String,
+  category: String,
+  imageUrl: String,
+  featured: { type: Boolean, default: false },
+  date: { type: String, default: '' }
+}, { collection: 'gallery' });
+
+let AdminUser, Volunteer, Employee, Member, GalleryPhoto;
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
@@ -124,6 +132,9 @@ mongoose.connect(process.env.MONGO_URI)
     Volunteer = registrationDb.model('Volunteer', volunteerSchema);
     Employee = registrationDb.model('Employee', employeeSchema);
     Member = registrationDb.model('Member', memberSchema);
+
+    const galleryDb = mongoose.connection.useDb('Gallery');
+    GalleryPhoto = galleryDb.model('GalleryPhoto', galleryPhotoSchema);
   })
   .catch(err => console.error('MongoDB connection error:', err));
 
@@ -164,6 +175,15 @@ const forwardAttachmentStorage = new CloudinaryStorage({
   },
 });
 const uploadForwardAttachments = multer({ storage: forwardAttachmentStorage });
+
+const galleryStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'udyam_foundation/gallery',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'heic']
+  }
+});
+const uploadGallery = multer({ storage: galleryStorage });
 
 app.post('/api/register/volunteer', upload.fields([
   { name: 'addressProofs', maxCount: 5 },
@@ -1105,7 +1125,91 @@ app.patch('/api/admin/registrations/:type/:id/report-issue', authMiddleware, asy
     res.status(500).json({ error: 'Failed to report issue' });
   }
 });
+// --- Gallery API Endpoints ---
 
+// Get all gallery photos (public)
+app.get('/api/gallery', async (req, res) => {
+  try {
+    const { category, featured } = req.query;
+    let query = {};
+    if (category) query.category = category;
+    if (featured === 'true') query.featured = true;
+    
+    const photos = await GalleryPhoto.find(query).sort({ date: -1 });
+    res.json(photos);
+  } catch (error) {
+    console.error('Error fetching gallery photos:', error);
+    res.status(500).json({ error: 'Failed to fetch photos' });
+  }
+});
+
+// Get unique categories (public)
+app.get('/api/gallery/categories', async (req, res) => {
+  try {
+    const categories = await GalleryPhoto.distinct('category');
+    res.json(categories);
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ error: 'Failed to fetch categories' });
+  }
+});
+
+// Upload new gallery photo (admin only)
+app.post('/api/gallery/upload', authMiddleware, uploadGallery.single('photo'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No photo provided' });
+    }
+    
+    const { title, category, featured } = req.body;
+    
+    const newPhoto = new GalleryPhoto({
+      title: title || 'Untitled',
+      category: category || 'Uncategorized',
+      imageUrl: req.file.path,
+      featured: featured === 'true'
+    });
+    
+    await newPhoto.save();
+    res.status(201).json({ success: true, message: 'Photo uploaded successfully', photo: newPhoto });
+  } catch (error) {
+    console.error('Error uploading photo:', error);
+    res.status(500).json({ error: 'Failed to upload photo' });
+  }
+});
+
+// Delete gallery photo (admin only)
+app.delete('/api/gallery/:id', authMiddleware, async (req, res) => {
+  try {
+    const photo = await GalleryPhoto.findByIdAndDelete(req.params.id);
+    if (!photo) {
+      return res.status(404).json({ error: 'Photo not found' });
+    }
+    res.json({ success: true, message: 'Photo deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting photo:', error);
+    res.status(500).json({ error: 'Failed to delete photo' });
+  }
+});
+
+// Toggle featured status (admin only)
+app.patch('/api/gallery/:id/featured', authMiddleware, async (req, res) => {
+  try {
+    const { featured } = req.body;
+    const photo = await GalleryPhoto.findByIdAndUpdate(
+      req.params.id, 
+      { featured: featured }, 
+      { new: true }
+    );
+    if (!photo) {
+      return res.status(404).json({ error: 'Photo not found' });
+    }
+    res.json({ success: true, photo });
+  } catch (error) {
+    console.error('Error updating photo:', error);
+    res.status(500).json({ error: 'Failed to update photo' });
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

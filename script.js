@@ -502,4 +502,228 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ─── GALLERY & LIGHTBOX ──────────────────────────────────────────
+  
+  const API_URL = 'http://localhost:3000'; // Make sure this matches your backend URL
+  const homepageGalleryGrid = document.getElementById('homepageGalleryGrid');
+  const fullGalleryGrid = document.getElementById('fullGalleryGrid');
+  const categoryFilters = document.getElementById('categoryFilters');
+
+  // Helper to format date
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    // Check if it's a standard ISO date string (contains 'T')
+    if (typeof dateStr === 'string' && dateStr.includes('T')) {
+      const d = new Date(dateStr);
+      if (!isNaN(d)) {
+        return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      }
+    }
+    return dateStr;
+  }
+
+  // Helper to render gallery items
+  function createGalleryHTML(photos) {
+    if (!photos || photos.length === 0) {
+      return '<p style="text-align: center; color: var(--text-muted); width: 100%;">No photos available at the moment.</p>';
+    }
+    
+    return photos.map((photo, index) => {
+      const formattedDate = formatDate(photo.date);
+      const dateHtml = formattedDate ? `<div class="gallery-date">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            ${formattedDate}
+          </div>` : '';
+          
+      return `
+      <div class="gallery-card reveal" style="animation-delay: ${(index % 12) * 0.05}s">
+        <div class="gallery-item" onclick="openLightbox(${index})">
+          <img src="${photo.imageUrl}" alt="${photo.title}" class="gallery-img" loading="lazy">
+          <div class="gallery-overlay">
+            <div class="view-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-card-content">
+          <span class="gallery-category-badge">${photo.category}</span>
+          ${dateHtml}
+        </div>
+      </div>
+    `}).join('');
+  }
+
+  // Global array for lightbox
+  window.currentGalleryPhotos = [];
+  let currentLightboxIndex = 0;
+
+  // Render Homepage Highlights
+  if (homepageGalleryGrid) {
+    fetch(`${API_URL}/api/gallery?featured=true`)
+      .then(res => res.json())
+      .then(photos => {
+        // Limit to 8 for homepage
+        const displayPhotos = photos.slice(0, 8);
+        window.currentGalleryPhotos = displayPhotos;
+        homepageGalleryGrid.innerHTML = createGalleryHTML(displayPhotos);
+        homepageGalleryGrid.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+      })
+      .catch(err => {
+        console.error('Error fetching homepage gallery:', err);
+        homepageGalleryGrid.innerHTML = '<p style="text-align: center;">Failed to load gallery.</p>';
+      });
+  }
+
+  // Render Full Gallery (Programs Page)
+  if (fullGalleryGrid && categoryFilters) {
+    let allPhotos = [];
+    let currentCategory = 'all';
+    let visibleCount = 12;
+    const ITEMS_PER_PAGE = 12;
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    const loadMoreContainer = document.getElementById('loadMoreContainer');
+    
+    // Load Categories
+    fetch(`${API_URL}/api/gallery/categories`)
+      .then(res => res.json())
+      .then(categories => {
+        const filterHTML = [
+          `<button class="gallery-filter-btn active" data-category="all">All Photos</button>`
+        ];
+        
+        categories.forEach(cat => {
+          if(cat) filterHTML.push(`<button class="gallery-filter-btn" data-category="${cat}">${cat}</button>`);
+        });
+        
+        categoryFilters.innerHTML = filterHTML.join('');
+        
+        // Add click events to filters
+        const filterBtns = categoryFilters.querySelectorAll('.gallery-filter-btn');
+        filterBtns.forEach(btn => {
+          btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            currentCategory = btn.getAttribute('data-category');
+            visibleCount = ITEMS_PER_PAGE; // Reset count
+            renderFilteredGallery();
+          });
+        });
+      });
+      
+    // Load all photos
+    fetch(`${API_URL}/api/gallery`)
+      .then(res => res.json())
+      .then(photos => {
+        allPhotos = photos;
+        renderFilteredGallery();
+      })
+      .catch(err => {
+        console.error('Error fetching full gallery:', err);
+        fullGalleryGrid.innerHTML = '<p style="text-align: center;">Failed to load gallery.</p>';
+      });
+      
+    function renderFilteredGallery() {
+      const filtered = currentCategory === 'all' 
+        ? allPhotos 
+        : allPhotos.filter(p => p.category === currentCategory);
+        
+      window.currentGalleryPhotos = filtered; // For lightbox to navigate all filtered items
+      
+      const displayPhotos = filtered.slice(0, visibleCount);
+      fullGalleryGrid.innerHTML = createGalleryHTML(displayPhotos);
+      fullGalleryGrid.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+      
+      // Handle Load More button visibility
+      if (loadMoreContainer) {
+        if (visibleCount < filtered.length) {
+          loadMoreContainer.style.display = 'block';
+        } else {
+          loadMoreContainer.style.display = 'none';
+        }
+      }
+    }
+    
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', () => {
+        visibleCount += ITEMS_PER_PAGE;
+        renderFilteredGallery();
+      });
+    }
+  }
+
+  // Lightbox Implementation
+  const body = document.body;
+  const lightboxModal = document.createElement('div');
+  lightboxModal.className = 'lightbox-modal';
+  lightboxModal.innerHTML = `
+    <button class="lightbox-close">&times;</button>
+    <button class="lightbox-nav lightbox-prev">&#10094;</button>
+    <div class="lightbox-content">
+      <img src="" alt="" class="lightbox-img">
+      <div class="lightbox-caption"></div>
+    </div>
+    <button class="lightbox-nav lightbox-next">&#10095;</button>
+  `;
+  body.appendChild(lightboxModal);
+
+  const lbImg = lightboxModal.querySelector('.lightbox-img');
+  const lbCaption = lightboxModal.querySelector('.lightbox-caption');
+  const lbClose = lightboxModal.querySelector('.lightbox-close');
+  const lbPrev = lightboxModal.querySelector('.lightbox-prev');
+  const lbNext = lightboxModal.querySelector('.lightbox-next');
+
+  window.openLightbox = function(index) {
+    if (!window.currentGalleryPhotos || window.currentGalleryPhotos.length === 0) return;
+    
+    currentLightboxIndex = index;
+    updateLightbox();
+    
+    lightboxModal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
+  };
+
+  function updateLightbox() {
+    const photo = window.currentGalleryPhotos[currentLightboxIndex];
+    if (!photo) return;
+    
+    lbImg.src = photo.imageUrl;
+    lbImg.alt = photo.title;
+    lbCaption.innerHTML = `<strong>${photo.category}</strong>: ${photo.title}`;
+  }
+
+  function closeLightbox() {
+    lightboxModal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  function prevImage(e) {
+    if(e) e.stopPropagation();
+    currentLightboxIndex = (currentLightboxIndex - 1 + window.currentGalleryPhotos.length) % window.currentGalleryPhotos.length;
+    updateLightbox();
+  }
+
+  function nextImage(e) {
+    if(e) e.stopPropagation();
+    currentLightboxIndex = (currentLightboxIndex + 1) % window.currentGalleryPhotos.length;
+    updateLightbox();
+  }
+
+  lbClose.addEventListener('click', closeLightbox);
+  lbPrev.addEventListener('click', prevImage);
+  lbNext.addEventListener('click', nextImage);
+  
+  lightboxModal.addEventListener('click', (e) => {
+    if (e.target === lightboxModal) closeLightbox();
+  });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (!lightboxModal.classList.contains('active')) return;
+    
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') prevImage();
+    if (e.key === 'ArrowRight') nextImage();
+  });
 });
+

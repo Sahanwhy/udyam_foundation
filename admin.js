@@ -733,26 +733,193 @@ document.addEventListener('DOMContentLoaded', () => {
       confirmIssueBtn.disabled = true;
 
       try {
-        const data = await apiRequest(`/api/admin/registrations/${currentIssueTarget.type}/${currentIssueTarget.id}/report-issue`, {
+        const response = await fetch(`${API_URL}/api/admin/registrations/${currentIssueTarget.type}/${currentIssueTarget.id}/report-issue`, {
           method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getAuthToken()}`
+          },
           body: JSON.stringify({ issueText })
         });
-        if (data.success) {
-          alert('Issue reported to Secretary successfully!');
-          reportIssueModal.style.display = 'none';
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          alert('Issue reported successfully!');
+          if (reportIssueModal) reportIssueModal.style.display = 'none';
           fetchRegistrations();
         } else {
           alert(data.error || 'Failed to report issue');
         }
       } catch (err) {
         console.error(err);
-        alert(err.message || 'An error occurred while reporting issue');
+        alert('An error occurred while reporting issue');
       } finally {
         confirmIssueBtn.innerText = 'Submit Issue';
         confirmIssueBtn.disabled = false;
       }
     });
   }
+
+// ─── GALLERY MANAGEMENT ──────────────────────────────────────────────
+
+const navGallery = document.getElementById('nav-gallery');
+const gallerySection = document.getElementById('gallerySection');
+const dashboardSection = document.getElementById('dashboardSection');
+const registrationsSection = document.getElementById('registrationsSection');
+const navItems = document.querySelectorAll('.nav-item');
+
+navGallery.addEventListener('click', (e) => {
+  e.preventDefault();
+  navItems.forEach(n => n.classList.remove('active'));
+  navGallery.classList.add('active');
+  
+  dashboardSection.style.display = 'none';
+  registrationsSection.style.display = 'none';
+  gallerySection.style.display = 'block';
+  
+  fetchAdminGallery();
+});
+
+// Update the other nav listeners to hide gallerySection
+document.querySelector('.nav-item[href="#"]').addEventListener('click', (e) => {
+  if(e.target === navGallery) return; // Handled above
+  if(e.target.closest('.reg-filter-btn')) return; // Handled in existing logic
+  if(e.target.id === 'nav-gallery') return;
+  
+  e.preventDefault();
+  navItems.forEach(n => n.classList.remove('active'));
+  e.target.closest('.nav-item').classList.add('active');
+  
+  dashboardSection.style.display = 'block';
+  registrationsSection.style.display = 'none';
+  gallerySection.style.display = 'none';
+});
+
+// Update registration filter buttons to hide gallerySection
+document.querySelectorAll('.reg-filter-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    btn.classList.add('active');
+    
+    dashboardSection.style.display = 'none';
+    gallerySection.style.display = 'none';
+    registrationsSection.style.display = 'block';
+    
+    const filter = btn.getAttribute('data-filter');
+    fetchRegistrations(filter);
+  });
+});
+
+window.fetchAdminGallery = function() {
+  fetch(`${API_URL}/api/gallery`)
+    .then(res => res.json())
+    .then(photos => {
+      const grid = document.getElementById('adminGalleryGrid');
+      if (photos.length === 0) {
+        grid.innerHTML = '<p>No photos found.</p>';
+        return;
+      }
+      
+      grid.innerHTML = photos.map(photo => `
+        <div style="background:white; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.1); display:flex; flex-direction:column;">
+          <img src="${photo.imageUrl}" alt="${photo.title}" style="width:100%; height:150px; object-fit:cover;">
+          <div style="padding: 1rem; flex: 1; display:flex; flex-direction:column; gap:0.5rem;">
+            <span style="background:var(--saffron); color:white; font-size:0.7rem; padding:0.2rem 0.6rem; border-radius:20px; align-self:flex-start;">${photo.category}</span>
+            <h4 style="margin:0; font-size:1rem;">${photo.title}</h4>
+            <div style="margin-top:auto; display:flex; justify-content:space-between; align-items:center; padding-top:1rem; border-top:1px solid var(--border);">
+              <label style="font-size:0.8rem; display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
+                <input type="checkbox" ${photo.featured ? 'checked' : ''} onchange="toggleFeatured('${photo._id}', this.checked)">
+                Featured
+              </label>
+              <button onclick="deleteGalleryPhoto('${photo._id}')" style="background:var(--danger); color:white; border:none; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.8rem;">Delete</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    })
+    .catch(err => console.error('Error fetching gallery:', err));
+}
+
+document.getElementById('uploadPhotoForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const title = document.getElementById('uploadTitle').value;
+  const category = document.getElementById('uploadCategory').value;
+  const featured = document.getElementById('uploadFeatured').checked;
+  const file = document.getElementById('uploadFile').files[0];
+  
+  if (!file) return alert('Please select an image file');
+  
+  const formData = new FormData();
+  formData.append('title', title);
+  formData.append('category', category);
+  formData.append('featured', featured);
+  formData.append('photo', file);
+  
+  const progress = document.getElementById('uploadProgress');
+  progress.style.display = 'block';
+  
+  fetch(`${API_URL}/api/gallery/upload`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    progress.style.display = 'none';
+    if (data.success) {
+      alert('Photo uploaded successfully!');
+      this.reset();
+      fetchAdminGallery();
+    } else {
+      alert(data.error || 'Failed to upload photo');
+    }
+  })
+  .catch(err => {
+    progress.style.display = 'none';
+    console.error(err);
+    alert('An error occurred during upload');
+  });
+});
+
+window.toggleFeatured = function(id, featured) {
+  fetch(`${API_URL}/api/gallery/${id}/featured`, {
+    method: 'PATCH',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}` 
+    },
+    body: JSON.stringify({ featured })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (!data.success) {
+      alert('Failed to update featured status');
+      fetchAdminGallery(); // Revert checkbox
+    }
+  })
+  .catch(err => console.error(err));
+}
+
+window.deleteGalleryPhoto = function(id) {
+  if (!confirm('Are you sure you want to delete this photo?')) return;
+  
+  fetch(`${API_URL}/api/gallery/${id}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      fetchAdminGallery();
+    } else {
+      alert(data.error || 'Failed to delete photo');
+    }
+  })
+  .catch(err => console.error(err));
+}
 
   refreshRegBtn.addEventListener('click', fetchRegistrations);
   
@@ -791,4 +958,148 @@ document.addEventListener('DOMContentLoaded', () => {
       if (lb && lb.style.display !== 'none') window.closePhotoLightbox();
     }
   });
+
+  // ─── GALLERY MANAGEMENT ──────────────────────────────────────────────
+  const navGallery = document.getElementById('nav-gallery');
+  const gallerySection = document.getElementById('gallerySection');
+  const dashboardSection = document.getElementById('dashboardSection');
+  const registrationsSection = document.getElementById('registrationsSection');
+  const navItems = document.querySelectorAll('.nav-item');
+
+  if(navGallery) {
+    navGallery.addEventListener('click', (e) => {
+      e.preventDefault();
+      navItems.forEach(n => n.classList.remove('active'));
+      navGallery.classList.add('active');
+      
+      if(dashboardSection) dashboardSection.style.display = 'none';
+      if(registrationsSection) registrationsSection.style.display = 'none';
+      if(gallerySection) gallerySection.style.display = 'block';
+      
+      fetchAdminGallery();
+    });
+  }
+
+  // Handle other navigation clicks to hide gallery
+  document.querySelectorAll('.nav-item').forEach(nav => {
+    if(nav.id === 'nav-gallery') return;
+    nav.addEventListener('click', (e) => {
+      if(nav.target === '_blank') return;
+      if(gallerySection) gallerySection.style.display = 'none';
+    });
+  });
+
+  window.fetchAdminGallery = function() {
+    fetch(`${API_URL}/api/gallery`)
+      .then(res => res.json())
+      .then(photos => {
+        const grid = document.getElementById('adminGalleryGrid');
+        if (!grid) return;
+        if (photos.length === 0) {
+          grid.innerHTML = '<p>No photos found.</p>';
+          return;
+        }
+        
+        grid.innerHTML = photos.map(photo => `
+          <div style="background:white; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.1); display:flex; flex-direction:column;">
+            <img src="${photo.imageUrl}" alt="${photo.title}" style="width:100%; height:150px; object-fit:cover;">
+            <div style="padding: 1rem; flex: 1; display:flex; flex-direction:column; gap:0.5rem;">
+              <span style="background:var(--saffron); color:white; font-size:0.7rem; padding:0.2rem 0.6rem; border-radius:20px; align-self:flex-start;">${photo.category}</span>
+              <h4 style="margin:0; font-size:1rem;">${photo.title}</h4>
+              <div style="margin-top:auto; display:flex; justify-content:space-between; align-items:center; padding-top:1rem; border-top:1px solid var(--border);">
+                <label style="font-size:0.8rem; display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
+                  <input type="checkbox" ${photo.featured ? 'checked' : ''} onchange="toggleFeatured('${photo._id}', this.checked)">
+                  Featured
+                </label>
+                <button onclick="deleteGalleryPhoto('${photo._id}')" style="background:var(--danger); color:white; border:none; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.8rem;">Delete</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      })
+      .catch(err => console.error('Error fetching gallery:', err));
+  }
+
+  const uploadForm = document.getElementById('uploadPhotoForm');
+  if(uploadForm) {
+    uploadForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const title = document.getElementById('uploadTitle').value;
+      const category = document.getElementById('uploadCategory').value;
+      const featured = document.getElementById('uploadFeatured').checked;
+      const file = document.getElementById('uploadFile').files[0];
+      
+      if (!file) return alert('Please select an image file');
+      
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('category', category);
+      formData.append('featured', featured);
+      formData.append('photo', file);
+      
+      const progress = document.getElementById('uploadProgress');
+      progress.style.display = 'block';
+      
+      fetch(`${API_URL}/api/gallery/upload`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${getAuthToken()}` },
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        progress.style.display = 'none';
+        if (data.success) {
+          alert('Photo uploaded successfully!');
+          this.reset();
+          fetchAdminGallery();
+        } else {
+          alert(data.error || 'Failed to upload photo');
+        }
+      })
+      .catch(err => {
+        progress.style.display = 'none';
+        console.error(err);
+        alert('An error occurred during upload');
+      });
+    });
+  }
+
+  window.toggleFeatured = function(id, featured) {
+    fetch(`${API_URL}/api/gallery/${id}/featured`, {
+      method: 'PATCH',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}` 
+      },
+      body: JSON.stringify({ featured })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) {
+        alert('Failed to update featured status');
+        fetchAdminGallery(); // Revert checkbox
+      }
+    })
+    .catch(err => console.error(err));
+  }
+
+  window.deleteGalleryPhoto = function(id) {
+    if (!confirm('Are you sure you want to delete this photo?')) return;
+    
+    fetch(`${API_URL}/api/gallery/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        fetchAdminGallery();
+      } else {
+        alert(data.error || 'Failed to delete photo');
+      }
+    })
+    .catch(err => console.error(err));
+  }
+
 });
