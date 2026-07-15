@@ -52,7 +52,10 @@ const adminUserSchema = new mongoose.Schema({
   role: { type: String, required: true, enum: ADMIN_ROLES },
   createdAt: { type: Date, default: Date.now },
   resetPasswordToken: String,
-  resetPasswordExpires: Date
+  resetPasswordExpires: Date,
+  profileUpdateOtp: String,
+  profileUpdateOtpExpires: Date,
+  photo: String
 }, { collection: 'users' });
 
 const volunteerSchema = new mongoose.Schema({
@@ -360,7 +363,7 @@ app.post('/api/verify-member-payment', upload.fields([
   }
 });
 
-app.post('/api/auth/signup', async (req, res) => {
+app.post('/api/auth/signup', upload.single('photo'), async (req, res) => {
   try {
     if (!AdminUser) {
       return res.status(503).json({ error: 'Database not ready. Please try again.' });
@@ -391,17 +394,19 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const photo = req.file ? req.file.path : '';
     const newUser = new AdminUser({
       fullName: fullName.trim(),
       phone: phone.trim(),
       email: email.toLowerCase().trim(),
       password: hashedPassword,
-      role
+      role,
+      photo
     });
     await newUser.save();
 
     const token = jwt.sign(
-      { id: newUser._id, email: newUser.email, fullName: newUser.fullName, role: newUser.role },
+      { id: newUser._id, email: newUser.email, fullName: newUser.fullName, role: newUser.role, photo: newUser.photo },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -409,7 +414,7 @@ app.post('/api/auth/signup', async (req, res) => {
     res.status(201).json({
       success: true,
       token,
-      user: { fullName: newUser.fullName, email: newUser.email, role: newUser.role }
+      user: { fullName: newUser.fullName, email: newUser.email, role: newUser.role, photo: newUser.photo }
     });
   } catch (error) {
     console.error('Signup error:', error);
@@ -440,7 +445,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, email: user.email, fullName: user.fullName, role: user.role },
+      { id: user._id, email: user.email, fullName: user.fullName, role: user.role, photo: user.photo },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -448,7 +453,7 @@ app.post('/api/auth/login', async (req, res) => {
     res.json({
       success: true,
       token,
-      user: { fullName: user.fullName, email: user.email, role: user.role }
+      user: { fullName: user.fullName, email: user.email, role: user.role, photo: user.photo }
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -1258,6 +1263,80 @@ app.patch('/api/gallery/:id/featured', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error updating photo:', error);
     res.status(500).json({ error: 'Failed to update photo' });
+  }
+});
+
+// Send OTP for Profile Edit (Mobile Number Change)
+app.post('/api/admin/profile/send-otp', authMiddleware, async (req, res) => {
+  try {
+    const user = await AdminUser.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+    
+    user.profileUpdateOtp = otpHash;
+    user.profileUpdateOtpExpires = Date.now() + 10 * 60 * 1000; // 10 mins
+    await user.save();
+
+    await transporter.sendMail({
+      from: `"Udyam Foundation" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: `OTP for Mobile Number Update`,
+      text: `Your OTP for updating your mobile number is: ${otp}. It is valid for 10 minutes.`,
+      html: `<p>Your OTP for updating your mobile number is: <strong>${otp}</strong>. It is valid for 10 minutes.</p>`
+    });
+
+    res.json({ success: true, message: 'OTP sent successfully' });
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+    res.status(500).json({ error: 'Failed to send OTP' });
+  }
+});
+
+// Update Profile
+app.put('/api/admin/profile', authMiddleware, upload.single('photo'), async (req, res) => {
+  try {
+    const { fullName, phone, otp } = req.body;
+    const user = await AdminUser.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    if (!fullName || !phone) return res.status(400).json({ error: 'Name and phone are required' });
+
+    // Check if phone changed
+    if (user.phone !== phone) {
+      if (!otp) return res.status(400).json({ error: 'OTP is required to change mobile number' });
+      if (!user.profileUpdateOtp || !user.profileUpdateOtpExpires || user.profileUpdateOtpExpires < Date.now()) {
+        return res.status(400).json({ error: 'OTP expired or not requested' });
+      }
+      
+      const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+      if (otpHash !== user.profileUpdateOtp) {
+        return res.status(400).json({ error: 'Invalid OTP' });
+      }
+      // OTP matched, clear it
+      user.profileUpdateOtp = undefined;
+      user.profileUpdateOtpExpires = undefined;
+    }
+
+    user.fullName = fullName;
+    user.phone = phone;
+    if (req.file) {
+      user.photo = req.file.path;
+    }
+    await user.save();
+
+    // Generate new token to reflect updated name/phone in payload if necessary
+    const token = jwt.sign(
+      { id: user._id, email: user.email, fullName: user.fullName, role: user.role, photo: user.photo },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({ success: true, message: 'Profile updated successfully', user: { fullName: user.fullName, email: user.email, role: user.role, phone: user.phone, photo: user.photo }, token });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
   }
 });
 

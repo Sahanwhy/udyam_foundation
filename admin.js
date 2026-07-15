@@ -15,7 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (user) {
     userNameEl.textContent = user.fullName || 'Admin';
     userRoleEl.textContent = user.role || '';
-    userAvatarEl.textContent = (user.fullName || 'A').charAt(0).toUpperCase();
+    if (user.photo) {
+      userAvatarEl.innerHTML = `<img src="${user.photo}" alt="Avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+      userAvatarEl.style.backgroundColor = 'transparent';
+    } else {
+      userAvatarEl.innerHTML = (user.fullName || 'A').charAt(0).toUpperCase();
+      userAvatarEl.style.backgroundColor = 'var(--accent)';
+    }
 
     // Dynamic Greeting
     const hour = new Date().getHours();
@@ -938,6 +944,158 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     })
     .catch(err => console.error(err));
+  }
+  // --- Edit Profile Logic ---
+  const editProfileModal = document.getElementById('editProfileModal');
+  const openEditProfileBtn = document.getElementById('openEditProfileBtn');
+  const cancelProfileBtn = document.getElementById('cancelProfileBtn');
+  const saveProfileBtn = document.getElementById('saveProfileBtn');
+  const editProfileName = document.getElementById('editProfileName');
+  const editProfilePhone = document.getElementById('editProfilePhone');
+  const otpSection = document.getElementById('otpSection');
+  const sendOtpBtn = document.getElementById('sendOtpBtn');
+  const otpInputGroup = document.getElementById('otpInputGroup');
+  const editProfileOtp = document.getElementById('editProfileOtp');
+  
+  let originalPhone = '';
+
+  if (openEditProfileBtn) {
+    openEditProfileBtn.addEventListener('click', () => {
+      const currentUser = getAuthUser();
+      if (currentUser) {
+        editProfileName.value = currentUser.fullName || '';
+        // If current user is loaded but phone isn't in token payload, try to handle it.
+        // But we added phone in the login response (if it's not there, it might be empty).
+        // Since we didn't add phone to login token initially, we might not have it in getAuthUser() right away unless they relogin.
+        editProfilePhone.value = currentUser.phone || '';
+        originalPhone = currentUser.phone || '';
+      }
+      otpSection.style.display = 'none';
+      otpInputGroup.style.display = 'none';
+      editProfileOtp.value = '';
+      if (editProfileModal) editProfileModal.style.display = 'flex';
+    });
+  }
+
+  if (cancelProfileBtn) {
+    cancelProfileBtn.addEventListener('click', () => {
+      if (editProfileModal) editProfileModal.style.display = 'none';
+    });
+  }
+
+  if (editProfilePhone) {
+    editProfilePhone.addEventListener('input', () => {
+      // If originalPhone is missing because it wasn't in the initial token payload, 
+      // let's assume if they change anything, they need an OTP.
+      if (editProfilePhone.value.trim() !== originalPhone) {
+        otpSection.style.display = 'block';
+      } else {
+        otpSection.style.display = 'none';
+        otpInputGroup.style.display = 'none';
+        editProfileOtp.value = '';
+      }
+    });
+  }
+
+  if (sendOtpBtn) {
+    sendOtpBtn.addEventListener('click', async () => {
+      try {
+        sendOtpBtn.textContent = 'Sending...';
+        sendOtpBtn.disabled = true;
+        
+        const response = await fetch(`${API_URL}/api/admin/profile/send-otp`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          alert('OTP sent to your email.');
+          sendOtpBtn.textContent = 'OTP Sent';
+          otpInputGroup.style.display = 'block';
+        } else {
+          alert(data.error || 'Failed to send OTP');
+          sendOtpBtn.textContent = 'Send OTP to Gmail';
+          sendOtpBtn.disabled = false;
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error sending OTP');
+        sendOtpBtn.textContent = 'Send OTP to Gmail';
+        sendOtpBtn.disabled = false;
+      }
+    });
+  }
+
+  if (saveProfileBtn) {
+    saveProfileBtn.addEventListener('click', async () => {
+      const fullName = editProfileName.value.trim();
+      const phone = editProfilePhone.value.trim();
+      const otp = editProfileOtp.value.trim();
+
+      if (!fullName || !phone) {
+        alert('Name and Mobile Number are required.');
+        return;
+      }
+
+      if (phone !== originalPhone && !otp) {
+        alert('OTP is required to change mobile number.');
+        return;
+      }
+
+      saveProfileBtn.textContent = 'Saving...';
+      saveProfileBtn.disabled = true;
+
+      try {
+        const formData = new FormData();
+        formData.append('fullName', fullName);
+        formData.append('phone', phone);
+        if (otp) formData.append('otp', otp);
+        
+        const photoFile = document.getElementById('editProfilePhoto').files[0];
+        if (photoFile) {
+          formData.append('photo', photoFile);
+        }
+
+        const response = await fetch(`${API_URL}/api/admin/profile`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${getAuthToken()}`
+          },
+          body: formData
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          alert('Profile updated successfully!');
+          if (data.token) localStorage.setItem('token', data.token);
+          if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
+          
+          userNameEl.textContent = data.user.fullName || 'Admin';
+          if (data.user.photo) {
+            userAvatarEl.innerHTML = `<img src="${data.user.photo}" alt="Avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+            userAvatarEl.style.backgroundColor = 'transparent';
+          } else {
+            userAvatarEl.innerHTML = (data.user.fullName || 'A').charAt(0).toUpperCase();
+            userAvatarEl.style.backgroundColor = 'var(--accent)';
+          }
+          if (document.getElementById('dynamicGreeting')) {
+            document.getElementById('dynamicGreeting').textContent = `Welcome back, ${data.user.fullName.split(' ')[0]}!`;
+          }
+          originalPhone = data.user.phone || '';
+
+          if (editProfileModal) editProfileModal.style.display = 'none';
+        } else {
+          alert(data.error || 'Failed to update profile');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error updating profile');
+      } finally {
+        saveProfileBtn.textContent = 'Save Changes';
+        saveProfileBtn.disabled = false;
+      }
+    });
   }
 
 });

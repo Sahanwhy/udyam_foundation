@@ -77,6 +77,11 @@
         </div>
 
         <div class="form-group">
+          <label for="photo">Passport Size Photo (Optional)</label>
+          <input type="file" id="photo" name="photo" accept="image/*">
+        </div>
+
+        <div class="form-group">
           <label for="password">Password</label>
           <div class="password-wrapper">
             <input type="password" id="password" name="password" placeholder="Create a password" required minlength="6" autocomplete="new-password">
@@ -142,16 +147,26 @@
       submitBtn.textContent = 'Creating account...';
 
       try {
-        const data = await apiRequest('/api/auth/signup', {
+        const formData = new FormData();
+        formData.append('fullName', document.getElementById('fullName').value.trim());
+        formData.append('phone', document.getElementById('phone').value.trim());
+        formData.append('email', document.getElementById('email').value.trim());
+        formData.append('password', passwordInput.value);
+        formData.append('role', role.value);
+        const photoFile = document.getElementById('photo').files[0];
+        if (photoFile) {
+          formData.append('photo', photoFile);
+        }
+
+        const response = await fetch(`${API_BASE}/api/auth/signup`, {
           method: 'POST',
-          body: JSON.stringify({
-            fullName: document.getElementById('fullName').value.trim(),
-            phone: document.getElementById('phone').value.trim(),
-            email: document.getElementById('email').value.trim(),
-            password: passwordInput.value,
-            role: role.value
-          })
+          body: formData
         });
+        
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Something went wrong');
+        }
 
         setAuthSession(data.token, data.user);
         window.location.href = 'admin.html';
