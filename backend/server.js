@@ -102,6 +102,8 @@ const memberSchema = new mongoose.Schema({
   pin: String,
   validity: String,
   amount: Number,
+  addressProofs: [String],
+  photo: String,
   paymentId: String,
   orderId: String,
   status: { type: String, enum: ['pending', 'accepted', 'rejected', 'forwarded', 'verified', 'issue_reported'], default: 'pending' },
@@ -306,6 +308,54 @@ app.post('/api/verify-payment', async (req, res) => {
     }
   } else {
     // Signature verification failed
+    return res.status(400).json({ error: 'Invalid signature sent!' });
+  }
+});
+
+app.post('/api/verify-member-payment', upload.fields([
+  { name: 'addressProofs', maxCount: 5 },
+  { name: 'photo', maxCount: 1 }
+]), async (req, res) => {
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, memberDetailsStr } = req.body;
+  
+  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  const sign = razorpay_order_id + '|' + razorpay_payment_id;
+  const expectedSign = crypto
+    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+    .update(sign.toString())
+    .digest('hex');
+
+  if (razorpay_signature === expectedSign) {
+    try {
+      if (!Member) return res.status(503).json({ error: 'Database not ready' });
+      
+      let memberDetails = {};
+      try {
+        if (memberDetailsStr) memberDetails = JSON.parse(memberDetailsStr);
+      } catch(e) {
+         console.error('Error parsing member details');
+      }
+
+      const addressProofs = req.files && req.files['addressProofs'] ? req.files['addressProofs'].map(f => f.path) : [];
+      const photo = req.files && req.files['photo'] ? req.files['photo'][0].path : '';
+
+      const newMember = new Member({
+        ...memberDetails,
+        addressProofs,
+        photo,
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+      });
+      await newMember.save();
+      return res.json({ success: true, message: 'Payment verified successfully' });
+    } catch (err) {
+      console.error('Error saving payment details:', err);
+      return res.status(500).json({ error: 'Payment verified but failed to save details' });
+    }
+  } else {
     return res.status(400).json({ error: 'Invalid signature sent!' });
   }
 });

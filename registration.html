@@ -158,6 +158,17 @@
             </div>
 
             <div class="form-group">
+              <label for="memAddressProof">Address Proof <span class="req">*</span></label>
+              <small class="field-hint" style="display:block; margin-bottom:0.5rem; color:#666;">You can select multiple photos</small>
+              <input type="file" id="memAddressProof" accept="image/*,.pdf" multiple required />
+            </div>
+
+            <div class="form-group">
+              <label for="memPhoto">Colour Photo (Passport Size) <span class="req">*</span></label>
+              <input type="file" id="memPhoto" accept="image/*" required />
+            </div>
+
+            <div class="form-group">
               <label for="memValidity">Member Validity & Fees <span class="req">*</span></label>
               <select id="memValidity" required style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-family: inherit;">
                 <option value="">Select Validity</option>
@@ -452,15 +463,23 @@
             handler: async function (response) {
               try {
                 // 3. Verify Payment
-                const verifyRes = await fetch('http://localhost:3000/api/verify-payment', {
+                const formData = new FormData();
+                formData.append('razorpay_order_id', response.razorpay_order_id);
+                formData.append('razorpay_payment_id', response.razorpay_payment_id);
+                formData.append('razorpay_signature', response.razorpay_signature);
+                formData.append('memberDetailsStr', JSON.stringify(memberDetails));
+
+                const addressProofs = document.getElementById('memAddressProof').files;
+                for (let i = 0; i < addressProofs.length; i++) {
+                  formData.append('addressProofs', addressProofs[i]);
+                }
+
+                const photo = document.getElementById('memPhoto').files[0];
+                if (photo) formData.append('photo', photo);
+
+                const verifyRes = await fetch('http://localhost:3000/api/verify-member-payment', {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_signature: response.razorpay_signature,
-                    memberDetails: memberDetails
-                  })
+                  body: formData
                 });
                 const verifyData = await verifyRes.json();
                 if (verifyData.success) {
