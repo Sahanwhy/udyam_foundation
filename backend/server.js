@@ -16,6 +16,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Simple health check route
+app.get('/', (req, res) => {
+  res.json({ status: 'active', message: 'Udyam Foundation Backend is running!' });
+});
+
 // MongoDB Connection
 const JWT_SECRET = process.env.JWT_SECRET || 'udyam-admin-secret-change-in-production';
 
