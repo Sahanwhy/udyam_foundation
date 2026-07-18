@@ -739,7 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
       confirmIssueBtn.disabled = true;
 
       try {
-        const response = await fetch(`${API_URL}/api/admin/registrations/${currentIssueTarget.type}/${currentIssueTarget.id}/report-issue`, {
+        const response = await fetch(`${API_BASE}/api/admin/registrations/${currentIssueTarget.type}/${currentIssueTarget.id}/report-issue`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -834,7 +834,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   window.fetchAdminGallery = function() {
-    fetch(`${API_URL}/api/gallery`)
+    fetch(`${API_BASE}/api/gallery`)
       .then(res => res.json())
       .then(photos => {
         const grid = document.getElementById('adminGalleryGrid');
@@ -885,7 +885,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const progress = document.getElementById('uploadProgress');
       progress.style.display = 'block';
       
-      fetch(`${API_URL}/api/gallery/upload`, {
+      fetch(`${API_BASE}/api/gallery/upload`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${getAuthToken()}` },
         body: formData
@@ -910,7 +910,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.toggleFeatured = function(id, featured) {
-    fetch(`${API_URL}/api/gallery/${id}/featured`, {
+    fetch(`${API_BASE}/api/gallery/${id}/featured`, {
       method: 'PATCH',
       headers: { 
         'Content-Type': 'application/json',
@@ -931,7 +931,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.deleteGalleryPhoto = function(id) {
     if (!confirm('Are you sure you want to delete this photo?')) return;
     
-    fetch(`${API_URL}/api/gallery/${id}`, {
+    fetch(`${API_BASE}/api/gallery/${id}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` }
     })
@@ -951,6 +951,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const cancelProfileBtn = document.getElementById('cancelProfileBtn');
   const saveProfileBtn = document.getElementById('saveProfileBtn');
   const editProfileName = document.getElementById('editProfileName');
+  const editProfileEmail = document.getElementById('editProfileEmail');
   const editProfilePhone = document.getElementById('editProfilePhone');
   const otpSection = document.getElementById('otpSection');
   const sendOtpBtn = document.getElementById('sendOtpBtn');
@@ -960,13 +961,11 @@ document.addEventListener('DOMContentLoaded', () => {
   let originalPhone = '';
 
   if (openEditProfileBtn) {
-    openEditProfileBtn.addEventListener('click', () => {
+    openEditProfileBtn.addEventListener('click', async () => {
       const currentUser = getAuthUser();
       if (currentUser) {
         editProfileName.value = currentUser.fullName || '';
-        // If current user is loaded but phone isn't in token payload, try to handle it.
-        // But we added phone in the login response (if it's not there, it might be empty).
-        // Since we didn't add phone to login token initially, we might not have it in getAuthUser() right away unless they relogin.
+        if (editProfileEmail) editProfileEmail.value = currentUser.email || '';
         editProfilePhone.value = currentUser.phone || '';
         originalPhone = currentUser.phone || '';
       }
@@ -974,6 +973,27 @@ document.addEventListener('DOMContentLoaded', () => {
       otpInputGroup.style.display = 'none';
       editProfileOtp.value = '';
       if (editProfileModal) editProfileModal.style.display = 'flex';
+
+      try {
+        const response = await fetch(`${API_BASE}/api/admin/profile`, {
+          headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+        });
+        const data = await response.json();
+        if (data.success && data.user) {
+          editProfileName.value = data.user.fullName || '';
+          if (editProfileEmail) editProfileEmail.value = data.user.email || '';
+          editProfilePhone.value = data.user.phone || '';
+          originalPhone = data.user.phone || '';
+          
+          const storedUser = getAuthUser();
+          if (storedUser) {
+            storedUser.phone = data.user.phone;
+            localStorage.setItem('udyam_admin_user', JSON.stringify(storedUser));
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch latest profile info', err);
+      }
     });
   }
 
@@ -1003,7 +1023,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sendOtpBtn.textContent = 'Sending...';
         sendOtpBtn.disabled = true;
         
-        const response = await fetch(`${API_URL}/api/admin/profile/send-otp`, {
+        const response = await fetch(`${API_BASE}/api/admin/profile/send-otp`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${getAuthToken()}` }
         });
@@ -1015,13 +1035,13 @@ document.addEventListener('DOMContentLoaded', () => {
           otpInputGroup.style.display = 'block';
         } else {
           alert(data.error || 'Failed to send OTP');
-          sendOtpBtn.textContent = 'Send OTP to Gmail';
+          sendOtpBtn.textContent = 'Send OTP to Email';
           sendOtpBtn.disabled = false;
         }
       } catch (err) {
         console.error(err);
         alert('Error sending OTP');
-        sendOtpBtn.textContent = 'Send OTP to Gmail';
+        sendOtpBtn.textContent = 'Send OTP to Email';
         sendOtpBtn.disabled = false;
       }
     });
@@ -1057,7 +1077,7 @@ document.addEventListener('DOMContentLoaded', () => {
           formData.append('photo', photoFile);
         }
 
-        const response = await fetch(`${API_URL}/api/admin/profile`, {
+        const response = await fetch(`${API_BASE}/api/admin/profile`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${getAuthToken()}`

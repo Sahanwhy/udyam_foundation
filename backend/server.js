@@ -1280,9 +1280,10 @@ app.post('/api/admin/profile/send-otp', authMiddleware, async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
     
-    user.profileUpdateOtp = otpHash;
-    user.profileUpdateOtpExpires = Date.now() + 10 * 60 * 1000; // 10 mins
-    await user.save();
+    await AdminUser.updateOne(
+      { _id: user._id },
+      { $set: { profileUpdateOtp: otpHash, profileUpdateOtpExpires: Date.now() + 10 * 60 * 1000 } }
+    );
 
     await transporter.sendMail({
       from: `"Udyam Foundation" <${process.env.EMAIL_USER}>`,
@@ -1296,6 +1297,18 @@ app.post('/api/admin/profile/send-otp', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error sending OTP:', error);
     res.status(500).json({ error: 'Failed to send OTP' });
+  }
+});
+
+// Get Profile
+app.get('/api/admin/profile', authMiddleware, async (req, res) => {
+  try {
+    const user = await AdminUser.findById(req.user.id).select('-password');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ success: true, user });
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    res.status(500).json({ error: 'Failed to fetch profile' });
   }
 });
 
