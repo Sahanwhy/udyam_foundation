@@ -3,7 +3,7 @@
 //  Change RENDER_URL below after deploying to Render
 // ═══════════════════════════════════════════════════
 
-const RENDER_URL = 'https://udyam-foundation-backend.onrender.com';
+const RENDER_URL = 'https://udyam-foundation.onrender.com';
 
 // Automatically use localhost when running locally (XAMPP / Live Server)
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
