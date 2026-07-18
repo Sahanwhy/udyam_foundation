@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://sahanwhy.github.io/udyam_foundation/sitemap.xml
+Sitemap: https://udyamsdf.org/sitemap.xml
