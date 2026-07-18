@@ -13,8 +13,32 @@ const nodemailer = require('nodemailer');
 const PDFDocument = require('pdfkit');
 
 const app = express();
-app.use(cors());
+
+// ── CORS: allow GitHub Pages frontend + local dev ──
+const allowedOrigins = [
+  'https://sahanwhy.github.io',
+  'https://udyamsdf.org',
+  'https://www.udyamsdf.org',
+  'http://localhost',
+  'http://127.0.0.1',
+  'http://localhost:5500',  // Live Server
+  'null'                    // file:// protocol during local dev
+];
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like curl, Postman, mobile apps)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.some(o => origin.startsWith(o))) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 app.use(express.json());
+
 
 // Simple health check route
 app.get('/', (req, res) => {

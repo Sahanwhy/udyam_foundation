@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,600&family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <script src="api-config.js"></script>
   <style>
     .registration-type-select {
       display: flex;
@@ -444,7 +445,7 @@
 
         try {
           // 1. Create Order
-          const orderRes = await fetch('http://localhost:3000/api/create-order', {
+          const orderRes = await fetch(`${API_BASE}/api/create-order`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ amount: amount * 100 }) // Razorpay expects paise
@@ -477,7 +478,7 @@
                 const photo = document.getElementById('memPhoto').files[0];
                 if (photo) formData.append('photo', photo);
 
-                const verifyRes = await fetch('http://localhost:3000/api/verify-member-payment', {
+                const verifyRes = await fetch(`${API_BASE}/api/verify-member-payment`, {
                   method: 'POST',
                   body: formData
                 });
@@ -548,7 +549,7 @@
         if (photo) formData.append('photo', photo);
 
         try {
-          const res = await fetch('http://localhost:3000/api/register/volunteer', {
+          const res = await fetch(`${API_BASE}/api/register/volunteer`, {
             method: 'POST',
             body: formData
           });
@@ -600,7 +601,7 @@
         if (photo) formData.append('photo', photo);
 
         try {
-          const res = await fetch('http://localhost:3000/api/register/employee', {
+          const res = await fetch(`${API_BASE}/api/register/employee`, {
             method: 'POST',
             body: formData
           });

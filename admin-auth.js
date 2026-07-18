@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:3000';
+// API_BASE is loaded from api-config.js (auto-switches localhost ↔ Render)
 
 const AUTH_TOKEN_KEY = 'udyam_admin_token';
 const AUTH_USER_KEY = 'udyam_admin_user';

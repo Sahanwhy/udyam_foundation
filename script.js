@@ -386,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const amountInPaise = amount.value * 100;
 
-      fetch('http://localhost:3000/api/create-order', {
+      fetch(`${API_BASE}/api/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: amountInPaise })
@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             
             // Verify payment
-            fetch('http://localhost:3000/api/verify-payment', {
+            fetch(`${API_BASE}/api/verify-payment`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -504,7 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ─── GALLERY & LIGHTBOX ──────────────────────────────────────────
   
-  const API_URL = 'http://localhost:3000'; // Make sure this matches your backend URL
+  const API_URL = API_BASE; // Loaded from api-config.js — auto-switches localhost ↔ Render
   const homepageGalleryGrid = document.getElementById('homepageGalleryGrid');
   const fullGalleryGrid = document.getElementById('fullGalleryGrid');
   const categoryFilters = document.getElementById('categoryFilters');

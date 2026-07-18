@@ -354,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const token = getAuthToken(); // Use the global function from admin-auth.js
-      const response = await fetch(`http://localhost:3000/api/admin/registrations/${type}/${id}/forward`, {
+      const response = await fetch(`${API_BASE}/api/admin/registrations/${type}/${id}/forward`, {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -677,7 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const token = getAuthToken();
-        const response = await fetch(`http://localhost:3000/api/admin/registrations/${currentVerifyForwardTarget.type}/${currentVerifyForwardTarget.id}/verify_and_forward`, {
+        const response = await fetch(`${API_BASE}/api/admin/registrations/${currentVerifyForwardTarget.type}/${currentVerifyForwardTarget.id}/verify_and_forward`, {
           method: 'PATCH',
           headers: { 'Authorization': `Bearer ${token}` },
           body: formData
