@@ -745,7 +745,7 @@
           <h2 id="dynamicGreeting">Welcome back, Admin!</h2>
           <p>Here's what's happening with Udyam Foundation today.</p>
           <div class="quick-actions">
-            <button class="btn-glass" onclick="alert('Exporting Donations Report...')">
+            <button class="btn-glass" id="openExportReportBtn">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
               Export Report
             </button>
@@ -1064,9 +1064,17 @@
       
       <!-- Role Select -->
       <div style="margin-bottom: 1.25rem;">
-        <label for="forwardRoleSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Forward To</label>
+        <label for="forwardRoleSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Forward To Role</label>
         <select id="forwardRoleSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; color: var(--text-main); background: #FAFAFA; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
           <!-- Options will be populated dynamically -->
+        </select>
+      </div>
+
+      <!-- Specific Person Select -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="forwardUserSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Select Person / Admin <span style="font-weight: 400; text-transform: none; color: #9CA3AF;">(optional)</span></label>
+        <select id="forwardUserSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; color: var(--text-main); background: #FAFAFA; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          <!-- Options will be populated dynamically based on selected role -->
         </select>
       </div>
 
@@ -1243,10 +1251,18 @@
       </div>
       <p style="margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.85rem; line-height: 1.5;">You are about to verify this application. Select who should receive it next. Choose 'Secretary' or 'President' to return it for final approval.</p>
       
-      <div style="margin-bottom: 1.5rem;">
-        <label for="verifyForwardRoleSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Forward To</label>
+      <div style="margin-bottom: 1.25rem;">
+        <label for="verifyForwardRoleSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Forward To Role</label>
         <select id="verifyForwardRoleSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; color: var(--text-main); background: #FAFAFA; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
           <!-- Options will be populated dynamically -->
+        </select>
+      </div>
+
+      <!-- Specific Person Select -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="verifyForwardUserSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Select Person / Admin <span style="font-weight: 400; text-transform: none; color: #9CA3AF;">(optional)</span></label>
+        <select id="verifyForwardUserSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; color: var(--text-main); background: #FAFAFA; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          <!-- Options will be populated dynamically based on selected role -->
         </select>
       </div>
 
@@ -1306,5 +1322,56 @@
       </div>
     </div>
   </div>
+  <!-- ══════════════════════════════════════════
+       EXPORT REPORT MODAL
+  ═══════════════════════════════════════════ -->
+  <div id="exportReportModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:300; align-items:center; justify-content:center; backdrop-filter:blur(4px); padding:1rem;">
+    <div id="exportReportPanel" style="background:white; border-radius:16px; width:100%; max-width:680px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 60px rgba(0,0,0,0.2); overflow:hidden;">
+
+      <!-- Modal Header -->
+      <div style="padding:1.5rem 1.5rem 1rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg, var(--primary), var(--accent)); color:white; flex-shrink:0;">
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <div style="width:38px; height:38px; border-radius:10px; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          </div>
+          <div>
+            <h3 style="margin:0; font-size:1.1rem; font-weight:700;">Export Donation Receipt</h3>
+            <p style="margin:0; font-size:0.8rem; color:rgba(255,255,255,0.8);">Search and select a donation to download its PDF receipt</p>
+          </div>
+        </div>
+        <button id="closeExportReportModal" style="width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.15); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Search + Filter Bar -->
+      <div style="padding:1rem 1.5rem; border-bottom:1px solid var(--border); flex-shrink:0; display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; background:#FAFAFA;">
+        <div style="flex:1; min-width:180px; position:relative;">
+          <svg style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); pointer-events:none;" xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="exportSearchInput" type="text" placeholder="Search by name, email, payment ID…" style="width:100%; padding:0.6rem 0.75rem 0.6rem 2.25rem; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.875rem; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <select id="exportFilterSelect" style="padding:0.6rem 1rem; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.875rem; background:white; color:var(--text-main); outline:none; cursor:pointer;">
+          <option value="all">All Donations</option>
+          <option value="80g">80G Only</option>
+          <option value="non80g">Non-80G Only</option>
+        </select>
+        <div style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap;" id="exportCountLabel">0 records</div>
+      </div>
+
+      <!-- Donations List -->
+      <div id="exportDonationsList" style="overflow-y:auto; flex:1; padding:0.75rem 1rem;">
+        <div style="text-align:center; padding:3rem; color:var(--text-muted);">
+          <div class="spinner" style="margin:0 auto 1rem;"></div>
+          Loading donations…
+        </div>
+      </div>
+
+      <!-- Footer hint -->
+      <div style="padding:0.75rem 1.5rem; border-top:1px solid var(--border); background:#FAFAFA; font-size:0.78rem; color:var(--text-muted); flex-shrink:0; text-align:center;">
+        Click <strong>Download PDF</strong> next to any donation to get its receipt
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

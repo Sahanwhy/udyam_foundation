@@ -97,6 +97,9 @@ const volunteerSchema = new mongoose.Schema({
   photo: String,
   status: { type: String, enum: ['pending', 'accepted', 'rejected', 'forwarded', 'verified', 'issue_reported'], default: 'pending' },
   assignedToRole: { type: String, default: 'Secretary' },
+  assignedToAdminId: { type: String, default: null },
+  assignedToAdminName: { type: String, default: null },
+  assignedToAdminEmail: { type: String, default: null },
   forwardAttachments: [mongoose.Schema.Types.Mixed],
   verifiedBy: [{ name: String, role: String, date: { type: Date, default: Date.now } }],
   issueText: String,
@@ -116,6 +119,9 @@ const employeeSchema = new mongoose.Schema({
   photo: String,
   status: { type: String, enum: ['pending', 'accepted', 'rejected', 'forwarded', 'verified', 'issue_reported'], default: 'pending' },
   assignedToRole: { type: String, default: 'Secretary' },
+  assignedToAdminId: { type: String, default: null },
+  assignedToAdminName: { type: String, default: null },
+  assignedToAdminEmail: { type: String, default: null },
   forwardAttachments: [mongoose.Schema.Types.Mixed],
   verifiedBy: [{ name: String, role: String, date: { type: Date, default: Date.now } }],
   issueText: String,
@@ -140,6 +146,9 @@ const memberSchema = new mongoose.Schema({
   orderId: String,
   status: { type: String, enum: ['pending', 'accepted', 'rejected', 'forwarded', 'verified', 'issue_reported'], default: 'pending' },
   assignedToRole: { type: String, default: 'Secretary' },
+  assignedToAdminId: { type: String, default: null },
+  assignedToAdminName: { type: String, default: null },
+  assignedToAdminEmail: { type: String, default: null },
   forwardAttachments: [mongoose.Schema.Types.Mixed],
   verifiedBy: [{ name: String, role: String, date: { type: Date, default: Date.now } }],
   issueText: String,
@@ -992,6 +1001,17 @@ app.get('/api/admin/registrations', authMiddleware, async (req, res) => {
   }
 });
 
+app.get('/api/admin/users', authMiddleware, async (req, res) => {
+  try {
+    if (!AdminUser) return res.status(503).json({ error: 'Database not ready' });
+    const users = await AdminUser.find({}, 'fullName email phone role photo createdAt').lean();
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching admin users:', error);
+    res.status(500).json({ error: 'Failed to fetch admin users' });
+  }
+});
+
 app.patch('/api/admin/registrations/:type/:id/status', authMiddleware, async (req, res) => {
   try {
     const { type, id } = req.params;
@@ -1030,7 +1050,7 @@ app.patch(
   async (req, res) => {
     try {
       const { type, id } = req.params;
-      const { newRole } = req.body;
+      const { newRole, assignedToAdminId, assignedToAdminName, assignedToAdminEmail } = req.body;
 
       if (!ADMIN_ROLES.includes(newRole)) {
         return res.status(400).json({ error: 'Invalid role for forwarding' });
@@ -1039,14 +1059,14 @@ app.patch(
       // Collect Cloudinary URLs for any uploaded attachments
       const attachmentUrls = req.files ? req.files.map(f => ({ url: f.path, uploadedBy: req.user.fullName || 'Admin' })) : [];
 
-      const updateFields = {
-        assignedToRole: newRole,
-        status: 'forwarded',
-        ...(attachmentUrls.length > 0 && { $push: { forwardAttachments: { $each: attachmentUrls } } }),
-      };
-
       // Separate $set and $push to avoid conflict
-      const setFields = { assignedToRole: newRole, status: 'forwarded' };
+      const setFields = {
+        assignedToRole: newRole,
+        assignedToAdminId: assignedToAdminId || null,
+        assignedToAdminName: assignedToAdminName || null,
+        assignedToAdminEmail: assignedToAdminEmail || null,
+        status: 'forwarded'
+      };
       const pushFields = attachmentUrls.length > 0 ? { forwardAttachments: { $each: attachmentUrls } } : null;
 
       let updatedDoc;
@@ -1124,7 +1144,7 @@ app.patch(
   async (req, res) => {
     try {
       const { type, id } = req.params;
-      const { newRole } = req.body;
+      const { newRole, assignedToAdminId, assignedToAdminName, assignedToAdminEmail } = req.body;
       const userName = req.user.fullName || 'Unknown Member';
       const userRole = req.user.role || 'Member';
 
@@ -1150,7 +1170,13 @@ app.patch(
       }
 
       const updateData = {
-        $set: { status, assignedToRole: newRole },
+        $set: {
+          status,
+          assignedToRole: newRole,
+          assignedToAdminId: assignedToAdminId || null,
+          assignedToAdminName: assignedToAdminName || null,
+          assignedToAdminEmail: assignedToAdminEmail || null
+        },
         $push: pushFields
       };
 

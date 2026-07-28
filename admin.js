@@ -157,13 +157,46 @@ document.addEventListener('DOMContentLoaded', () => {
   // Modal elements
   const forwardModal = document.getElementById('forwardModal');
   const forwardRoleSelect = document.getElementById('forwardRoleSelect');
+  const forwardUserSelect = document.getElementById('forwardUserSelect');
   const cancelForwardBtn = document.getElementById('cancelForwardBtn');
   const confirmForwardBtn = document.getElementById('confirmForwardBtn');
 
   let allRegistrations = [];
+  let allAdminUsers = [];
   let currentRegFilter = 'pending';
   let currentSort = 'latest';
   let currentForwardTarget = null; // { type, id }
+
+  const fetchAdminUsers = async () => {
+    try {
+      const users = await apiRequest('/api/admin/users');
+      if (Array.isArray(users)) {
+        allAdminUsers = users;
+      }
+    } catch (err) {
+      console.error('Failed to fetch admin users:', err);
+    }
+  };
+
+  const populateUserSelect = (selectedRole, selectEl) => {
+    if (!selectEl) return;
+    const matchingAdmins = allAdminUsers.filter(u => u.role === selectedRole);
+
+    if (matchingAdmins.length === 0) {
+      selectEl.innerHTML = `<option value="">Any admin in role (No registered admins)</option>`;
+    } else {
+      let optionsHtml = `<option value="">Any admin in role (${matchingAdmins.length} available)</option>`;
+      optionsHtml += matchingAdmins.map(u => {
+        const isCurrent = user && (u._id === user._id || u.email === user.email);
+        const label = `${u.fullName} (${u.email})${isCurrent ? ' - You' : ''}`;
+        return `<option value="${u._id}">${label}</option>`;
+      }).join('');
+      selectEl.innerHTML = optionsHtml;
+      if (matchingAdmins.length === 1) {
+        selectEl.value = matchingAdmins[0]._id;
+      }
+    }
+  };
   
   const regSortSelect = document.getElementById('regSortSelect');
   if (regSortSelect) {
@@ -262,7 +295,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     } else {
-      const forwardedCount = allRegistrations.filter(r => r.status === 'forwarded' && r.assignedToRole === user.role).length;
+      const forwardedCount = allRegistrations.filter(r => {
+        if (r.status !== 'forwarded') return false;
+        if (r.assignedToAdminId) return r.assignedToAdminId === user._id;
+        if (r.assignedToAdminEmail) return r.assignedToAdminEmail === user.email;
+        return r.assignedToRole === user.role;
+      }).length;
       if (forwardedCount > 0) {
         const forwardedNav = document.getElementById('nav-forwarded');
         if (forwardedNav) {
@@ -279,6 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const fetchRegistrations = async () => {
     try {
       registrationsContainer.innerHTML = '<div style="padding: 2rem; text-align: center;"><div class="spinner"></div> Loading registrations...</div>';
+      await fetchAdminUsers();
       const data = await apiRequest('/api/admin/registrations');
       allRegistrations = data;
       renderRegistrations();
@@ -316,13 +355,23 @@ document.addEventListener('DOMContentLoaded', () => {
     currentForwardTarget = { type, id };
 
     // Populate select, exclude current user's role
-    forwardRoleSelect.innerHTML = ADMIN_ROLES
-      .filter(role => role !== user.role)
+    const roles = ADMIN_ROLES.filter(role => role !== user.role);
+    forwardRoleSelect.innerHTML = roles
       .map(role => `<option value="${role}">${role}</option>`)
       .join('');
 
+    if (roles.length > 0) {
+      populateUserSelect(roles[0], forwardUserSelect);
+    }
+
     forwardModal.style.display = 'flex';
   };
+
+  if (forwardRoleSelect && forwardUserSelect) {
+    forwardRoleSelect.addEventListener('change', (e) => {
+      populateUserSelect(e.target.value, forwardUserSelect);
+    });
+  }
 
   cancelForwardBtn.addEventListener('click', () => {
     forwardModal.style.display = 'none';
@@ -338,6 +387,8 @@ document.addEventListener('DOMContentLoaded', () => {
   confirmForwardBtn.addEventListener('click', async () => {
     if (!currentForwardTarget) return;
     const newRole = forwardRoleSelect.value;
+    const selectedUserId = forwardUserSelect ? forwardUserSelect.value : '';
+    const selectedUserObj = allAdminUsers.find(u => u._id === selectedUserId);
     const { type, id } = currentForwardTarget;
 
     try {
@@ -346,9 +397,14 @@ document.addEventListener('DOMContentLoaded', () => {
       confirmBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;"></span> Forwarding...</span>';
       confirmBtn.disabled = true;
 
-      // Build FormData to support file attachments
+      // Build FormData to support file attachments & person assignment
       const formData = new FormData();
       formData.append('newRole', newRole);
+      if (selectedUserObj) {
+        formData.append('assignedToAdminId', selectedUserObj._id);
+        formData.append('assignedToAdminName', selectedUserObj.fullName);
+        formData.append('assignedToAdminEmail', selectedUserObj.email);
+      }
       if (typeof forwardSelectedFiles !== 'undefined' && forwardSelectedFiles.length > 0) {
         forwardSelectedFiles.forEach(file => formData.append('attachments', file));
       }
@@ -365,6 +421,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const index = allRegistrations.findIndex(r => r._id === id);
         if (index > -1) {
           allRegistrations[index].assignedToRole = newRole;
+          allRegistrations[index].assignedToAdminId = selectedUserObj ? selectedUserObj._id : null;
+          allRegistrations[index].assignedToAdminName = selectedUserObj ? selectedUserObj.fullName : null;
+          allRegistrations[index].assignedToAdminEmail = selectedUserObj ? selectedUserObj.email : null;
           allRegistrations[index].status = 'forwarded';
           if (res.data && res.data.forwardAttachments) {
             allRegistrations[index].forwardAttachments = res.data.forwardAttachments;
@@ -548,7 +607,8 @@ document.addEventListener('DOMContentLoaded', () => {
                   // Show current assignedToRole if it's not Secretary/President (still with an intermediate reviewer)
                   const isCurrentIntermediate = currentRole && currentRole !== 'Secretary' && currentRole !== 'President';
                   if (isCurrentIntermediate) {
-                    chainParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;background:#F59E0B;color:white;font-size:0.7rem;font-weight:700;white-space:nowrap;">${clockSvg}${currentRole}</span>`);
+                    const roleLabel = currentRole + (reg.assignedToAdminName ? ` (${reg.assignedToAdminName})` : '');
+                    chainParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;background:#F59E0B;color:white;font-size:0.7rem;font-weight:700;white-space:nowrap;">${clockSvg}${roleLabel}</span>`);
                   }
 
                   const chainHtml = chainParts.reduce((acc, part, i) => {
@@ -569,7 +629,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#64748B;margin-bottom:6px;">Current Access</div>
                       <div style="display:inline-flex;align-items:center;gap:6px;padding:0.35rem 1rem;border-radius:50px;font-size:0.85rem;background:${user.role === reg.assignedToRole ? 'var(--primary)' : '#E2E8F0'};color:${user.role === reg.assignedToRole ? 'white' : '#475569'};font-weight:600;box-shadow:${user.role === reg.assignedToRole ? '0 2px 4px rgba(27,67,50,0.2)' : 'none'};">
                         ${user.role === reg.assignedToRole ? '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
-                        ${reg.assignedToRole}
+                        ${reg.assignedToRole}${reg.assignedToAdminName ? ' (' + reg.assignedToAdminName + ')' : ''}
                       </div>
                     </div>
                   `;
@@ -636,6 +696,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const verifyForwardModal = document.getElementById('verifyForwardModal');
   const verifyForwardRoleSelect = document.getElementById('verifyForwardRoleSelect');
+  const verifyForwardUserSelect = document.getElementById('verifyForwardUserSelect');
   const cancelVerifyForwardBtn = document.getElementById('cancelVerifyForwardBtn');
   const confirmVerifyForwardBtn = document.getElementById('confirmVerifyForwardBtn');
   let currentVerifyForwardTarget = null;
@@ -645,14 +706,23 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Populate select, exclude current user's role
     if (verifyForwardRoleSelect) {
-      verifyForwardRoleSelect.innerHTML = ADMIN_ROLES
-        .filter(role => role !== user.role)
+      const roles = ADMIN_ROLES.filter(role => role !== user.role);
+      verifyForwardRoleSelect.innerHTML = roles
         .map(role => `<option value="${role}">${role}</option>`)
         .join('');
+      if (roles.length > 0) {
+        populateUserSelect(roles[0], verifyForwardUserSelect);
+      }
     }
 
     if (verifyForwardModal) verifyForwardModal.style.display = 'flex';
   };
+
+  if (verifyForwardRoleSelect && verifyForwardUserSelect) {
+    verifyForwardRoleSelect.addEventListener('change', (e) => {
+      populateUserSelect(e.target.value, verifyForwardUserSelect);
+    });
+  }
 
   if (cancelVerifyForwardBtn) {
     cancelVerifyForwardBtn.addEventListener('click', () => {
@@ -665,6 +735,8 @@ document.addEventListener('DOMContentLoaded', () => {
     confirmVerifyForwardBtn.addEventListener('click', async () => {
       if (!currentVerifyForwardTarget) return;
       const newRole = verifyForwardRoleSelect.value;
+      const selectedUserId = verifyForwardUserSelect ? verifyForwardUserSelect.value : '';
+      const selectedUserObj = allAdminUsers.find(u => u._id === selectedUserId);
       
       confirmVerifyForwardBtn.innerHTML = 'Verifying...';
       confirmVerifyForwardBtn.disabled = true;
@@ -672,6 +744,11 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const formData = new FormData();
         formData.append('newRole', newRole);
+        if (selectedUserObj) {
+          formData.append('assignedToAdminId', selectedUserObj._id);
+          formData.append('assignedToAdminName', selectedUserObj.fullName);
+          formData.append('assignedToAdminEmail', selectedUserObj.email);
+        }
         if (typeof verifyForwardSelectedFiles !== 'undefined' && verifyForwardSelectedFiles.length > 0) {
           verifyForwardSelectedFiles.forEach(file => formData.append('attachments', file));
         }
@@ -1117,5 +1194,154 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // ══════════════════════════════════════════
+  //  EXPORT REPORT MODAL CONTROLLER
+  // ══════════════════════════════════════════
+
+  const exportReportModal   = document.getElementById('exportReportModal');
+  const openExportReportBtn = document.getElementById('openExportReportBtn');
+  const closeExportModal    = document.getElementById('closeExportReportModal');
+  const exportListEl        = document.getElementById('exportDonationsList');
+  const exportSearchInput   = document.getElementById('exportSearchInput');
+  const exportFilterSelect  = document.getElementById('exportFilterSelect');
+  const exportCountLabel    = document.getElementById('exportCountLabel');
+
+  // Currency formatter (reuse pattern from above)
+  const fmtCurrency = (n) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(n);
+
+  // Render the filterable donation list inside the modal
+  function renderExportList() {
+    const payments = window.__allPayments || [];
+    const query    = (exportSearchInput ? exportSearchInput.value : '').trim().toLowerCase();
+    const filter   = exportFilterSelect ? exportFilterSelect.value : 'all';
+
+    const filtered = payments.filter(item => {
+      // 80G filter
+      if (filter === '80g'    && !item.with80G) return false;
+      if (filter === 'non80g' &&  item.with80G) return false;
+      // Text search
+      if (query) {
+        const haystack = [
+          item.fullName, item.email, item.phone,
+          item.paymentId, item.pan
+        ].join(' ').toLowerCase();
+        if (!haystack.includes(query)) return false;
+      }
+      return true;
+    });
+
+    // Update count label
+    if (exportCountLabel) {
+      exportCountLabel.textContent = `${filtered.length} record${filtered.length !== 1 ? 's' : ''}`;
+    }
+
+    if (filtered.length === 0) {
+      exportListEl.innerHTML = `
+        <div style="text-align:center; padding:3rem; color:var(--text-muted);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="#D1D5DB" stroke-width="1.5" style="margin:0 auto 1rem; display:block;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          No donations match your search.
+        </div>`;
+      return;
+    }
+
+    exportListEl.innerHTML = filtered.map((item, idx) => {
+      const date = new Date(item.date);
+      const dateStr = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      const timeStr = date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+      const badge80G = item.with80G
+        ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:rgba(59,130,246,0.1);color:#2563EB;border-radius:20px;font-size:0.7rem;font-weight:700;">80G</span>`
+        : '';
+
+      return `
+        <div style="display:flex;align-items:center;gap:1rem;padding:0.9rem 0.75rem;border-bottom:1px solid #F3F4F6;transition:background 0.15s;border-radius:8px;cursor:default;"
+             onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background='transparent'">
+          <!-- Index badge -->
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(27,67,50,0.08);color:var(--primary);font-size:0.75rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${idx + 1}</div>
+
+          <!-- Donor info -->
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:0.9rem;color:#111827;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+              ${item.fullName || 'Anonymous'} ${badge80G}
+            </div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;display:flex;gap:0.5rem;flex-wrap:wrap;">
+              <span>${item.email || '—'}</span>
+              ${item.phone ? `<span style="color:#D1D5DB;">|</span><span>${item.phone}</span>` : ''}
+            </div>
+            <div style="font-size:0.75rem;color:#9CA3AF;margin-top:2px;">
+              ${dateStr} &nbsp;·&nbsp; ${timeStr}
+              ${item.paymentId ? `&nbsp;·&nbsp; <span style="font-family:monospace;">${item.paymentId}</span>` : ''}
+            </div>
+          </div>
+
+          <!-- Amount -->
+          <div style="font-size:1rem;font-weight:700;color:var(--primary);white-space:nowrap;flex-shrink:0;">
+            ${fmtCurrency(item.amount)}
+          </div>
+
+          <!-- Download button -->
+          <button
+            onclick="window.downloadReceipt('${item._id}')"
+            title="Download PDF receipt"
+            style="display:inline-flex;align-items:center;gap:5px;padding:0.5rem 0.9rem;background:var(--primary);color:white;border:none;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0;transition:all 0.2s;white-space:nowrap;"
+            onmouseover="this.style.background='var(--primary-light)';this.style.transform='translateY(-1px)'"
+            onmouseout="this.style.background='var(--primary)';this.style.transform='translateY(0)'"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            PDF
+          </button>
+        </div>`;
+    }).join('');
+  }
+
+  // Open modal
+  if (openExportReportBtn) {
+    openExportReportBtn.addEventListener('click', () => {
+      exportReportModal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      // Reset search
+      if (exportSearchInput)  exportSearchInput.value = '';
+      if (exportFilterSelect) exportFilterSelect.value = 'all';
+
+      if (!window.__allPayments || window.__allPayments.length === 0) {
+        exportListEl.innerHTML = `
+          <div style="text-align:center;padding:3rem;color:var(--text-muted);">
+            <div class="spinner" style="margin:0 auto 1rem;"></div>
+            Loading donation records…
+          </div>`;
+        // Try to fetch if not yet loaded
+        apiRequest('/api/donations').then(data => {
+          window.__allPayments = data;
+          renderExportList();
+        }).catch(() => {
+          exportListEl.innerHTML = `<div style="text-align:center;padding:3rem;color:var(--danger);">Failed to load donations. Is the backend running?</div>`;
+        });
+      } else {
+        renderExportList();
+      }
+    });
+  }
+
+  // Close modal
+  function closeExportReportModal() {
+    exportReportModal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  if (closeExportModal) {
+    closeExportModal.addEventListener('click', closeExportReportModal);
+  }
+
+  // Close on backdrop click
+  if (exportReportModal) {
+    exportReportModal.addEventListener('click', (e) => {
+      if (e.target === exportReportModal) closeExportReportModal();
+    });
+  }
+
+  // Live search & filter
+  if (exportSearchInput)  exportSearchInput.addEventListener('input', renderExportList);
+  if (exportFilterSelect) exportFilterSelect.addEventListener('change', renderExportList);
 
 });
