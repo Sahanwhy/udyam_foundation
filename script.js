@@ -538,7 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return `
       <div class="gallery-card reveal" style="animation-delay: ${(index % 12) * 0.05}s">
         <div class="gallery-item" onclick="openLightbox(${index})">
-          <img src="${photo.imageUrl}" alt="${photo.title}" class="gallery-img" loading="lazy">
+          <img src="${photo.imageUrl}" alt="${photo.category || 'Gallery image'}" class="gallery-img" loading="lazy">
           <div class="gallery-overlay">
             <div class="view-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
@@ -687,9 +687,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const photo = window.currentGalleryPhotos[currentLightboxIndex];
     if (!photo) return;
     
+    const formattedDate = formatDate(photo.date);
     lbImg.src = photo.imageUrl;
-    lbImg.alt = photo.title;
-    lbCaption.innerHTML = `<strong>${photo.category}</strong>: ${photo.title}`;
+    lbImg.alt = photo.category || 'Gallery image';
+    lbCaption.innerHTML = `<strong>${photo.category}</strong>${formattedDate ? ' &bull; ' + formattedDate : ''}`;
   }
 
   function closeLightbox() {

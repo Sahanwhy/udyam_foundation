@@ -1264,28 +1264,48 @@ app.get('/api/gallery/categories', async (req, res) => {
   }
 });
 
-// Upload new gallery photo (admin only)
-app.post('/api/gallery/upload', authMiddleware, uploadGallery.single('photo'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No photo provided' });
+// Upload new gallery photo(s) (admin only - supports single or multiple uploads)
+app.post('/api/gallery/upload', authMiddleware, (req, res, next) => {
+  uploadGallery.any()(req, res, async (err) => {
+    if (err) {
+      console.error('Multer/Cloudinary upload error:', err);
+      return res.status(400).json({ error: err.message || 'File upload failed' });
     }
-    
-    const { title, category, featured } = req.body;
-    
-    const newPhoto = new GalleryPhoto({
-      title: title || 'Untitled',
-      category: category || 'Uncategorized',
-      imageUrl: req.file.path,
-      featured: featured === 'true'
-    });
-    
-    await newPhoto.save();
-    res.status(201).json({ success: true, message: 'Photo uploaded successfully', photo: newPhoto });
-  } catch (error) {
-    console.error('Error uploading photo:', error);
-    res.status(500).json({ error: 'Failed to upload photo' });
-  }
+    try {
+      const filesList = req.files && req.files.length > 0 ? req.files : (req.file ? [req.file] : []);
+      if (filesList.length === 0) {
+        return res.status(400).json({ error: 'No photos provided' });
+      }
+      
+      const { category, date, year, featured } = req.body;
+      const photoDate = date || year || '';
+      const isFeatured = featured === 'true' || featured === true;
+      
+      const savedPhotos = [];
+      for (const file of filesList) {
+        const imageUrl = file.path || file.secure_url || file.url || '';
+        const newPhoto = new GalleryPhoto({
+          title: '',
+          category: category || 'Uncategorized',
+          imageUrl: imageUrl,
+          featured: isFeatured,
+          date: photoDate
+        });
+        await newPhoto.save();
+        savedPhotos.push(newPhoto);
+      }
+      
+      return res.status(201).json({ 
+        success: true, 
+        message: `Uploaded ${savedPhotos.length} photo(s) successfully`, 
+        photos: savedPhotos,
+        photo: savedPhotos[0]
+      });
+    } catch (error) {
+      console.error('Error uploading photo(s):', error);
+      return res.status(500).json({ error: error.message || 'Failed to upload photo(s)' });
+    }
+  });
 });
 
 // Delete gallery photo (admin only)
@@ -1299,6 +1319,22 @@ app.delete('/api/gallery/:id', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error deleting photo:', error);
     res.status(500).json({ error: 'Failed to delete photo' });
+  }
+});
+
+// Delete entire gallery category (admin only)
+app.delete('/api/gallery/category/:categoryName', authMiddleware, async (req, res) => {
+  try {
+    const categoryName = decodeURIComponent(req.params.categoryName);
+    const result = await GalleryPhoto.deleteMany({ category: categoryName });
+    res.json({ 
+      success: true, 
+      message: `Deleted ${result.deletedCount} photo(s) in category "${categoryName}"`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    res.status(500).json({ error: 'Failed to delete category' });
   }
 });
 

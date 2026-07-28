@@ -910,35 +910,91 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  window.adminGalleryPhotos = [];
+
   window.fetchAdminGallery = function() {
     fetch(`${API_BASE}/api/gallery`)
       .then(res => res.json())
       .then(photos => {
-        const grid = document.getElementById('adminGalleryGrid');
-        if (!grid) return;
-        if (photos.length === 0) {
-          grid.innerHTML = '<p>No photos found.</p>';
-          return;
-        }
-        
-        grid.innerHTML = photos.map(photo => `
-          <div style="background:white; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.1); display:flex; flex-direction:column;">
-            <img src="${photo.imageUrl}" alt="${photo.title}" style="width:100%; height:150px; object-fit:cover;">
-            <div style="padding: 1rem; flex: 1; display:flex; flex-direction:column; gap:0.5rem;">
-              <span style="background:var(--saffron); color:white; font-size:0.7rem; padding:0.2rem 0.6rem; border-radius:20px; align-self:flex-start;">${photo.category}</span>
-              <h4 style="margin:0; font-size:1rem;">${photo.title}</h4>
-              <div style="margin-top:auto; display:flex; justify-content:space-between; align-items:center; padding-top:1rem; border-top:1px solid var(--border);">
-                <label style="font-size:0.8rem; display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
-                  <input type="checkbox" ${photo.featured ? 'checked' : ''} onchange="toggleFeatured('${photo._id}', this.checked)">
-                  Featured
-                </label>
-                <button onclick="deleteGalleryPhoto('${photo._id}')" style="background:var(--danger); color:white; border:none; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.8rem;">Delete</button>
-              </div>
-            </div>
-          </div>
-        `).join('');
+        window.adminGalleryPhotos = photos || [];
+        updateAdminCategoryFilterOptions();
+        window.filterAdminGallery();
       })
       .catch(err => console.error('Error fetching gallery:', err));
+  }
+
+  function updateAdminCategoryFilterOptions() {
+    const filterSelect = document.getElementById('adminCategoryFilter');
+    if (!filterSelect) return;
+    
+    const currentVal = filterSelect.value || 'all';
+    const categories = Array.from(new Set(window.adminGalleryPhotos.map(p => p.category).filter(Boolean))).sort();
+    
+    let html = '<option value="all">All Categories</option>';
+    categories.forEach(cat => {
+      html += `<option value="${escapeHtml(cat)}"${cat === currentVal ? ' selected' : ''}>${escapeHtml(cat)}</option>`;
+    });
+    
+    filterSelect.innerHTML = html;
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  window.filterAdminGallery = function() {
+    const filterSelect = document.getElementById('adminCategoryFilter');
+    const deleteBtn = document.getElementById('deleteCategoryBtn');
+    const selectedCategory = filterSelect ? filterSelect.value : 'all';
+    
+    if (deleteBtn) {
+      deleteBtn.style.display = 'inline-flex';
+      if (selectedCategory !== 'all') {
+        deleteBtn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Delete Category ("${escapeHtml(selectedCategory)}")`;
+      } else {
+        deleteBtn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Delete Category`;
+      }
+    }
+    
+    const grid = document.getElementById('adminGalleryGrid');
+    if (!grid) return;
+    
+    const displayPhotos = selectedCategory === 'all' 
+      ? window.adminGalleryPhotos 
+      : window.adminGalleryPhotos.filter(p => p.category === selectedCategory);
+      
+    if (displayPhotos.length === 0) {
+      grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No photos found in this category.</p>';
+      return;
+    }
+    
+    grid.innerHTML = displayPhotos.map(photo => `
+      <div style="background:white; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.1); display:flex; flex-direction:column;">
+        <img src="${photo.imageUrl}" alt="${photo.category || 'Gallery Photo'}" style="width:100%; height:150px; object-fit:cover;">
+        <div style="padding: 1rem; flex: 1; display:flex; flex-direction:column; gap:0.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.3rem;">
+            <span style="background:var(--saffron); color:white; font-size:0.7rem; padding:0.2rem 0.6rem; border-radius:20px;">${photo.category}</span>
+            ${photo.date ? `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:500;">${photo.date}</span>` : ''}
+          </div>
+          <div style="margin-top:auto; display:flex; justify-content:space-between; align-items:center; padding-top:1rem; border-top:1px solid var(--border);">
+            <label style="font-size:0.8rem; display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
+              <input type="checkbox" ${photo.featured ? 'checked' : ''} onchange="toggleFeatured('${photo._id}', this.checked)">
+              Featured
+            </label>
+            <button onclick="deleteGalleryPhoto('${photo._id}')" style="background:var(--danger); color:white; border:none; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.8rem;">Delete</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
   }
 
   const uploadForm = document.getElementById('uploadPhotoForm');
@@ -946,42 +1002,62 @@ document.addEventListener('DOMContentLoaded', () => {
     uploadForm.addEventListener('submit', function(e) {
       e.preventDefault();
       
-      const title = document.getElementById('uploadTitle').value;
-      const category = document.getElementById('uploadCategory').value;
-      const featured = document.getElementById('uploadFeatured').checked;
-      const file = document.getElementById('uploadFile').files[0];
+      const categoryEl = document.getElementById('uploadCategory');
+      const dateEl = document.getElementById('uploadDate');
+      const featuredEl = document.getElementById('uploadFeatured');
+      const fileInput = document.getElementById('uploadFile');
       
-      if (!file) return alert('Please select an image file');
+      const category = categoryEl ? categoryEl.value.trim() : '';
+      const date = dateEl ? dateEl.value.trim() : '';
+      const featured = featuredEl ? featuredEl.checked : false;
+      const files = fileInput ? fileInput.files : null;
+      
+      if (!category) return alert('Please enter a category name');
+      if (!files || files.length === 0) return alert('Please select at least one image file');
       
       const formData = new FormData();
-      formData.append('title', title);
       formData.append('category', category);
+      formData.append('date', date);
       formData.append('featured', featured);
-      formData.append('photo', file);
+      
+      for (let i = 0; i < files.length; i++) {
+        formData.append('photos', files[i]);
+      }
       
       const progress = document.getElementById('uploadProgress');
-      progress.style.display = 'block';
+      if (progress) {
+        progress.textContent = `Uploading ${files.length} photo(s)...`;
+        progress.style.display = 'block';
+      }
       
       fetch(`${API_BASE}/api/gallery/upload`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${getAuthToken()}` },
         body: formData
       })
-      .then(res => res.json())
-      .then(data => {
-        progress.style.display = 'none';
-        if (data.success) {
-          alert('Photo uploaded successfully!');
+      .then(async res => {
+        let data = {};
+        try {
+          data = await res.json();
+        } catch(e) {
+          data = { error: `Server error (${res.status})` };
+        }
+        return { ok: res.ok, data };
+      })
+      .then(({ ok, data }) => {
+        if (progress) progress.style.display = 'none';
+        if (ok && data.success) {
+          alert(data.message || 'Photo(s) uploaded successfully!');
           this.reset();
           fetchAdminGallery();
         } else {
-          alert(data.error || 'Failed to upload photo');
+          alert(data.error || 'Failed to upload photo(s)');
         }
       })
       .catch(err => {
-        progress.style.display = 'none';
+        if (progress) progress.style.display = 'none';
         console.error(err);
-        alert('An error occurred during upload');
+        alert(err.message || 'An error occurred during upload');
       });
     });
   }
@@ -1021,6 +1097,52 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     })
     .catch(err => console.error(err));
+  }
+
+  window.deleteSelectedCategory = function() {
+    const filterSelect = document.getElementById('adminCategoryFilter');
+    let selectedCategory = filterSelect ? filterSelect.value : 'all';
+    
+    const categories = Array.from(new Set(window.adminGalleryPhotos.map(p => p.category).filter(Boolean))).sort();
+    if (categories.length === 0) {
+      return alert('No categories found in the gallery.');
+    }
+
+    if (selectedCategory === 'all' || !selectedCategory) {
+      const categoryPrompt = prompt(
+        `Which category would you like to delete?\n\nAvailable Categories:\n• ${categories.join('\n• ')}\n\nEnter category name:`
+      );
+      if (!categoryPrompt) return; // User cancelled
+      
+      const matchedCategory = categories.find(c => c.toLowerCase() === categoryPrompt.trim().toLowerCase());
+      if (!matchedCategory) {
+        return alert(`Category "${categoryPrompt.trim()}" was not found.\nAvailable categories: ${categories.join(', ')}`);
+      }
+      selectedCategory = matchedCategory;
+    }
+    
+    if (!confirm(`Are you sure you want to delete ALL photos in the category "${selectedCategory}"?\nThis action cannot be undone.`)) {
+      return;
+    }
+    
+    fetch(`${API_BASE}/api/gallery/category/${encodeURIComponent(selectedCategory)}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert(data.message || `Successfully deleted category "${selectedCategory}"`);
+        if (filterSelect) filterSelect.value = 'all';
+        fetchAdminGallery();
+      } else {
+        alert(data.error || 'Failed to delete category');
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert('An error occurred while deleting the category');
+    });
   }
   // --- Edit Profile Logic ---
   const editProfileModal = document.getElementById('editProfileModal');
