@@ -502,26 +502,30 @@
        MOBILE RESPONSIVE STYLES
     ============================================= */
 
-    /* Hamburger button — hidden on desktop */
+    /* Hamburger button — integrated into header-left */
     .hamburger-btn {
       display: none;
-      position: fixed;
-      top: 14px;
-      left: 14px;
-      z-index: 200;
       background: var(--primary);
       border: none;
       border-radius: 8px;
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: var(--shadow-md);
+      box-shadow: var(--shadow-sm);
       transition: background 0.2s;
+      flex-shrink: 0;
     }
     .hamburger-btn:hover { background: var(--primary-light); }
     .hamburger-btn svg { color: white; }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 0;
+    }
 
     /* Sidebar overlay backdrop */
     .sidebar-overlay {
@@ -529,7 +533,7 @@
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.45);
-      z-index: 9;
+      z-index: 90;
       backdrop-filter: blur(2px);
     }
     .sidebar-overlay.active { display: block; }
@@ -543,7 +547,8 @@
         transform: translateX(-100%);
         transition: transform 0.3s ease;
         z-index: 100;
-        width: 220px;
+        width: 240px;
+        box-shadow: 4px 0 20px rgba(0,0,0,0.25);
       }
       .sidebar.open {
         transform: translateX(0);
@@ -552,60 +557,137 @@
       /* Main content takes full width */
       .main-content {
         margin-left: 0;
-        padding: 1rem;
-        padding-top: 64px; /* space for hamburger */
+        padding: 0.85rem 1rem;
       }
 
-      /* Header: stack on very small screens */
+      /* Header: single clean row */
       .header {
-        flex-wrap: wrap;
-        gap: 0.75rem;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+        padding-bottom: 0.85rem;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 0.5rem;
       }
       .header h1 {
-        font-size: 1.25rem;
-        padding-left: 48px; /* space for hamburger */
+        font-size: 1.15rem;
+        padding-left: 0;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .user-profile {
         gap: 8px;
-        flex-wrap: wrap;
+        flex-shrink: 0;
       }
-      .user-info { display: none; } /* hide name/role on mobile to save space */
-      .logout-btn { font-size: 0.8rem; padding: 0.4rem 0.75rem; }
+      .user-info {
+        display: flex !important;
+        flex-direction: column;
+        align-items: flex-end;
+        line-height: 1.2;
+        max-width: 110px;
+        overflow: hidden;
+      }
+      .user-name {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--text-main);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+      }
+      .user-role {
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #059669;
+        background: rgba(16, 185, 129, 0.12);
+        padding: 2px 7px;
+        border-radius: 10px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        margin-top: 1px;
+      }
+      .avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 0.85rem;
+      }
+      .logout-btn {
+        font-size: 0.78rem;
+        padding: 0.4rem 0.75rem;
+        border-radius: 6px;
+      }
 
       /* Welcome banner */
-      .welcome-banner { padding: 1.25rem; }
-      .welcome-content h2 { font-size: 1.1rem; }
-      .btn-glass { padding: 0.6rem 1rem; font-size: 0.85rem; }
-      .quick-actions { gap: 0.5rem; }
+      .welcome-banner {
+        padding: 1.25rem;
+        border-radius: 14px;
+      }
+      .welcome-content h2 { font-size: 1.15rem; }
+      .welcome-content p { font-size: 0.85rem; }
+      .quick-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
+      .btn-glass {
+        flex: 1;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.82rem;
+        justify-content: center;
+        white-space: nowrap;
+      }
 
       /* Stats grid: 2 columns on mobile */
       .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+        gap: 0.75rem;
       }
+      .stat-card {
+        padding: 0.85rem 1rem;
+        border-radius: 12px;
+        gap: 0.6rem;
+      }
+      .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        flex-shrink: 0;
+      }
+      .stat-icon svg { width: 20px; height: 20px; }
+      .stat-info h3 { font-size: 0.75rem; }
+      .stat-info p { font-size: 1.25rem; }
 
       /* Dashboard layout: single column */
       .dashboard-layout {
         grid-template-columns: 1fr;
+        gap: 1rem;
       }
 
       /* Data section headers: wrap */
       .data-section-header {
         flex-wrap: wrap;
         gap: 0.75rem;
-        padding: 1rem;
+        padding: 1rem 1.25rem;
       }
-      .data-section-header h2 { font-size: 1rem; }
+      .data-section-header h2 { font-size: 1.1rem; }
 
       /* Registrations header controls wrap */
       #registrationsSection .data-section-header > div:first-child {
         flex-wrap: wrap;
         gap: 0.5rem;
+        width: 100%;
       }
       #registrationsSection .data-section-header > div:first-child > div {
         flex-wrap: wrap;
         gap: 0.5rem;
+        width: 100%;
+        justify-content: space-between;
       }
-      #regSortSelect { font-size: 0.8rem; }
+      #regSortSelect { font-size: 0.8rem; flex: 1; min-width: 120px; }
 
       /* Gallery upload form: single column */
       #uploadPhotoForm {
@@ -615,24 +697,24 @@
       /* Activity timeline in dashboard */
       .activity-timeline { padding: 1rem; }
 
-      /* Tables: horizontal scroll already handled by .table-container */
-      th, td { padding: 0.5rem; font-size: 0.8rem; }
-
       /* Modals: full-width with safe margin */
       #editProfileModal > div,
       #forwardModal > div,
       #verifyForwardModal > div,
-      #reportIssueModal > div {
-        max-width: calc(100vw - 2rem) !important;
-        margin: 0 1rem;
-        padding: 1.5rem !important;
-        border-radius: 12px !important;
+      #reportIssueModal > div,
+      #sendAdminMessageModal > div,
+      #exportReportPanel {
+        max-width: calc(100vw - 1.5rem) !important;
+        margin: 0 auto;
+        padding: 1.25rem !important;
+        border-radius: 14px !important;
+        max-height: 86vh !important;
       }
 
       /* Gallery grid: 2 columns on mobile */
       #adminGalleryGrid {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
-        gap: 1rem !important;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+        gap: 0.75rem !important;
       }
 
       /* Refresh btn text on small screens */
@@ -640,22 +722,25 @@
     }
 
     @media (max-width: 480px) {
-      /* Stats: single column on very small */
+      .main-content {
+        padding: 0.75rem;
+      }
+      
+      .header h1 {
+        font-size: 1.05rem;
+      }
+
+      /* Stats: 1 column on very small phones */
       .stats-grid {
         grid-template-columns: 1fr;
       }
-      .stat-card { padding: 0.85rem; }
-      .stat-info p { font-size: 1.25rem; }
-
-      /* Header title smaller */
-      .header h1 { font-size: 1.1rem; }
 
       /* Gallery grid: 1 column on very small */
       #adminGalleryGrid {
         grid-template-columns: 1fr !important;
       }
 
-      /* Quick actions: full width buttons */
+      /* Quick actions: stacked buttons on narrow screen */
       .quick-actions { flex-direction: column; }
       .btn-glass { width: 100%; justify-content: center; }
     }
@@ -663,21 +748,16 @@
 </head>
 <body>
 
-  <!-- Hamburger toggle for mobile -->
-  <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation" aria-expanded="false">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5">
-      <line x1="3" y1="6" x2="21" y2="6"/>
-      <line x1="3" y1="12" x2="21" y2="12"/>
-      <line x1="3" y1="18" x2="21" y2="18"/>
-    </svg>
-  </button>
-
   <!-- Sidebar overlay backdrop -->
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
   <aside class="sidebar" id="mainSidebar">
     <div class="sidebar-header">
       <h2>Udyam Admin</h2>
+      <div id="sidebarUserBadge" style="margin-top: 0.6rem; font-size: 0.78rem; background: rgba(255,255,255,0.12); padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; gap: 2px;">
+        <div style="font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="sidebarUserName">Admin</div>
+        <div style="font-size: 0.72rem; color: #A7F3D0; font-weight: 600; text-transform: capitalize;" id="sidebarUserRole">Role</div>
+      </div>
     </div>
     <nav class="sidebar-nav">
       <a href="#" class="nav-item active">
@@ -697,6 +777,12 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
         Gallery
+      </a>
+      <a href="#" class="nav-item" id="nav-admin-messages">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+        </svg>
+        Admin Messages
       </a>
       <div class="nav-section-title" style="padding: 1.5rem 1.5rem 0.5rem; font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 700; letter-spacing: 0.05em;">Registrations</div>
       <a href="#" class="nav-item reg-filter-btn active" data-filter="pending" id="nav-pending">
@@ -727,8 +813,17 @@
   </aside>
 
   <main class="main-content">
-    <header class="header" style="border:none; padding-bottom: 0;">
-      <h1>Admin Dashboard</h1>
+    <header class="header">
+      <div class="header-left">
+        <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation" aria-expanded="false">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <h1>Admin Dashboard</h1>
+      </div>
       <div class="user-profile">
         <div class="user-info">
           <div class="user-name" id="userName">Admin</div>
@@ -955,6 +1050,50 @@
         </div>
       </div>
     </section>
+
+    <!-- Admin Direct Messages Section -->
+    <section id="adminMessagesSection" style="display: none; padding: 1.5rem 0;">
+      <div class="data-section-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; background: white; padding: 1.25rem 1.5rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div>
+          <h2 style="margin: 0 0 0.25rem 0; font-size: 1.3rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="var(--primary)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+            Admin Messages & Files
+          </h2>
+          <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Send written notes, images, or PDFs directly to any admin or role independently of registration applications.</p>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+          <button id="openSendAdminMsgBtn" style="padding: 0.6rem 1.25rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(27,67,50,0.2); transition: all 0.2s;" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='var(--primary)'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Send New Message / File
+          </button>
+          
+          <button class="refresh-btn" id="refreshAdminMsgBtn" style="padding: 0.6rem 1rem; border: 1.5px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-weight: 600; color: var(--text-main); display: inline-flex; align-items: center; gap: 6px; font-size: 0.88rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters & Search Bar -->
+      <div style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 1.25rem; background: white; padding: 0.85rem 1.25rem; border-radius: 10px; border: 1px solid var(--border);">
+        <div style="display: flex; gap: 0.5rem; align-items: center;" id="adminMsgFilterTabs">
+          <button class="admin-msg-filter-btn active" data-msg-filter="all" style="padding: 0.45rem 0.9rem; border-radius: 20px; border: 1px solid var(--border); background: var(--primary); color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">All Messages</button>
+          <button class="admin-msg-filter-btn" data-msg-filter="inbox" style="padding: 0.45rem 0.9rem; border-radius: 20px; border: 1px solid var(--border); background: #F3F4F6; color: #4B5563; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">Inbox / Received</button>
+          <button class="admin-msg-filter-btn" data-msg-filter="sent" style="padding: 0.45rem 0.9rem; border-radius: 20px; border: 1px solid var(--border); background: #F3F4F6; color: #4B5563; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">Sent Messages</button>
+        </div>
+
+        <div style="position: relative; width: 260px; max-width: 100%;">
+          <input type="text" id="adminMsgSearchInput" placeholder="Search by message or sender..." style="width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.2rem; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.85rem; outline: none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" stroke-width="2" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); pointer-events: none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+      </div>
+
+      <!-- Messages Container -->
+      <div id="adminMessagesContainer" style="display: flex; flex-direction: column; gap: 1rem;">
+        <!-- Injected dynamically -->
+      </div>
+    </section>
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1087,6 +1226,12 @@
         <select id="forwardUserSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; color: var(--text-main); background: #FAFAFA; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
           <!-- Options will be populated dynamically based on selected role -->
         </select>
+      </div>
+
+      <!-- Written Message / Note -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="forwardMessageInput" style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Written Message / Note <span style="font-weight: 400; text-transform: none; color: #9CA3AF;">(optional)</span></label>
+        <textarea id="forwardMessageInput" rows="3" placeholder="Attach a written message or note for all admins..." style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; color: var(--text-main); background: #FAFAFA; outline: none; transition: border-color 0.2s; resize: vertical;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
       </div>
 
       <!-- Attachments Upload -->
@@ -1277,6 +1422,12 @@
         </select>
       </div>
 
+      <!-- Written Message / Note -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="verifyForwardMessageInput" style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Written Message / Note <span style="font-weight: 400; text-transform: none; color: #9CA3AF;">(optional)</span></label>
+        <textarea id="verifyForwardMessageInput" rows="3" placeholder="Attach a written message or note for all admins..." style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; color: var(--text-main); background: #FAFAFA; outline: none; transition: border-color 0.2s; resize: vertical;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+      </div>
+
       <!-- Attachments Upload -->
       <div style="margin-bottom: 1.5rem;">
         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Attachments <span style="font-weight: 400; text-transform: none; letter-spacing: 0; color: #9CA3AF;">(optional — PDF or Image, max 10)</span></label>
@@ -1384,5 +1535,138 @@
     </div>
   </div>
 
+  <!-- Send Admin Message Modal -->
+  <div id="sendAdminMessageModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: white; padding: 2rem; border-radius: 16px; width: 100%; max-width: 520px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto;">
+      
+      <!-- Modal Header -->
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+        <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(27,67,50,0.1); display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+        </div>
+        <div>
+          <h3 style="margin: 0; color: var(--text-main); font-size: 1.15rem; font-weight: 700;">Send Message / File to Admin</h3>
+          <p style="margin: 0; color: var(--text-muted); font-size: 0.8rem;">Send a direct message or share documents with any admin.</p>
+        </div>
+      </div>
+
+      <!-- Recipient Role Select -->
+      <div style="margin-top: 1.25rem; margin-bottom: 1.25rem;">
+        <label for="adminMsgRoleSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Target Admin Role</label>
+        <select id="adminMsgRoleSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; color: var(--text-main); background: #FAFAFA; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          <option value="All">All Admins (Broadcast)</option>
+          <!-- Role options populated dynamically -->
+        </select>
+      </div>
+
+      <!-- Specific Person Select -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="adminMsgUserSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Select Specific Person / Admin <span style="font-weight: 400; text-transform: none; color: #9CA3AF;">(optional)</span></label>
+        <select id="adminMsgUserSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; color: var(--text-main); background: #FAFAFA; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          <!-- Options populated dynamically -->
+        </select>
+      </div>
+
+      <!-- Subject / Title -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="adminMsgSubjectInput" style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Subject / Title <span style="font-weight: 400; text-transform: none; color: #9CA3AF;">(optional)</span></label>
+        <input type="text" id="adminMsgSubjectInput" placeholder="e.g. Document Verification, Event Notice, Review Request..." style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; color: var(--text-main); background: #FAFAFA; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+
+      <!-- Written Message Input -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="adminMsgTextInput" style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Written Message <span style="color: var(--danger);">*</span></label>
+        <textarea id="adminMsgTextInput" rows="4" placeholder="Write your message here..." style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; color: var(--text-main); background: #FAFAFA; outline: none; transition: border-color 0.2s; resize: vertical;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+      </div>
+
+      <!-- Attachments Dropzone -->
+      <div style="margin-bottom: 1.5rem;">
+        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Attach Files <span style="font-weight: 400; text-transform: none; color: #9CA3AF;">(optional — PDF or Image, max 10)</span></label>
+        
+        <label id="adminMsgDropZone" for="adminMsgAttachments" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; border: 2px dashed #D1D5DB; border-radius: 10px; padding: 1.5rem 1rem; cursor: pointer; transition: all 0.2s; background: #F9FAFB;"
+               ondragover="event.preventDefault(); this.style.borderColor='var(--accent)'; this.style.background='rgba(64,145,108,0.05)';"
+               ondragleave="this.style.borderColor='#D1D5DB'; this.style.background='#F9FAFB';"
+               ondrop="handleAdminMsgDrop(event)">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(64,145,108,0.1); display: flex; align-items: center; justify-content: center; color: var(--accent);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+          </div>
+          <div style="text-align: center;">
+            <span style="font-size: 0.875rem; font-weight: 600; color: var(--accent);">Click to upload</span>
+            <span style="font-size: 0.875rem; color: var(--text-muted);"> or drag & drop</span>
+          </div>
+          <span style="font-size: 0.75rem; color: #9CA3AF;">PDF, JPG, PNG, JPEG</span>
+        </label>
+        <input type="file" id="adminMsgAttachments" name="attachments" multiple accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="handleAdminMsgFileSelect(this)">
+        
+        <div id="adminMsgFileList" style="margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;"></div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid var(--border);">
+        <button id="cancelSendAdminMsgBtn" style="padding: 0.6rem 1.25rem; background: transparent; border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 500; color: var(--text-muted); transition: all 0.2s;" onmouseover="this.style.borderColor='var(--danger)'; this.style.color='var(--danger)'" onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text-muted)'">Cancel</button>
+        <button id="confirmSendAdminMsgBtn" style="padding: 0.6rem 1.4rem; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='var(--primary)'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Send Message
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // --- Admin Message Modal File Handling ---
+    let adminMsgSelectedFiles = [];
+
+    function renderAdminMsgFileList() {
+      const list = document.getElementById('adminMsgFileList');
+      if (!list) return;
+      if (!adminMsgSelectedFiles.length) { list.innerHTML = ''; return; }
+      list.innerHTML = adminMsgSelectedFiles.map((f, i) => {
+        const isPdf = f.type === 'application/pdf';
+        const icon = isPdf
+          ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#EF4444" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`
+          : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#3B82F6" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
+        const size = f.size < 1024 * 1024 ? `${(f.size/1024).toFixed(1)} KB` : `${(f.size/1024/1024).toFixed(1)} MB`;
+        return `<div style="display:flex; align-items:center; gap:0.6rem; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:0.5rem 0.75rem;">
+          ${icon}
+          <span style="flex:1; font-size:0.8rem; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px;" title="${f.name}">${f.name}</span>
+          <span style="font-size:0.75rem; color:var(--text-muted); white-space:nowrap;">${size}</span>
+          <button onclick="removeAdminMsgFile(${i})" style="background:none; border:none; cursor:pointer; padding:2px; color:#9CA3AF; display:flex; align-items:center; transition:color 0.2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='#9CA3AF'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>`;
+      }).join('');
+    }
+
+    function handleAdminMsgFileSelect(input) {
+      const newFiles = Array.from(input.files);
+      newFiles.forEach(f => {
+        if (adminMsgSelectedFiles.length < 10) adminMsgSelectedFiles.push(f);
+      });
+      input.value = '';
+      renderAdminMsgFileList();
+    }
+
+    function handleAdminMsgDrop(event) {
+      event.preventDefault();
+      const dropZone = document.getElementById('adminMsgDropZone');
+      if (dropZone) {
+        dropZone.style.borderColor = '#D1D5DB';
+        dropZone.style.background = '#F9FAFB';
+      }
+      const newFiles = Array.from(event.dataTransfer.files).filter(f =>
+        ['image/jpeg','image/png','image/jpg','application/pdf'].includes(f.type)
+      );
+      newFiles.forEach(f => {
+        if (adminMsgSelectedFiles.length < 10) adminMsgSelectedFiles.push(f);
+      });
+      renderAdminMsgFileList();
+    }
+
+    function removeAdminMsgFile(index) {
+      adminMsgSelectedFiles.splice(index, 1);
+      renderAdminMsgFileList();
+    }
+  </script>
 </body>
 </html>

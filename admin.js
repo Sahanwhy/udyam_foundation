@@ -15,6 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (user) {
     userNameEl.textContent = user.fullName || 'Admin';
     userRoleEl.textContent = user.role || '';
+
+    const sidebarUserNameEl = document.getElementById('sidebarUserName');
+    const sidebarUserRoleEl = document.getElementById('sidebarUserRole');
+    if (sidebarUserNameEl) sidebarUserNameEl.textContent = user.fullName || 'Admin';
+    if (sidebarUserRoleEl) sidebarUserRoleEl.textContent = user.role || 'Role';
+
     if (user.photo) {
       userAvatarEl.innerHTML = `<img src="${user.photo}" alt="Avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
       userAvatarEl.style.backgroundColor = 'transparent';
@@ -354,6 +360,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const openForwardModal = (type, id) => {
     currentForwardTarget = { type, id };
 
+    // Clear written message input
+    const msgInput = document.getElementById('forwardMessageInput');
+    if (msgInput) msgInput.value = '';
+
     // Populate select, exclude current user's role
     const roles = ADMIN_ROLES.filter(role => role !== user.role);
     forwardRoleSelect.innerHTML = roles
@@ -376,6 +386,8 @@ document.addEventListener('DOMContentLoaded', () => {
   cancelForwardBtn.addEventListener('click', () => {
     forwardModal.style.display = 'none';
     currentForwardTarget = null;
+    const msgInput = document.getElementById('forwardMessageInput');
+    if (msgInput) msgInput.value = '';
     // Clear file selection
     if (typeof forwardSelectedFiles !== 'undefined') {
       forwardSelectedFiles = [];
@@ -390,6 +402,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedUserId = forwardUserSelect ? forwardUserSelect.value : '';
     const selectedUserObj = allAdminUsers.find(u => u._id === selectedUserId);
     const { type, id } = currentForwardTarget;
+    const msgInput = document.getElementById('forwardMessageInput');
+    const messageVal = msgInput ? msgInput.value.trim() : '';
 
     try {
       const confirmBtn = confirmForwardBtn;
@@ -397,13 +411,16 @@ document.addEventListener('DOMContentLoaded', () => {
       confirmBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;"></span> Forwarding...</span>';
       confirmBtn.disabled = true;
 
-      // Build FormData to support file attachments & person assignment
+      // Build FormData to support file attachments & person assignment & written message
       const formData = new FormData();
       formData.append('newRole', newRole);
       if (selectedUserObj) {
         formData.append('assignedToAdminId', selectedUserObj._id);
         formData.append('assignedToAdminName', selectedUserObj.fullName);
         formData.append('assignedToAdminEmail', selectedUserObj.email);
+      }
+      if (messageVal) {
+        formData.append('message', messageVal);
       }
       if (typeof forwardSelectedFiles !== 'undefined' && forwardSelectedFiles.length > 0) {
         forwardSelectedFiles.forEach(file => formData.append('attachments', file));
@@ -428,10 +445,14 @@ document.addEventListener('DOMContentLoaded', () => {
           if (res.data && res.data.forwardAttachments) {
             allRegistrations[index].forwardAttachments = res.data.forwardAttachments;
           }
+          if (res.data && res.data.forwardNotes) {
+            allRegistrations[index].forwardNotes = res.data.forwardNotes;
+          }
         }
         renderRegistrations();
         updateSidebarBadges();
         forwardModal.style.display = 'none';
+        if (msgInput) msgInput.value = '';
         // Reset file selection
         if (typeof forwardSelectedFiles !== 'undefined') {
           forwardSelectedFiles = [];
@@ -539,6 +560,33 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>`;
       }
 
+      // Forward Notes / Written Messages section
+      let forwardNotesHtml = '';
+      if (reg.forwardNotes && reg.forwardNotes.length > 0) {
+        const notesContent = reg.forwardNotes.map(n => {
+          const author = `${n.authorName || 'Admin'}${n.authorRole ? ` (${n.authorRole})` : ''}`;
+          const formattedDate = n.date ? new Date(n.date).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+          return `
+            <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 0.75rem 1rem; margin-top: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; font-size: 0.78rem;">
+                <span style="font-weight: 700; color: var(--primary);">${author}</span>
+                <span style="color: #9CA3AF;">${formattedDate}</span>
+              </div>
+              <div style="font-size: 0.875rem; color: #334155; white-space: pre-wrap; line-height: 1.45;">${n.note}</div>
+            </div>
+          `;
+        }).join('');
+
+        forwardNotesHtml = `
+          <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 8px; padding: 1rem 1.25rem; margin-top: 0.25rem;">
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#D97706" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+              <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#D97706;">Admin Written Messages (${reg.forwardNotes.length})</span>
+            </div>
+            ${notesContent}
+          </div>`;
+      }
+
       return `
         <div style="background: white; border: 1px solid #E5E7EB; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); transition: box-shadow 0.3s ease, transform 0.3s ease;"
              onmouseover="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'; this.style.transform='translateY(-2px)'"
@@ -642,6 +690,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ${docsHtml}
           </div>
           ${forwardAttachmentsHtml}
+          ${forwardNotesHtml}
           
           ${(() => {
             // Normalize verifiedBy — old DB docs may store a plain object instead of an array
@@ -704,6 +753,9 @@ document.addEventListener('DOMContentLoaded', () => {
   window.openVerifyForwardModal = (type, id) => {
     currentVerifyForwardTarget = { type, id };
     
+    const vMsgInput = document.getElementById('verifyForwardMessageInput');
+    if (vMsgInput) vMsgInput.value = '';
+
     // Populate select, exclude current user's role
     if (verifyForwardRoleSelect) {
       const roles = ADMIN_ROLES.filter(role => role !== user.role);
@@ -728,6 +780,8 @@ document.addEventListener('DOMContentLoaded', () => {
     cancelVerifyForwardBtn.addEventListener('click', () => {
       if (verifyForwardModal) verifyForwardModal.style.display = 'none';
       currentVerifyForwardTarget = null;
+      const vMsgInput = document.getElementById('verifyForwardMessageInput');
+      if (vMsgInput) vMsgInput.value = '';
     });
   }
 
@@ -737,7 +791,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const newRole = verifyForwardRoleSelect.value;
       const selectedUserId = verifyForwardUserSelect ? verifyForwardUserSelect.value : '';
       const selectedUserObj = allAdminUsers.find(u => u._id === selectedUserId);
-      
+      const vMsgInput = document.getElementById('verifyForwardMessageInput');
+      const vMessageVal = vMsgInput ? vMsgInput.value.trim() : '';
+
       confirmVerifyForwardBtn.innerHTML = 'Verifying...';
       confirmVerifyForwardBtn.disabled = true;
 
@@ -748,6 +804,9 @@ document.addEventListener('DOMContentLoaded', () => {
           formData.append('assignedToAdminId', selectedUserObj._id);
           formData.append('assignedToAdminName', selectedUserObj.fullName);
           formData.append('assignedToAdminEmail', selectedUserObj.email);
+        }
+        if (vMessageVal) {
+          formData.append('message', vMessageVal);
         }
         if (typeof verifyForwardSelectedFiles !== 'undefined' && verifyForwardSelectedFiles.length > 0) {
           verifyForwardSelectedFiles.forEach(file => formData.append('attachments', file));
@@ -765,6 +824,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (response.ok && data.success) {
           alert('Successfully verified and forwarded!');
           if (verifyForwardModal) verifyForwardModal.style.display = 'none';
+          if (vMsgInput) vMsgInput.value = '';
           if (typeof verifyForwardSelectedFiles !== 'undefined') {
             verifyForwardSelectedFiles = [];
             const list = document.getElementById('verifyForwardFileList');
@@ -1466,4 +1526,362 @@ document.addEventListener('DOMContentLoaded', () => {
   if (exportSearchInput)  exportSearchInput.addEventListener('input', renderExportList);
   if (exportFilterSelect) exportFilterSelect.addEventListener('change', renderExportList);
 
+  // ─── ADMIN DIRECT MESSAGES & FILES MODULE ──────────────────────────────────
+  const navAdminMessages = document.getElementById('nav-admin-messages');
+  const adminMessagesSection = document.getElementById('adminMessagesSection');
+  const adminMessagesContainer = document.getElementById('adminMessagesContainer');
+  const openSendAdminMsgBtn = document.getElementById('openSendAdminMsgBtn');
+  const refreshAdminMsgBtn = document.getElementById('refreshAdminMsgBtn');
+  const sendAdminMessageModal = document.getElementById('sendAdminMessageModal');
+  const cancelSendAdminMsgBtn = document.getElementById('cancelSendAdminMsgBtn');
+  const confirmSendAdminMsgBtn = document.getElementById('confirmSendAdminMsgBtn');
+  const adminMsgRoleSelect = document.getElementById('adminMsgRoleSelect');
+  const adminMsgUserSelect = document.getElementById('adminMsgUserSelect');
+  const adminMsgSubjectInput = document.getElementById('adminMsgSubjectInput');
+  const adminMsgTextInput = document.getElementById('adminMsgTextInput');
+  const adminMsgSearchInput = document.getElementById('adminMsgSearchInput');
+  const adminMsgFilterTabs = document.querySelectorAll('.admin-msg-filter-btn');
+
+  let allAdminMessages = [];
+  let currentAdminMsgFilter = 'all';
+
+  // Navigation switching
+  if (navAdminMessages) {
+    navAdminMessages.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      navAdminMessages.classList.add('active');
+
+      if (dashboardSection) dashboardSection.style.display = 'none';
+      if (registrationsSection) registrationsSection.style.display = 'none';
+      if (gallerySection) gallerySection.style.display = 'none';
+      if (adminMessagesSection) adminMessagesSection.style.display = 'block';
+
+      fetchAdminMessages();
+    });
+  }
+
+  // Ensure clicking other nav items hides adminMessagesSection
+  document.querySelectorAll('.nav-item').forEach(nav => {
+    if (nav.id === 'nav-admin-messages') return;
+    nav.addEventListener('click', () => {
+      if (adminMessagesSection) adminMessagesSection.style.display = 'none';
+    });
+  });
+
+  // Populate recipient role select in modal
+  const populateMsgRoleOptions = () => {
+    if (!adminMsgRoleSelect) return;
+    let rolesHtml = `<option value="All">All Admins (Broadcast)</option>`;
+    rolesHtml += ADMIN_ROLES.map(r => `<option value="${r}">${r}</option>`).join('');
+    adminMsgRoleSelect.innerHTML = rolesHtml;
+    populateMsgUserSelect('All');
+  };
+
+  const populateMsgUserSelect = (selectedRole) => {
+    if (!adminMsgUserSelect) return;
+    let matchingAdmins = allAdminUsers;
+    if (selectedRole !== 'All') {
+      matchingAdmins = allAdminUsers.filter(u => u.role === selectedRole);
+    }
+    
+    if (matchingAdmins.length === 0) {
+      adminMsgUserSelect.innerHTML = `<option value="">Any admin in role (No registered admins)</option>`;
+    } else {
+      let optionsHtml = `<option value="">Any admin in role (${matchingAdmins.length} available)</option>`;
+      optionsHtml += matchingAdmins.map(u => {
+        const isCurrent = user && (u._id === user._id || u.email === user.email);
+        return `<option value="${u._id}">${u.fullName} (${u.role})${isCurrent ? ' - You' : ''}</option>`;
+      }).join('');
+      adminMsgUserSelect.innerHTML = optionsHtml;
+    }
+  };
+
+  if (adminMsgRoleSelect) {
+    adminMsgRoleSelect.addEventListener('change', (e) => {
+      populateMsgUserSelect(e.target.value);
+    });
+  }
+
+  // Open compose modal
+  if (openSendAdminMsgBtn) {
+    openSendAdminMsgBtn.addEventListener('click', async () => {
+      if (allAdminUsers.length === 0) {
+        await fetchAdminUsers();
+      }
+      populateMsgRoleOptions();
+      if (adminMsgSubjectInput) adminMsgSubjectInput.value = '';
+      if (adminMsgTextInput) adminMsgTextInput.value = '';
+      if (typeof adminMsgSelectedFiles !== 'undefined') {
+        adminMsgSelectedFiles = [];
+        if (typeof renderAdminMsgFileList === 'function') renderAdminMsgFileList();
+      }
+      if (sendAdminMessageModal) sendAdminMessageModal.style.display = 'flex';
+    });
+  }
+
+  // Close compose modal
+  if (cancelSendAdminMsgBtn) {
+    cancelSendAdminMsgBtn.addEventListener('click', () => {
+      if (sendAdminMessageModal) sendAdminMessageModal.style.display = 'none';
+      if (adminMsgSubjectInput) adminMsgSubjectInput.value = '';
+      if (adminMsgTextInput) adminMsgTextInput.value = '';
+      if (typeof adminMsgSelectedFiles !== 'undefined') {
+        adminMsgSelectedFiles = [];
+        if (typeof renderAdminMsgFileList === 'function') renderAdminMsgFileList();
+      }
+    });
+  }
+
+  // Confirm Send Message
+  if (confirmSendAdminMsgBtn) {
+    confirmSendAdminMsgBtn.addEventListener('click', async () => {
+      const recipientRole = adminMsgRoleSelect ? adminMsgRoleSelect.value : 'All';
+      const selectedUserId = adminMsgUserSelect ? adminMsgUserSelect.value : '';
+      const selectedUserObj = allAdminUsers.find(u => u._id === selectedUserId);
+      const subject = adminMsgSubjectInput ? adminMsgSubjectInput.value.trim() : '';
+      const message = adminMsgTextInput ? adminMsgTextInput.value.trim() : '';
+
+      if (!message) {
+        alert('Please enter a message text.');
+        return;
+      }
+
+      confirmSendAdminMsgBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;"></span> Sending...</span>';
+      confirmSendAdminMsgBtn.disabled = true;
+
+      try {
+        const formData = new FormData();
+        formData.append('recipientRole', recipientRole);
+        if (selectedUserObj) {
+          formData.append('recipientAdminId', selectedUserObj._id);
+          formData.append('recipientAdminName', selectedUserObj.fullName);
+          formData.append('recipientAdminEmail', selectedUserObj.email);
+        }
+        if (subject) formData.append('subject', subject);
+        formData.append('message', message);
+
+        if (typeof adminMsgSelectedFiles !== 'undefined' && adminMsgSelectedFiles.length > 0) {
+          adminMsgSelectedFiles.forEach(file => formData.append('attachments', file));
+        }
+
+        const token = getAuthToken();
+        const response = await fetch(`${API_BASE}/api/admin/messages`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+
+        const resData = await response.json();
+
+        if (response.ok && resData.success) {
+          alert('Message sent successfully!');
+          if (sendAdminMessageModal) sendAdminMessageModal.style.display = 'none';
+          if (adminMsgSubjectInput) adminMsgSubjectInput.value = '';
+          if (adminMsgTextInput) adminMsgTextInput.value = '';
+          if (typeof adminMsgSelectedFiles !== 'undefined') {
+            adminMsgSelectedFiles = [];
+            if (typeof renderAdminMsgFileList === 'function') renderAdminMsgFileList();
+          }
+          fetchAdminMessages();
+        } else {
+          alert(resData.error || 'Failed to send message');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('An error occurred while sending message');
+      } finally {
+        confirmSendAdminMsgBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Send Message';
+        confirmSendAdminMsgBtn.disabled = false;
+      }
+    });
+  }
+
+  // Fetch admin messages
+  const fetchAdminMessages = async () => {
+    if (!adminMessagesContainer) return;
+    try {
+      adminMessagesContainer.innerHTML = '<div style="padding: 2rem; text-align: center;"><div class="spinner"></div> Loading messages...</div>';
+      const token = getAuthToken();
+      const res = await fetch(`${API_BASE}/api/admin/messages`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        allAdminMessages = data;
+        renderAdminMessages();
+      } else {
+        adminMessagesContainer.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--danger);">Failed to load messages.</div>';
+      }
+    } catch (err) {
+      console.error('Fetch admin messages error:', err);
+      adminMessagesContainer.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--danger);">Error connecting to backend server.</div>';
+    }
+  };
+
+  // Filter tabs click handlers
+  adminMsgFilterTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      adminMsgFilterTabs.forEach(t => {
+        t.classList.remove('active');
+        t.style.background = '#F3F4F6';
+        t.style.color = '#4B5563';
+      });
+      tab.classList.add('active');
+      tab.style.background = 'var(--primary)';
+      tab.style.color = 'white';
+      currentAdminMsgFilter = tab.getAttribute('data-msg-filter');
+      renderAdminMessages();
+    });
+  });
+
+  if (adminMsgSearchInput) {
+    adminMsgSearchInput.addEventListener('input', () => {
+      renderAdminMessages();
+    });
+  }
+
+  if (refreshAdminMsgBtn) {
+    refreshAdminMsgBtn.addEventListener('click', fetchAdminMessages);
+  }
+
+  // Render Admin Messages
+  const renderAdminMessages = () => {
+    if (!adminMessagesContainer) return;
+
+    const searchTerm = adminMsgSearchInput ? adminMsgSearchInput.value.toLowerCase().trim() : '';
+
+    let filtered = allAdminMessages.filter(m => {
+      const isSentByMe = user && (m.senderId === user._id || m.senderEmail === user.email);
+      if (currentAdminMsgFilter === 'inbox' && isSentByMe) return false;
+      if (currentAdminMsgFilter === 'sent' && !isSentByMe) return false;
+
+      if (searchTerm) {
+        const textMatch = (m.message || '').toLowerCase().includes(searchTerm);
+        const subjectMatch = (m.subject || '').toLowerCase().includes(searchTerm);
+        const senderMatch = (m.senderName || '').toLowerCase().includes(searchTerm) || (m.senderRole || '').toLowerCase().includes(searchTerm);
+        return textMatch || subjectMatch || senderMatch;
+      }
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      adminMessagesContainer.innerHTML = `
+        <div style="padding: 3rem; text-align: center; color: var(--text-muted); background: white; border-radius: 12px; border: 1px solid var(--border);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" stroke-width="1.5" style="margin-bottom: 0.5rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+          <div style="font-weight: 600; font-size: 0.95rem; color: #374151;">No admin messages found</div>
+          <p style="font-size: 0.8rem; margin-top: 0.25rem;">Send a direct message or share files with admins using the button above.</p>
+        </div>`;
+      return;
+    }
+
+    adminMessagesContainer.innerHTML = filtered.map(m => {
+      const isSentByMe = user && (m.senderId === user._id || m.senderEmail === user.email);
+      const isSecretaryOrPresident = user && (user.role === 'Secretary' || user.role === 'President');
+      const canDelete = isSentByMe || isSecretaryOrPresident;
+
+      const formattedDate = m.createdAt
+        ? new Date(m.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : '';
+
+      const recipientText = m.recipientAdminName
+        ? `${m.recipientAdminName} (${m.recipientRole})`
+        : (m.recipientRole === 'All' ? 'All Admins' : `Role: ${m.recipientRole}`);
+
+      // Attachments HTML
+      let attachmentsHtml = '';
+      if (m.attachments && m.attachments.length > 0) {
+        const attachLinks = m.attachments.map((attachment, idx) => {
+          const isObject = typeof attachment === 'object' && attachment !== null;
+          const url = isObject ? attachment.url : attachment;
+          const name = isObject && attachment.name ? attachment.name : `Attachment ${idx + 1}`;
+          
+          const isPdf = url.toLowerCase().includes('.pdf') || url.includes('/raw/');
+          const icon = isPdf
+            ? `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#EF4444" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#3B82F6" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
+          
+          const style = isPdf
+            ? "display:inline-flex; align-items:center; gap:5px; color:#EF4444; text-decoration:none; font-weight:600; font-size:0.8rem; background:rgba(239,68,68,0.08); padding:5px 12px; border-radius:6px; transition:all 0.2s;"
+            : "display:inline-flex; align-items:center; gap:5px; color:#3B82F6; text-decoration:none; font-weight:600; font-size:0.8rem; background:rgba(59,130,246,0.08); padding:5px 12px; border-radius:6px; transition:all 0.2s;";
+
+          return `<a href="${url}" target="_blank" style="${style}" title="${name}">${icon} ${name}</a>`;
+        }).join('');
+
+        attachmentsHtml = `
+          <div style="margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed #E2E8F0; display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #64748B; letter-spacing: 0.05em;">Attachments (${m.attachments.length})</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">${attachLinks}</div>
+          </div>`;
+      }
+
+      return `
+        <div style="background: white; border: 1px solid #E5E7EB; border-radius: 12px; padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative;">
+          <!-- Top Header -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.75rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <div style="width: 40px; height: 40px; border-radius: 50%; background: ${isSentByMe ? 'var(--primary)' : '#3B82F6'}; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; flex-shrink: 0;">
+                ${(m.senderName || 'A').charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <div style="font-size: 0.95rem; font-weight: 700; color: #111827; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                  ${m.senderName}
+                  <span style="font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 12px; background: #F3F4F6; color: #4B5563;">${m.senderRole}</span>
+                  ${isSentByMe ? '<span style="font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; background: rgba(27,67,50,0.1); color: var(--primary);">You</span>' : ''}
+                </div>
+                <div style="font-size: 0.85rem; color: #6B7280; display: flex; align-items: center; gap: 0.35rem; margin-top: 2px;">
+                  <span>To: <strong style="color: #374151;">${recipientText}</strong></span>
+                  <span>•</span>
+                  <span>${formattedDate}</span>
+                </div>
+              </div>
+            </div>
+
+            ${canDelete ? `
+              <button onclick="window.deleteAdminMessage('${m._id}')" style="background: transparent; border: none; cursor: pointer; color: #9CA3AF; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: color 0.2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='#9CA3AF'" title="Delete Message">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            ` : ''}
+          </div>
+
+          <!-- Subject Line -->
+          ${m.subject ? `
+            <div style="font-size: 1rem; font-weight: 700; color: #1E293B; margin-top: 0.25rem;">
+              ${m.subject}
+            </div>
+          ` : ''}
+
+          <!-- Written Message Body -->
+          <div style="font-size: 0.92rem; color: #334155; white-space: pre-wrap; line-height: 1.5; background: #F8FAFC; padding: 0.85rem 1rem; border-radius: 8px; border: 1px solid #F1F5F9;">
+            ${m.message}
+          </div>
+
+          <!-- Attachments -->
+          ${attachmentsHtml}
+        </div>
+      `;
+    }).join('');
+  };
+
+  // Delete message window function
+  window.deleteAdminMessage = async (id) => {
+    if (!confirm('Are you sure you want to delete this message?')) return;
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_BASE}/api/admin/messages/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        allAdminMessages = allAdminMessages.filter(m => m._id !== id);
+        renderAdminMessages();
+      } else {
+        alert(data.error || 'Failed to delete message');
+      }
+    } catch (err) {
+      console.error('Delete message error:', err);
+      alert('An error occurred while deleting message');
+    }
+  };
 });

@@ -47,6 +47,7 @@ app.get('/', (req, res) => {
 
 // MongoDB Connection
 const JWT_SECRET = process.env.JWT_SECRET || 'udyam-admin-secret-change-in-production';
+const ADMIN_SECRET_KEY = process.env.ADMIN_SECRET_KEY || 'Udyam@2026';
 
 const userPaymentSchema = new mongoose.Schema({
   fullName: String,
@@ -101,6 +102,7 @@ const volunteerSchema = new mongoose.Schema({
   assignedToAdminName: { type: String, default: null },
   assignedToAdminEmail: { type: String, default: null },
   forwardAttachments: [mongoose.Schema.Types.Mixed],
+  forwardNotes: [{ note: String, authorName: String, authorRole: String, date: { type: Date, default: Date.now } }],
   verifiedBy: [{ name: String, role: String, date: { type: Date, default: Date.now } }],
   issueText: String,
   date: { type: Date, default: Date.now }
@@ -123,6 +125,7 @@ const employeeSchema = new mongoose.Schema({
   assignedToAdminName: { type: String, default: null },
   assignedToAdminEmail: { type: String, default: null },
   forwardAttachments: [mongoose.Schema.Types.Mixed],
+  forwardNotes: [{ note: String, authorName: String, authorRole: String, date: { type: Date, default: Date.now } }],
   verifiedBy: [{ name: String, role: String, date: { type: Date, default: Date.now } }],
   issueText: String,
   date: { type: Date, default: Date.now }
@@ -150,6 +153,7 @@ const memberSchema = new mongoose.Schema({
   assignedToAdminName: { type: String, default: null },
   assignedToAdminEmail: { type: String, default: null },
   forwardAttachments: [mongoose.Schema.Types.Mixed],
+  forwardNotes: [{ note: String, authorName: String, authorRole: String, date: { type: Date, default: Date.now } }],
   verifiedBy: [{ name: String, role: String, date: { type: Date, default: Date.now } }],
   issueText: String,
   date: { type: Date, default: Date.now }
@@ -163,13 +167,31 @@ const galleryPhotoSchema = new mongoose.Schema({
   date: { type: String, default: '' }
 }, { collection: 'gallery' });
 
-let AdminUser, Volunteer, Employee, Member, GalleryPhoto;
+const adminMessageSchema = new mongoose.Schema({
+  senderId: { type: String, required: true },
+  senderName: { type: String, required: true },
+  senderEmail: { type: String, required: true },
+  senderRole: { type: String, required: true },
+  
+  recipientRole: { type: String, required: true },
+  recipientAdminId: { type: String, default: null },
+  recipientAdminName: { type: String, default: null },
+  recipientAdminEmail: { type: String, default: null },
+  
+  subject: { type: String, default: '' },
+  message: { type: String, required: true },
+  attachments: [mongoose.Schema.Types.Mixed],
+  createdAt: { type: Date, default: Date.now }
+}, { collection: 'admin_messages' });
+
+let AdminUser, Volunteer, Employee, Member, GalleryPhoto, AdminMessage;
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('Connected to MongoDB');
     const superAdminDb = mongoose.connection.useDb('Super_admin');
     AdminUser = superAdminDb.model('AdminUser', adminUserSchema);
+    AdminMessage = superAdminDb.model('AdminMessage', adminMessageSchema);
 
     const registrationDb = mongoose.connection.useDb('Registration');
     Volunteer = registrationDb.model('Volunteer', volunteerSchema);
@@ -407,7 +429,11 @@ app.post('/api/auth/signup', upload.single('photo'), async (req, res) => {
       return res.status(503).json({ error: 'Database not ready. Please try again.' });
     }
 
-    const { fullName, phone, email, password, role } = req.body;
+    const { fullName, phone, email, password, role, adminPasscode } = req.body;
+
+    if (!adminPasscode || adminPasscode.trim() !== ADMIN_SECRET_KEY) {
+      return res.status(403).json({ error: 'Invalid Master Admin Key. You are not authorized to create an admin account.' });
+    }
 
     if (!fullName?.trim() || !phone?.trim() || !email?.trim() || !password || !role) {
       return res.status(400).json({ error: 'All fields are required' });
@@ -1050,7 +1076,7 @@ app.patch(
   async (req, res) => {
     try {
       const { type, id } = req.params;
-      const { newRole, assignedToAdminId, assignedToAdminName, assignedToAdminEmail } = req.body;
+      const { newRole, assignedToAdminId, assignedToAdminName, assignedToAdminEmail, message } = req.body;
 
       if (!ADMIN_ROLES.includes(newRole)) {
         return res.status(400).json({ error: 'Invalid role for forwarding' });
@@ -1067,27 +1093,34 @@ app.patch(
         assignedToAdminEmail: assignedToAdminEmail || null,
         status: 'forwarded'
       };
-      const pushFields = attachmentUrls.length > 0 ? { forwardAttachments: { $each: attachmentUrls } } : null;
+
+      const pushFields = {};
+      if (attachmentUrls.length > 0) {
+        pushFields.forwardAttachments = { $each: attachmentUrls };
+      }
+      if (message && message.trim()) {
+        pushFields.forwardNotes = {
+          $each: [{
+            note: message.trim(),
+            authorName: req.user.fullName || 'Admin',
+            authorRole: req.user.role || '',
+            date: new Date()
+          }]
+        };
+      }
+
+      const updatePayload = {
+        $set: setFields,
+        ...(Object.keys(pushFields).length > 0 && { $push: pushFields })
+      };
 
       let updatedDoc;
       if (type === 'volunteer') {
-        updatedDoc = await Volunteer.findByIdAndUpdate(
-          id,
-          { $set: setFields, ...(pushFields && { $push: pushFields }) },
-          { new: true }
-        );
+        updatedDoc = await Volunteer.findByIdAndUpdate(id, updatePayload, { new: true });
       } else if (type === 'employee') {
-        updatedDoc = await Employee.findByIdAndUpdate(
-          id,
-          { $set: setFields, ...(pushFields && { $push: pushFields }) },
-          { new: true }
-        );
+        updatedDoc = await Employee.findByIdAndUpdate(id, updatePayload, { new: true });
       } else if (type === 'member') {
-        updatedDoc = await Member.findByIdAndUpdate(
-          id,
-          { $set: setFields, ...(pushFields && { $push: pushFields }) },
-          { new: true }
-        );
+        updatedDoc = await Member.findByIdAndUpdate(id, updatePayload, { new: true });
       } else {
         return res.status(400).json({ error: 'Invalid type' });
       }
@@ -1144,7 +1177,7 @@ app.patch(
   async (req, res) => {
     try {
       const { type, id } = req.params;
-      const { newRole, assignedToAdminId, assignedToAdminName, assignedToAdminEmail } = req.body;
+      const { newRole, assignedToAdminId, assignedToAdminName, assignedToAdminEmail, message } = req.body;
       const userName = req.user.fullName || 'Unknown Member';
       const userRole = req.user.role || 'Member';
 
@@ -1167,6 +1200,17 @@ app.patch(
 
       if (attachmentUrls.length > 0) {
         pushFields.forwardAttachments = { $each: attachmentUrls };
+      }
+
+      if (message && message.trim()) {
+        pushFields.forwardNotes = {
+          $each: [{
+            note: message.trim(),
+            authorName: userName,
+            authorRole: userRole,
+            date: new Date()
+          }]
+        };
       }
 
       const updateData = {
@@ -1430,17 +1474,117 @@ app.put('/api/admin/profile', authMiddleware, upload.single('photo'), async (req
     }
     await user.save();
 
-    // Generate new token to reflect updated name/phone in payload if necessary
-    const token = jwt.sign(
-      { id: user._id, email: user.email, fullName: user.fullName, role: user.role, photo: user.photo },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
     res.json({ success: true, message: 'Profile updated successfully', user: { fullName: user.fullName, email: user.email, role: user.role, phone: user.phone, photo: user.photo }, token });
   } catch (error) {
     console.error('Error updating profile:', error);
     res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+// ─── Admin Direct Messages API Endpoints ─────────────────────────────────────
+
+// Fetch messages relevant to the current user (sent or received)
+app.get('/api/admin/messages', authMiddleware, async (req, res) => {
+  try {
+    if (!AdminMessage) return res.status(503).json({ error: 'Database not ready' });
+    
+    const userId = req.user.id;
+    const userRole = req.user.role;
+    const userEmail = req.user.email;
+
+    const query = {
+      $or: [
+        { senderId: userId },
+        { recipientAdminId: userId },
+        { recipientAdminEmail: userEmail },
+        { recipientRole: userRole },
+        { recipientRole: 'All' }
+      ]
+    };
+
+    const messages = await AdminMessage.find(query).sort({ createdAt: -1 }).lean();
+    res.json(messages);
+  } catch (error) {
+    console.error('Error fetching admin messages:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Post a new direct message/attachment to any admin or role
+app.post(
+  '/api/admin/messages',
+  authMiddleware,
+  uploadForwardAttachments.array('attachments', 10),
+  async (req, res) => {
+    try {
+      if (!AdminMessage || !AdminUser) return res.status(503).json({ error: 'Database not ready' });
+
+      const sender = await AdminUser.findById(req.user.id).select('fullName email role');
+      if (!sender) return res.status(404).json({ error: 'Sender user not found' });
+
+      const { recipientRole, recipientAdminId, recipientAdminName, recipientAdminEmail, subject, message } = req.body;
+
+      if (!message || message.trim() === '') {
+        return res.status(400).json({ error: 'Message text is required' });
+      }
+
+      if (!recipientRole) {
+        return res.status(400).json({ error: 'Recipient role is required' });
+      }
+
+      const attachments = req.files ? req.files.map(f => ({
+        url: f.path,
+        name: f.originalname || 'Attachment',
+        type: f.mimetype || (f.path.includes('.pdf') ? 'application/pdf' : 'image/jpeg')
+      })) : [];
+
+      const newMsg = new AdminMessage({
+        senderId: sender._id.toString(),
+        senderName: sender.fullName,
+        senderEmail: sender.email,
+        senderRole: sender.role,
+        
+        recipientRole: recipientRole,
+        recipientAdminId: recipientAdminId || null,
+        recipientAdminName: recipientAdminName || null,
+        recipientAdminEmail: recipientAdminEmail || null,
+        
+        subject: subject ? subject.trim() : '',
+        message: message.trim(),
+        attachments,
+        createdAt: new Date()
+      });
+
+      await newMsg.save();
+
+      res.status(201).json({ success: true, message: 'Message sent successfully', data: newMsg });
+    } catch (error) {
+      console.error('Error sending admin message:', error);
+      res.status(500).json({ error: 'Failed to send message' });
+    }
+  }
+);
+
+// Delete an admin message
+app.delete('/api/admin/messages/:id', authMiddleware, async (req, res) => {
+  try {
+    if (!AdminMessage) return res.status(503).json({ error: 'Database not ready' });
+
+    const msg = await AdminMessage.findById(req.params.id);
+    if (!msg) return res.status(404).json({ error: 'Message not found' });
+
+    const isSender = msg.senderId === req.user.id;
+    const isSecretaryOrPresident = req.user.role === 'Secretary' || req.user.role === 'President';
+
+    if (!isSender && !isSecretaryOrPresident) {
+      return res.status(403).json({ error: 'Not authorized to delete this message' });
+    }
+
+    await AdminMessage.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Message deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting admin message:', error);
+    res.status(500).json({ error: 'Failed to delete message' });
   }
 });
 
