@@ -66,15 +66,15 @@ app.get('/api/test-email', async (req, res) => {
       text: 'If you receive this email, your server email configuration is working perfectly!',
       html: '<h3>Udyam Social Development Foundation</h3><p>Your server email configuration is working perfectly!</p>'
     });
-    res.json({ success: true, messageId: info.messageId, emailUser: process.env.EMAIL_USER });
+    res.json({ success: true, messageId: info.messageId, emailUser: EMAIL_USER });
   } catch (err) {
     res.status(500).json({
       success: false,
       error: err.message,
       code: err.code,
       command: err.command,
-      emailUser: process.env.EMAIL_USER ? process.env.EMAIL_USER : 'MISSING',
-      hasPassword: Boolean(process.env.EMAIL_APP_PASSWORD)
+      emailUser: EMAIL_USER,
+      hasPassword: Boolean(EMAIL_APP_PASSWORD)
     });
   }
 });
@@ -559,11 +559,14 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+const EMAIL_USER = process.env.EMAIL_USER || 'udyamsdf2022@gmail.com';
+const EMAIL_APP_PASSWORD = process.env.EMAIL_APP_PASSWORD || 'dzjmvpoiopgolmpy';
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_APP_PASSWORD
+    user: EMAIL_USER,
+    pass: EMAIL_APP_PASSWORD
   }
 });
 
@@ -577,7 +580,7 @@ const ORG = {
   reg80G: 'AAETU1234F/80G/2024-25',
   reg12A: 'AAETU1234F/12A/2024-25',
   website: 'udyamfoundation.org',
-  email: process.env.EMAIL_USER || 'support@udyamfoundation.org',
+  email: EMAIL_USER,
 };
 
 function formatIndianAmount(amount) {
@@ -900,8 +903,8 @@ async function sendDonationConfirmationEmail(donor) {
 </html>`;
 
   const mailOptions = {
-    from: `"Udyam Social Development Foundation" <${process.env.EMAIL_USER}>`,
-    replyTo: process.env.EMAIL_USER,
+    from: `"Udyam Social Development Foundation" <${EMAIL_USER}>`,
+    replyTo: EMAIL_USER,
     to: donor.email,
     subject: `💚 Donation Confirmed — ${amountFormatted} | Receipt ${receiptNo}`,
     text: `Dear ${donor.fullName},\n\nThank you for your generous donation of ${amountFormatted} to Udyam Social Development Foundation!\n\nReceipt No: ${receiptNo}\nPayment ID: ${donor.paymentId}\nAmount: ${amountFormatted}\n\nYour official receipt is attached to this email. Please save it for your records.\n\nWith gratitude,\nUdyam Social Development Foundation Team`,
