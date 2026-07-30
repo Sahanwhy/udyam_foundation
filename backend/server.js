@@ -55,6 +55,30 @@ app.get('/', (req, res) => {
   res.json({ status: 'active', message: 'Udyam Foundation Backend is running!' });
 });
 
+// Diagnostic route for testing email configuration
+app.get('/api/test-email', async (req, res) => {
+  try {
+    const testEmail = req.query.email || 'sahanhasn205@gmail.com';
+    const info = await transporter.sendMail({
+      from: `"Udyam Social Development Foundation" <${process.env.EMAIL_USER || 'udyamsdf2022@gmail.com'}>`,
+      to: testEmail,
+      subject: 'Test Receipt Email from Udyam Foundation Server',
+      text: 'If you receive this email, your server email configuration is working perfectly!',
+      html: '<h3>Udyam Social Development Foundation</h3><p>Your server email configuration is working perfectly!</p>'
+    });
+    res.json({ success: true, messageId: info.messageId, emailUser: process.env.EMAIL_USER });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message,
+      code: err.code,
+      command: err.command,
+      emailUser: process.env.EMAIL_USER ? process.env.EMAIL_USER : 'MISSING',
+      hasPassword: Boolean(process.env.EMAIL_APP_PASSWORD)
+    });
+  }
+});
+
 // MongoDB Connection
 const JWT_SECRET = process.env.JWT_SECRET || 'udyam-admin-secret-change-in-production';
 const ADMIN_SECRET_KEY = process.env.ADMIN_SECRET_KEY || 'Udyam@2026';
