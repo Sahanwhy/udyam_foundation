@@ -737,6 +737,12 @@ document.addEventListener('DOMContentLoaded', () => {
               <button onclick="window.updateRegStatus('${reg.type}', '${reg._id}', 'accepted')" style="flex:1; min-width:110px; padding:0.6rem 1rem; background:var(--success); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">✓ Final Accept</button>
               <button onclick="window.updateRegStatus('${reg.type}', '${reg._id}', 'rejected')" style="flex:1; min-width:110px; padding:0.6rem 1rem; background:white; color:var(--danger); border:1px solid var(--danger); border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.background='var(--danger)'; this.style.color='white'" onmouseout="this.style.background='white'; this.style.color='var(--danger)'">✕ Final Reject</button>
               <button onclick="window.openForwardModal('${reg.type}', '${reg._id}')" style="flex:1; min-width:110px; padding:0.6rem 1rem; background:#3B82F6; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">→ Forward</button>
+              <button onclick="window.deleteRegistration('${reg.type}', '${reg._id}', '${reg.fullName.replace(/'/g, "&apos;")}')" style="padding:0.6rem 1rem; background:white; color:#DC2626; border:1.5px solid #DC2626; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s; display:inline-flex; align-items:center; gap:5px;" onmouseover="this.style.background='#DC2626'; this.style.color='white'" onmouseout="this.style.background='white'; this.style.color='#DC2626'"><svg xmlns='http://www.w3.org/2000/svg' width='13' height='13' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14H6L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4h6v2'/></svg>Delete</button>
+            </div>` : ''}
+
+          ${(user.role === 'Secretary' || user.role === 'President') && ['accepted', 'rejected'].includes(currentRegFilter) ? `
+            <div style="display:flex; flex-wrap:wrap; gap:0.6rem; justify-content:flex-end; border-top:1px solid #F1F5F9; padding-top:0.85rem; margin-top:0.25rem;">
+              <button onclick="window.deleteRegistration('${reg.type}', '${reg._id}', '${reg.fullName.replace(/'/g, "&apos;")}')" style="padding:0.6rem 1.1rem; background:white; color:#DC2626; border:1.5px solid #DC2626; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s; display:inline-flex; align-items:center; gap:6px;" onmouseover="this.style.background='#DC2626'; this.style.color='white'" onmouseout="this.style.background='white'; this.style.color='#DC2626'"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14H6L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4h6v2'/></svg>Delete Application</button>
             </div>` : ''}
 
           ${user.role !== 'Secretary' && user.role !== 'President' && currentRegFilter === 'forwarded' && user.role === reg.assignedToRole ? `
@@ -752,6 +758,31 @@ document.addEventListener('DOMContentLoaded', () => {
   // Expose to window for inline onclick handlers
   window.updateRegStatus = updateRegistrationStatus;
   window.openForwardModal = openForwardModal;
+
+  const deleteRegistration = async (type, id, name) => {
+    // First confirmation
+    const first = confirm(`Are you sure you want to permanently delete the registration for "${name}"?\n\nThis action cannot be undone.`);
+    if (!first) return;
+    // Second confirmation
+    const second = confirm(`⚠ Final Warning!\n\nYou are about to PERMANENTLY DELETE the application of "${name}".\n\nClick OK to confirm deletion.`);
+    if (!second) return;
+
+    try {
+      const res = await apiRequest(`/api/admin/registrations/${type}/${id}`, { method: 'DELETE' });
+      if (res.success) {
+        allRegistrations = allRegistrations.filter(r => r._id !== id);
+        renderRegistrations();
+        updateSidebarBadges();
+      } else {
+        alert(res.error || 'Failed to delete registration.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'An error occurred while deleting.');
+    }
+  };
+
+  window.deleteRegistration = deleteRegistration;
 
   const verifyForwardModal = document.getElementById('verifyForwardModal');
   const verifyForwardRoleSelect = document.getElementById('verifyForwardRoleSelect');

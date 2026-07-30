@@ -1153,6 +1153,38 @@ app.patch('/api/admin/registrations/:type/:id/status', authMiddleware, async (re
   }
 });
 
+// DELETE a registration (Secretary / President only)
+app.delete('/api/admin/registrations/:type/:id', authMiddleware, async (req, res) => {
+  try {
+    const { type, id } = req.params;
+    const adminRole = req.user && req.user.role;
+
+    if (adminRole !== 'Secretary' && adminRole !== 'President') {
+      return res.status(403).json({ error: 'Only Secretary or President can delete registrations.' });
+    }
+
+    let deletedDoc;
+    if (type === 'volunteer') {
+      deletedDoc = await Volunteer.findByIdAndDelete(id);
+    } else if (type === 'employee') {
+      deletedDoc = await Employee.findByIdAndDelete(id);
+    } else if (type === 'member') {
+      deletedDoc = await Member.findByIdAndDelete(id);
+    } else {
+      return res.status(400).json({ error: 'Invalid registration type.' });
+    }
+
+    if (!deletedDoc) {
+      return res.status(404).json({ error: 'Registration not found.' });
+    }
+
+    res.json({ success: true, message: 'Registration deleted successfully.' });
+  } catch (error) {
+    console.error('Error deleting registration:', error);
+    res.status(500).json({ error: 'Failed to delete registration.' });
+  }
+});
+
 app.patch(
   '/api/admin/registrations/:type/:id/forward',
   authMiddleware,
