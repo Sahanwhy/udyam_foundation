@@ -142,6 +142,24 @@ document.addEventListener('DOMContentLoaded', () => {
     window.generateDonationCertificate(item);
   };
 
+  window.resendReceiptEmail = async (id) => {
+    const item = window.__allPayments && window.__allPayments.find(d => String(d._id) === String(id));
+    if (!item) { alert('Donation record not found.'); return; }
+
+    const targetEmail = prompt(`Resend receipt email to:`, item.email || '');
+    if (!targetEmail || !targetEmail.trim()) return;
+
+    try {
+      const data = await apiRequest('/api/admin/resend-receipt', {
+        method: 'POST',
+        body: JSON.stringify({ id, email: targetEmail.trim() })
+      });
+      alert(data.message || 'Receipt email sent successfully!');
+    } catch (err) {
+      alert(err.message || 'Failed to send receipt email.');
+    }
+  };
+
   // --- Registrations Section Logic ---
   const ADMIN_ROLES = [
     'Executive Member',
@@ -1462,17 +1480,28 @@ document.addEventListener('DOMContentLoaded', () => {
             ${fmtCurrency(item.amount)}
           </div>
 
-          <!-- Download button -->
-          <button
-            onclick="window.downloadReceipt('${item._id}')"
-            title="Download PDF receipt"
-            style="display:inline-flex;align-items:center;gap:5px;padding:0.5rem 0.9rem;background:var(--primary);color:white;border:none;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0;transition:all 0.2s;white-space:nowrap;"
-            onmouseover="this.style.background='var(--primary-light)';this.style.transform='translateY(-1px)'"
-            onmouseout="this.style.background='var(--primary)';this.style.transform='translateY(0)'"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            PDF
-          </button>
+          <!-- Action Buttons -->
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <button
+              onclick="window.downloadReceipt('${item._id}')"
+              title="Download PDF receipt"
+              style="display:inline-flex;align-items:center;gap:5px;padding:0.5rem 0.8rem;background:var(--primary);color:white;border:none;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s;white-space:nowrap;"
+              onmouseover="this.style.background='var(--primary-light)';this.style.transform='translateY(-1px)'"
+              onmouseout="this.style.background='var(--primary)';this.style.transform='translateY(0)'"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              PDF
+            </button>
+            <button
+              onclick="window.resendReceiptEmail('${item._id}')"
+              title="Resend receipt email to donor"
+              style="display:inline-flex;align-items:center;gap:4px;padding:0.5rem 0.8rem;background:#10B981;color:white;border:none;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s;white-space:nowrap;"
+              onmouseover="this.style.background='#059669';this.style.transform='translateY(-1px)'"
+              onmouseout="this.style.background='#10B981';this.style.transform='translateY(0)'"
+            >
+              ✉️ Resend
+            </button>
+          </div>
         </div>`;
     }).join('');
   }

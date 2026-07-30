@@ -875,11 +875,12 @@ async function sendDonationConfirmationEmail(donor) {
 </body>
 </html>`;
 
-  await transporter.sendMail({
-    from: `"Udyam Foundation" <${process.env.EMAIL_USER}>`,
+  const mailOptions = {
+    from: `"Udyam Social Development Foundation" <${process.env.EMAIL_USER}>`,
+    replyTo: process.env.EMAIL_USER,
     to: donor.email,
     subject: `💚 Donation Confirmed — ${amountFormatted} | Receipt ${receiptNo}`,
-    text: `Dear ${donor.fullName},\n\nThank you for your generous donation of ${amountFormatted} to Udyam Social Development Foundation!\n\nReceipt No: ${receiptNo}\nPayment ID: ${donor.paymentId}\nAmount: ${amountFormatted}\n\nYour official receipt is attached to this email. Please save it for your records.\n\nWith gratitude,\nUdyam Foundation Team`,
+    text: `Dear ${donor.fullName},\n\nThank you for your generous donation of ${amountFormatted} to Udyam Social Development Foundation!\n\nReceipt No: ${receiptNo}\nPayment ID: ${donor.paymentId}\nAmount: ${amountFormatted}\n\nYour official receipt is attached to this email. Please save it for your records.\n\nWith gratitude,\nUdyam Social Development Foundation Team`,
     html: htmlBody,
     attachments: [
       {
@@ -888,10 +889,55 @@ async function sendDonationConfirmationEmail(donor) {
         contentType: 'application/pdf',
       }
     ]
-  });
+  };
 
-  console.log(`Donation confirmation email sent to ${donor.email}`);
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[Email Success] Receipt ${receiptNo} sent to ${donor.email} (MessageId: ${info.messageId})`);
+    return info;
+  } catch (err) {
+    console.error(`[Email Error - Attempt 1 Failed] Could not send to ${donor.email}:`, err.message);
+    await new Promise(r => setTimeout(r, 2000));
+    try {
+      const infoRetry = await transporter.sendMail(mailOptions);
+      console.log(`[Email Success - Retry] Receipt ${receiptNo} sent to ${donor.email} (MessageId: ${infoRetry.messageId})`);
+      return infoRetry;
+    } catch (retryErr) {
+      console.error(`[Email Error - Attempt 2 Failed] Retry failed for ${donor.email}:`, retryErr.message);
+      throw retryErr;
+    }
+  }
 }
+
+// ─── Resend Receipt Email Endpoint ───────────────────────────────────────────
+app.post('/api/admin/resend-receipt', async (req, res) => {
+  try {
+    const { id, paymentId, email } = req.body;
+    if (!id && !paymentId) {
+      return res.status(400).json({ error: 'Payment ID or Record ID is required' });
+    }
+
+    const query = [];
+    if (id && mongoose.Types.ObjectId.isValid(id)) query.push({ _id: id });
+    if (paymentId) query.push({ paymentId: paymentId });
+
+    const payment = await UserPayment.findOne({ $or: query });
+    if (!payment) {
+      return res.status(404).json({ error: 'Payment record not found' });
+    }
+
+    const donorData = payment.toObject();
+    if (email && email.trim()) {
+      donorData.email = email.trim();
+    }
+
+    await sendDonationConfirmationEmail(donorData);
+    res.json({ success: true, message: `Receipt email sent successfully to ${donorData.email}` });
+  } catch (error) {
+    console.error('Error resending receipt email:', error);
+    res.status(500).json({ error: error.message || 'Failed to resend receipt email' });
+  }
+});
 
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
