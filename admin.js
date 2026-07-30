@@ -625,152 +625,125 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       return `
-        <div style="background: white; border: 1px solid #E5E7EB; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); transition: box-shadow 0.3s ease, transform 0.3s ease;"
-             onmouseover="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'; this.style.transform='translateY(-2px)'"
-             onmouseout="this.style.boxShadow='0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'; this.style.transform='translateY(0)'">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
-            <div style="display: flex; gap: 1.25rem; align-items: center;">
-              ${reg.photo
-                ? `<div style="position:relative; width:64px; height:64px; flex-shrink:0; cursor:pointer;" onclick="window.openPhotoLightbox('${reg.photo.replace(/'/g, "&apos;")}', '${reg.fullName.replace(/'/g, "&apos;")}')"
-                     title="Click to view full photo">
-                    <img src="${reg.photo}" alt="Photo" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid white; box-shadow:0 0 0 2px var(--primary); display:block; transition:filter 0.2s;" />
-                    <div style="position:absolute; inset:0; border-radius:50%; background:rgba(0,0,0,0); display:flex; align-items:center; justify-content:center; transition:background 0.2s;"
-                         onmouseover="this.style.background='rgba(0,0,0,0.38)'; this.previousElementSibling.style.filter='brightness(0.7)'"
-                         onmouseout="this.style.background='rgba(0,0,0,0)'; this.previousElementSibling.style.filter='none'">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0; transition:opacity 0.2s;"
-                           onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'">
-                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                        <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
-                      </svg>
-                    </div>
-                  </div>`
-                : `<div style="width:64px; height:64px; border-radius:50%; background:#F3F4F6; color:#9CA3AF; font-size:0.8rem; font-weight:500; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 0 0 2px #D1D5DB; flex-shrink:0;">No Photo</div>`}
-              <div>
-                <h3 style="margin: 0 0 0.35rem 0; font-size: 1.2rem; font-weight: 700; color: #111827; display: flex; align-items: center; gap: 0.75rem;">
-                  ${index + 1}. ${reg.fullName} 
-                  <span style="font-size: 0.7rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; background: rgba(59, 130, 246, 0.1); color: #2563EB; text-transform: uppercase; letter-spacing: 0.5px;">${reg.type}</span>
-                </h3>
-                <div style="font-size: 0.9rem; color: #4B5563; display: flex; align-items: center; gap: 0.5rem;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                  ${reg.email} 
-                  <span style="color: #D1D5DB;">|</span> 
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                  ${reg.phone}
-                </div>
+        <div style="background: white; border: 1px solid #E5E7EB; border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.08); transition: box-shadow 0.3s ease, transform 0.3s ease; overflow: hidden;"
+             onmouseover="this.style.boxShadow='0 8px 20px rgba(0,0,0,0.1)'; this.style.transform='translateY(-2px)'"
+             onmouseout="this.style.boxShadow='0 1px 3px 0 rgba(0,0,0,0.08)'; this.style.transform='translateY(0)'">
+
+          <!-- Identity Row: photo + name/contact -->
+          <div style="display: flex; gap: 0.85rem; align-items: center; min-width: 0;">
+            ${reg.photo
+              ? `<div style="position:relative; width:56px; height:56px; flex-shrink:0; cursor:pointer;" onclick="window.openPhotoLightbox('${reg.photo.replace(/'/g, "&apos;")}', '${reg.fullName.replace(/'/g, "&apos;")}')" title="Click to view full photo">
+                  <img src="${reg.photo}" alt="Photo" style="width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid white; box-shadow:0 0 0 2px var(--primary); display:block;" />
+                </div>`
+              : `<div style="width:56px; height:56px; border-radius:50%; background:#F3F4F6; color:#9CA3AF; font-size:0.75rem; font-weight:600; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px #D1D5DB; flex-shrink:0;">No<br>Photo</div>`}
+            <div style="min-width:0; flex:1;">
+              <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
+                <span style="font-size:1.05rem; font-weight:700; color:#111827;">${index + 1}. ${reg.fullName}</span>
+                <span style="font-size:0.65rem; font-weight:700; padding:3px 9px; border-radius:20px; background:rgba(59,130,246,0.1); color:#2563EB; text-transform:uppercase; letter-spacing:0.5px; flex-shrink:0;">${reg.type}</span>
               </div>
-            </div>
-            
-            <div style="display: flex; gap: 1rem; align-items: stretch; flex-wrap: wrap; justify-content: flex-end;">
-              <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; background: #F0FDF4; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #BBF7D0;">
-                <span style="font-size: 0.7rem; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px;">Applied On</span>
-                <div style="display: flex; align-items: center; gap: 6px; font-weight: 600; color: #15803D; font-size: 0.9rem;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                  ${new Date(reg.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  <span style="color: #86EFAC; margin: 0 2px;">|</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                  ${new Date(reg.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                </div>
+              <div style="font-size:0.82rem; color:#4B5563; display:flex; flex-wrap:wrap; align-items:center; gap:0.35rem; min-width:0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">${reg.email}</span>
+                <span style="color:#D1D5DB; flex-shrink:0;">|</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                <span style="flex-shrink:0;">${reg.phone}</span>
               </div>
-
-              ${(() => {
-                const isSecretaryForwardedView = (user.role === 'Secretary' || user.role === 'President') && currentRegFilter === 'forwarded';
-                if (isSecretaryForwardedView) {
-                  // Build the Review Chain: verified roles (✓ green) + current in-progress role (⏳ amber)
-                  // Normalize verifiedBy — old DB docs may have a plain object instead of an array
-                  const verifiedList = Array.isArray(reg.verifiedBy) ? reg.verifiedBy : (reg.verifiedBy ? [reg.verifiedBy] : []);
-                  const verifiedRoleNames = verifiedList.map(v => v.role);
-                  const currentRole = reg.assignedToRole;
-
-                  const checkSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>`;
-                  const clockSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
-                  const arrowSpan = `<span style="color:#CBD5E1;font-size:0.75rem;line-height:1;">→</span>`;
-
-                  const chainParts = verifiedList.map(v =>
-                    `<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;background:#10B981;color:white;font-size:0.7rem;font-weight:700;white-space:nowrap;">${checkSvg}${v.role}</span>`
-                  );
-
-                  // Show current assignedToRole if it's not Secretary/President (still with an intermediate reviewer)
-                  const isCurrentIntermediate = currentRole && currentRole !== 'Secretary' && currentRole !== 'President';
-                  if (isCurrentIntermediate) {
-                    const roleLabel = currentRole + (reg.assignedToAdminName ? ` (${reg.assignedToAdminName})` : '');
-                    chainParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;background:#F59E0B;color:white;font-size:0.7rem;font-weight:700;white-space:nowrap;">${clockSvg}${roleLabel}</span>`);
-                  }
-
-                  const chainHtml = chainParts.reduce((acc, part, i) => {
-                    return i === 0 ? part : acc + arrowSpan + part;
-                  }, '');
-
-                  return `
-                    <div style="background:#F8FAFC;padding:0.75rem 1rem;border-radius:8px;border:1px solid #E2E8F0;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;min-width:0;">
-                      <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#64748B;margin-bottom:8px;">Review Chain</div>
-                      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;justify-content:flex-end;row-gap:4px;">
-                        ${chainHtml || `<span style="color:#9CA3AF;font-size:0.8rem;">Pending review</span>`}
-                      </div>
-                    </div>
-                  `;
-                } else {
-                  return `
-                    <div style="text-align:right;background:#F8FAFC;padding:0.75rem 1rem;border-radius:8px;border:1px solid #E2E8F0;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;">
-                      <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#64748B;margin-bottom:6px;">Current Access</div>
-                      <div style="display:inline-flex;align-items:center;gap:6px;padding:0.35rem 1rem;border-radius:50px;font-size:0.85rem;background:${user.role === reg.assignedToRole ? 'var(--primary)' : '#E2E8F0'};color:${user.role === reg.assignedToRole ? 'white' : '#475569'};font-weight:600;box-shadow:${user.role === reg.assignedToRole ? '0 2px 4px rgba(27,67,50,0.2)' : 'none'};">
-                        ${user.role === reg.assignedToRole ? '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
-                        ${reg.assignedToRole}${reg.assignedToAdminName ? ' (' + reg.assignedToAdminName + ')' : ''}
-                      </div>
-                    </div>
-                  `;
-                }
-              })()}
             </div>
           </div>
-          
-          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1.25rem; border-radius: 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+
+          <!-- Meta Row: Applied On + Status Badge -->
+          <div style="display:flex; flex-wrap:wrap; gap:0.6rem; align-items:stretch;">
+            <div style="display:flex; flex-direction:column; justify-content:center; background:#F0FDF4; padding:0.6rem 0.9rem; border-radius:8px; border:1px solid #BBF7D0; flex:1; min-width:160px;">
+              <span style="font-size:0.65rem; font-weight:700; color:#166534; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:3px;">Applied On</span>
+              <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px; font-weight:600; color:#15803D; font-size:0.82rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                ${new Date(reg.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                <span style="color:#86EFAC;">|</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                ${new Date(reg.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
+
+            ${(() => {
+              const isSecretaryForwardedView = (user.role === 'Secretary' || user.role === 'President') && currentRegFilter === 'forwarded';
+              if (isSecretaryForwardedView) {
+                const verifiedList = Array.isArray(reg.verifiedBy) ? reg.verifiedBy : (reg.verifiedBy ? [reg.verifiedBy] : []);
+                const currentRole = reg.assignedToRole;
+                const checkSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>`;
+                const clockSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+                const arrowSpan = `<span style="color:#CBD5E1;font-size:0.75rem;">→</span>`;
+                const chainParts = verifiedList.map(v =>
+                  `<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;background:#10B981;color:white;font-size:0.65rem;font-weight:700;white-space:nowrap;">${checkSvg}${v.role}</span>`
+                );
+                const isCurrentIntermediate = currentRole && currentRole !== 'Secretary' && currentRole !== 'President';
+                if (isCurrentIntermediate) {
+                  const roleLabel = currentRole + (reg.assignedToAdminName ? ` (${reg.assignedToAdminName})` : '');
+                  chainParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;background:#F59E0B;color:white;font-size:0.65rem;font-weight:700;white-space:nowrap;">${clockSvg}${roleLabel}</span>`);
+                }
+                const chainHtml = chainParts.reduce((acc, part, i) => i === 0 ? part : acc + arrowSpan + part, '');
+                return `
+                  <div style="background:#F8FAFC;padding:0.6rem 0.9rem;border-radius:8px;border:1px solid #E2E8F0;display:flex;flex-direction:column;justify-content:center;flex:1;min-width:160px;">
+                    <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#64748B;margin-bottom:6px;">Review Chain</div>
+                    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;row-gap:4px;">
+                      ${chainHtml || `<span style="color:#9CA3AF;font-size:0.8rem;">Pending review</span>`}
+                    </div>
+                  </div>`;
+              } else {
+                return `
+                  <div style="background:#F8FAFC;padding:0.6rem 0.9rem;border-radius:8px;border:1px solid #E2E8F0;display:flex;flex-direction:column;justify-content:center;flex:1;min-width:160px;">
+                    <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#64748B;margin-bottom:6px;">Current Access</div>
+                    <div style="display:inline-flex;align-items:center;gap:5px;padding:0.3rem 0.8rem;border-radius:50px;font-size:0.8rem;background:${user.role === reg.assignedToRole ? 'var(--primary)' : '#E2E8F0'};color:${user.role === reg.assignedToRole ? 'white' : '#475569'};font-weight:600;width:fit-content;">
+                      ${user.role === reg.assignedToRole ? `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
+                      ${reg.assignedToRole}${reg.assignedToAdminName ? ' (' + reg.assignedToAdminName + ')' : ''}
+                    </div>
+                  </div>`;
+              }
+            })()}
+          </div>
+
+          <!-- Details Grid -->
+          <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:1rem; border-radius:8px; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:0.75rem;">
             ${docsHtml}
           </div>
+
           ${forwardAttachmentsHtml}
           ${forwardNotesHtml}
-          
+
           ${(() => {
-            // Normalize verifiedBy — old DB docs may store a plain object instead of an array
             const verifiedByList = Array.isArray(reg.verifiedBy) ? reg.verifiedBy : (reg.verifiedBy ? [reg.verifiedBy] : []);
             return verifiedByList.length > 0 ? `
-            <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); padding: 1rem 1.25rem; border-radius: 8px; margin-top: 1rem;">
-              <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.6rem;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#059669" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#059669;">Verification History (${verifiedByList.length})</span>
+            <div style="background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.15); padding:0.85rem 1rem; border-radius:8px;">
+              <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.5rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#059669" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#059669;">Verification History (${verifiedByList.length})</span>
               </div>
-              <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">
-                ${verifiedByList.map(v => `<span style="display:inline-flex; align-items:center; background:#10B981; color:white; padding:4px 10px; border-radius:50px; font-size:0.75rem; font-weight:600;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg> ${v.name} (${v.role})</span>`).join('')}
+              <div style="display:flex; flex-wrap:wrap; gap:0.35rem;">
+                ${verifiedByList.map(v => `<span style="display:inline-flex; align-items:center; background:#10B981; color:white; padding:3px 9px; border-radius:50px; font-size:0.72rem; font-weight:600;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg>${v.name} (${v.role})</span>`).join('')}
               </div>
-            </div>
-          ` : '';
+            </div>` : '';
           })()}
 
           ${reg.status === 'issue_reported' ? `
-            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 1rem; border-radius: 8px; margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; color: #B91C1C; font-weight: 500; font-size: 0.9rem;">
-              <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); padding:0.85rem 1rem; border-radius:8px; display:flex; flex-direction:column; gap:0.4rem;">
+              <div style="display:flex; align-items:center; gap:0.4rem; font-weight:700; color:#B91C1C; font-size:0.88rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                 Issue Reported
               </div>
-              <div style="background: white; padding: 0.75rem; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.1); color: #7F1D1D; font-size: 0.85rem; line-height: 1.4;">
-                ${reg.issueText}
-              </div>
-            </div>
-          ` : ''}
-          
-          ${(user.role === 'Secretary' || user.role === 'President') && ['pending', 'forwarded', 'verified', 'issue_reported'].includes(currentRegFilter) ? `
-            <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem; border-top: 1px solid #E5E7EB; padding-top: 1.25rem;">
-              <button onclick="window.updateRegStatus('${reg.type}', '${reg._id}', 'accepted')" style="padding: 0.6rem 1.25rem; background: var(--success); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 6px rgba(16, 185, 129, 0.3)'" onmouseout="this.style.transform='none'; this.style.boxShadow='0 2px 4px rgba(16, 185, 129, 0.2)'">Final Accept</button>
-              <button onclick="window.updateRegStatus('${reg.type}', '${reg._id}', 'rejected')" style="padding: 0.6rem 1.25rem; background: white; color: var(--danger); border: 1px solid var(--danger); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;" onmouseover="this.style.background='var(--danger)'; this.style.color='white'" onmouseout="this.style.background='white'; this.style.color='var(--danger)'">Final Reject</button>
-              <button onclick="window.openForwardModal('${reg.type}', '${reg._id}')" style="padding: 0.6rem 1.25rem; background: #3B82F6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 6px rgba(59, 130, 246, 0.3)'" onmouseout="this.style.transform='none'; this.style.boxShadow='0 2px 4px rgba(59, 130, 246, 0.2)'">Forward</button>
-            </div>
-          ` : ''}
+              <div style="background:white; padding:0.65rem 0.85rem; border-radius:6px; border:1px solid rgba(239,68,68,0.1); color:#7F1D1D; font-size:0.83rem; line-height:1.45;">${reg.issueText}</div>
+            </div>` : ''}
+
+          ${(user.role === 'Secretary' || user.role === 'President') && ['pending', 'verified', 'issue_reported'].includes(currentRegFilter) ? `
+            <div style="display:flex; flex-wrap:wrap; gap:0.6rem; justify-content:flex-end; border-top:1px solid #F1F5F9; padding-top:0.85rem; margin-top:0.25rem;">
+              <button onclick="window.updateRegStatus('${reg.type}', '${reg._id}', 'accepted')" style="flex:1; min-width:110px; padding:0.6rem 1rem; background:var(--success); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">✓ Final Accept</button>
+              <button onclick="window.updateRegStatus('${reg.type}', '${reg._id}', 'rejected')" style="flex:1; min-width:110px; padding:0.6rem 1rem; background:white; color:var(--danger); border:1px solid var(--danger); border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.background='var(--danger)'; this.style.color='white'" onmouseout="this.style.background='white'; this.style.color='var(--danger)'">✕ Final Reject</button>
+              <button onclick="window.openForwardModal('${reg.type}', '${reg._id}')" style="flex:1; min-width:110px; padding:0.6rem 1rem; background:#3B82F6; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">→ Forward</button>
+            </div>` : ''}
 
           ${user.role !== 'Secretary' && user.role !== 'President' && currentRegFilter === 'forwarded' && user.role === reg.assignedToRole ? `
-            <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem; border-top: 1px solid #E5E7EB; padding-top: 1.25rem;">
-              <button onclick="window.openReportIssueModal('${reg.type}', '${reg._id}')" style="padding: 0.6rem 1.25rem; background: white; color: #EF4444; border: 1px solid #EF4444; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;" onmouseover="this.style.background='#EF4444'; this.style.color='white'" onmouseout="this.style.background='white'; this.style.color='#EF4444'">Report Issue</button>
-              <button onclick="window.openVerifyForwardModal('${reg.type}', '${reg._id}')" style="padding: 0.6rem 1.25rem; background: var(--success); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 6px rgba(16, 185, 129, 0.3)'" onmouseout="this.style.transform='none'; this.style.boxShadow='0 2px 4px rgba(16, 185, 129, 0.2)'">Verify & Forward</button>
-            </div>
-          ` : ''}
+            <div style="display:flex; flex-wrap:wrap; gap:0.6rem; justify-content:flex-end; border-top:1px solid #F1F5F9; padding-top:0.85rem; margin-top:0.25rem;">
+              <button onclick="window.openReportIssueModal('${reg.type}', '${reg._id}')" style="flex:1; min-width:120px; padding:0.6rem 1rem; background:white; color:#EF4444; border:1px solid #EF4444; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.background='#EF4444'; this.style.color='white'" onmouseout="this.style.background='white'; this.style.color='#EF4444'">⚠ Report Issue</button>
+              <button onclick="window.openVerifyForwardModal('${reg.type}', '${reg._id}')" style="flex:1; min-width:120px; padding:0.6rem 1rem; background:var(--success); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">✓ Verify & Forward</button>
+            </div>` : ''}
         </div>
       `;
     }).join('');
