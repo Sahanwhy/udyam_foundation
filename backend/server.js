@@ -1166,6 +1166,10 @@ app.patch(
         return res.status(400).json({ error: 'Invalid role for forwarding' });
       }
 
+      if (!assignedToAdminId) {
+        return res.status(400).json({ error: 'Please select a specific person / admin to forward this registration to.' });
+      }
+
       // Collect Cloudinary URLs for any uploaded attachments
       const attachmentUrls = req.files ? req.files.map(f => ({ url: f.path, uploadedBy: req.user.fullName || 'Admin' })) : [];
 
@@ -1267,6 +1271,10 @@ app.patch(
 
       if (!ADMIN_ROLES.includes(newRole)) {
         return res.status(400).json({ error: 'Invalid role for forwarding' });
+      }
+
+      if (!assignedToAdminId) {
+        return res.status(400).json({ error: 'Please select a specific person / admin to forward this registration to.' });
       }
 
       const attachmentUrls = req.files ? req.files.map(f => ({ url: f.path, uploadedBy: userName })) : [];

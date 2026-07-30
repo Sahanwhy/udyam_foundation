@@ -114,19 +114,19 @@
 
           <div class="form-group">
             <label>Certificate Type <span class="req">*</span></label>
-            <div class="cert-type-options" style="display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.25rem;">
-              <label class="cert-type-label" style="display: flex; align-items: flex-start; gap: 0.6rem; cursor: pointer; padding: 0.75rem 1rem; border: 1.5px solid #D1D5DB; border-radius: 8px; transition: border-color 0.2s, background 0.2s;">
-                <input type="radio" name="certType" value="normal" checked style="margin-top: 0.2rem;" />
+            <div class="cert-type-options">
+              <label class="cert-type-label">
+                <input type="radio" name="certType" value="normal" checked />
                 <span>
-                  <strong style="display: block; font-size: 0.9rem;">Without 80G Certificate</strong>
-                  <span style="font-size: 0.8rem; color: #6B7280;">Standard donation receipt</span>
+                  <strong>Without 80G Certificate</strong>
+                  <span class="cert-desc">Standard donation receipt</span>
                 </span>
               </label>
-              <label class="cert-type-label" style="display: flex; align-items: flex-start; gap: 0.6rem; cursor: pointer; padding: 0.75rem 1rem; border: 1.5px solid #D1D5DB; border-radius: 8px; transition: border-color 0.2s, background 0.2s;">
-                <input type="radio" name="certType" value="80g" style="margin-top: 0.2rem;" />
+              <label class="cert-type-label">
+                <input type="radio" name="certType" value="80g" />
                 <span>
-                  <strong style="display: block; font-size: 0.9rem;">With 80G Certificate</strong>
-                  <span style="font-size: 0.8rem; color: #6B7280;">Tax exemption receipt (PAN required)</span>
+                  <strong>With 80G Certificate</strong>
+                  <span class="cert-desc">Tax exemption receipt (PAN required)</span>
                 </span>
               </label>
             </div>
@@ -134,14 +134,14 @@
 
           <div class="form-group" style="margin-top: 1rem;">
             <label>Donation Amount (₹) <span class="req">*</span></label>
-            <div class="donate-amounts" style="grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
-              <button type="button" class="amount-btn amount-select-btn" data-amount="500" style="color: var(--green-deep); border-color: var(--green-deep);">₹500</button>
-              <button type="button" class="amount-btn amount-select-btn" data-amount="1000" style="color: var(--green-deep); border-color: var(--green-deep);">₹1,000</button>
-              <button type="button" class="amount-btn amount-select-btn" data-amount="2500" style="color: var(--green-deep); border-color: var(--green-deep);">₹2,500</button>
-              <button type="button" class="amount-btn amount-select-btn" data-amount="5000" style="color: var(--green-deep); border-color: var(--green-deep);">₹5,000</button>
-              <button type="button" class="amount-btn amount-select-btn" data-amount="50000" style="color: var(--green-deep); border-color: var(--green-deep);">₹50,000</button>
-              <button type="button" class="amount-btn amount-select-btn" data-amount="75000" style="color: var(--green-deep); border-color: var(--green-deep);">₹75,000</button>
-              <button type="button" class="amount-btn amount-select-btn" data-amount="100000" style="color: var(--green-deep); border-color: var(--green-deep);">₹1,00,000</button>
+            <div class="donate-amounts">
+              <button type="button" class="amount-btn amount-select-btn" data-amount="500">₹500</button>
+              <button type="button" class="amount-btn amount-select-btn" data-amount="1000">₹1,000</button>
+              <button type="button" class="amount-btn amount-select-btn" data-amount="2500">₹2,500</button>
+              <button type="button" class="amount-btn amount-select-btn" data-amount="5000">₹5,000</button>
+              <button type="button" class="amount-btn amount-select-btn" data-amount="50000">₹50,000</button>
+              <button type="button" class="amount-btn amount-select-btn" data-amount="75000">₹75,000</button>
+              <button type="button" class="amount-btn amount-select-btn" data-amount="100000">₹1,00,000</button>
             </div>
             <input type="number" id="donAmount" placeholder="Or enter custom amount" min="1" required style="margin-top: 0.5rem;" />
           </div>

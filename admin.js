@@ -207,9 +207,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const matchingAdmins = allAdminUsers.filter(u => u.role === selectedRole);
 
     if (matchingAdmins.length === 0) {
-      selectEl.innerHTML = `<option value="">Any admin in role (No registered admins)</option>`;
+      selectEl.innerHTML = `<option value="">No registered admins in this role</option>`;
     } else {
-      let optionsHtml = `<option value="">Any admin in role (${matchingAdmins.length} available)</option>`;
+      let optionsHtml = `<option value="">-- Select Person / Admin --</option>`;
       optionsHtml += matchingAdmins.map(u => {
         const isCurrent = user && (u._id === user._id || u.email === user.email);
         const label = `${u.fullName} (${u.email})${isCurrent ? ' - You' : ''}`;
@@ -218,6 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
       selectEl.innerHTML = optionsHtml;
       if (matchingAdmins.length === 1) {
         selectEl.value = matchingAdmins[0]._id;
+      } else {
+        selectEl.value = '';
       }
     }
   };
@@ -418,7 +420,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!currentForwardTarget) return;
     const newRole = forwardRoleSelect.value;
     const selectedUserId = forwardUserSelect ? forwardUserSelect.value : '';
+
+    if (!selectedUserId) {
+      alert('Please select a specific person / admin to forward this registration to.');
+      if (forwardUserSelect) forwardUserSelect.focus();
+      return;
+    }
+
     const selectedUserObj = allAdminUsers.find(u => u._id === selectedUserId);
+    const targetName = selectedUserObj ? `${selectedUserObj.fullName} (${newRole})` : newRole;
+
+    // 1st Confirmation
+    const confirm1 = confirm(`[CONFIRMATION 1 of 2]\nAre you sure you want to forward this registration to ${targetName}?`);
+    if (!confirm1) return;
+
+    // 2nd Confirmation
+    const confirm2 = confirm(`[CONFIRMATION 2 of 2 - FINAL CONFIRMATION]\nConfirm forwarding to ${targetName}?\nYou will lose direct access to edit this registration once forwarded.`);
+    if (!confirm2) return;
+
     const { type, id } = currentForwardTarget;
     const msgInput = document.getElementById('forwardMessageInput');
     const messageVal = msgInput ? msgInput.value.trim() : '';
@@ -808,7 +827,24 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!currentVerifyForwardTarget) return;
       const newRole = verifyForwardRoleSelect.value;
       const selectedUserId = verifyForwardUserSelect ? verifyForwardUserSelect.value : '';
+
+      if (!selectedUserId) {
+        alert('Please select a specific person / admin to forward this registration to.');
+        if (verifyForwardUserSelect) verifyForwardUserSelect.focus();
+        return;
+      }
+
       const selectedUserObj = allAdminUsers.find(u => u._id === selectedUserId);
+      const targetName = selectedUserObj ? `${selectedUserObj.fullName} (${newRole})` : newRole;
+
+      // 1st Confirmation
+      const confirm1 = confirm(`[CONFIRMATION 1 of 2]\nAre you sure you want to VERIFY and forward this registration to ${targetName}?`);
+      if (!confirm1) return;
+
+      // 2nd Confirmation
+      const confirm2 = confirm(`[CONFIRMATION 2 of 2 - FINAL CONFIRMATION]\nPlease confirm once again: Are you completely sure you want to finalize verification and forward this registration to ${targetName}?`);
+      if (!confirm2) return;
+
       const vMsgInput = document.getElementById('verifyForwardMessageInput');
       const vMessageVal = vMsgInput ? vMsgInput.value.trim() : '';
 
