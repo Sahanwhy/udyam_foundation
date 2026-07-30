@@ -446,6 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     pan: pan ? pan.value.trim().toUpperCase() : '',
                     amount: parseFloat(amount.value),
                     paymentId: response.razorpay_payment_id,
+                    receiptNo: order.receipt,
                     with80G: is80GSelected(),
                   });
                 }

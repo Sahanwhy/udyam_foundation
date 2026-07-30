@@ -40,6 +40,16 @@ app.use(cors({
 app.use(express.json());
 
 
+function generateReceiptNumber(dateInput) {
+  const d = dateInput && !isNaN(new Date(dateInput).getTime()) ? new Date(dateInput) : new Date();
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const dateYear = `${day}${month}${year}`;
+  const unique = Math.floor(100000 + Math.random() * 900000);
+  return `USDF/${dateYear}/${unique}`;
+}
+
 // Simple health check route
 app.get('/', (req, res) => {
   res.json({ status: 'active', message: 'Udyam Foundation Backend is running!' });
@@ -300,7 +310,7 @@ app.post('/api/register/employee', upload.fields([
 
 app.post('/api/create-order', async (req, res) => {
   try {
-    const uniqueReceipt = `rcpt_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const uniqueReceipt = generateReceiptNumber();
     const { amount, currency = 'INR', receipt = uniqueReceipt } = req.body;
 
     if (!amount || amount < 100) {
@@ -535,8 +545,8 @@ const transporter = nodemailer.createTransport({
 
 // ─── PDF Receipt Generator (server-side) ─────────────────────────────────────
 const ORG = {
-  name: 'UDYAM SOCIAL DEVELOPMENT FOUNDATION',
-  shortName: 'Udyam Foundation',
+  name: 'Udyam Social Development Foundation',
+  shortName: 'Udyam Social Development Foundation',
   tagline: 'Empowering Youth, Transforming Communities',
   address: 'Kakodonga, Golaghat, Assam — 785621, India',
   pan: 'AAETU1234F',
@@ -563,7 +573,7 @@ function numberToWords(num) {
     if (n < 1000) return ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' + convert(n % 100) : '');
     if (n < 100000) return convert(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 ? ' ' + convert(n % 1000) : '');
     if (n < 10000000) return convert(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 ? ' ' + convert(n % 100000) : '');
-    return convert(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 ? ' ' + convert(n % 10000000) : '');
+    return convert(Math.floor(num / 10000000)) + ' Crore' + (n % 10000000 ? ' ' + convert(n % 10000000) : '');
   }
   return convert(Math.floor(num)) + ' Rupees Only';
 }
@@ -588,7 +598,7 @@ function generateReceiptPDF(donor) {
     const margin = 50;
     const contentW = pageWidth - margin * 2;
     const now = new Date();
-    const receiptNo = donor.receiptNo || `RCPT-${Date.now()}`;
+    const receiptNo = donor.receiptNo || generateReceiptNumber(donor.date || donor.createdAt);
     const with80G = Boolean(donor.with80G);
 
     // ── Header Banner ──────────────────────────────────────────────────────────
@@ -721,11 +731,12 @@ async function sendDonationConfirmationEmail(donor) {
 
   const pdfBuffer = await generateReceiptPDF(donor);
   const with80G = Boolean(donor.with80G);
-  const receiptNo = donor.receiptNo || `RCPT-${Date.now()}`;
+  const receiptNo = donor.receiptNo || generateReceiptNumber(donor.date || donor.createdAt);
   const amountFormatted = `₹${Number(donor.amount).toLocaleString('en-IN')}`;
+  const safeReceiptId = receiptNo.replace(/[^a-zA-Z0-9_-]/g, '_');
   const filename = with80G
-    ? `Udyam_80G_Receipt_${receiptNo}.pdf`
-    : `Udyam_Donation_Receipt_${receiptNo}.pdf`;
+    ? `Udyam_80G_Receipt_${safeReceiptId}.pdf`
+    : `Udyam_Donation_Receipt_${safeReceiptId}.pdf`;
 
   const htmlBody = `
 <!DOCTYPE html>

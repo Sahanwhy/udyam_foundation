@@ -3,7 +3,7 @@
 ══════════════════════════════════════════ */
 
 const ORG = {
-  name: 'UDYAM FOUNDATION',
+  name: 'Udyam Social Development Foundation',
   fullName: 'Udyam Social Development Foundation',
   tagline: 'Empowering Youth, Transforming Communities',
   address: 'Kakodonga, Golaghat, Assam, India',
@@ -31,8 +31,14 @@ function formatDateTime(date) {
   });
 }
 
-function generateReceiptNumber() {
-  return `RCPT-${Date.now()}`;
+function generateReceiptNumber(dateInput) {
+  const d = dateInput && !isNaN(new Date(dateInput).getTime()) ? new Date(dateInput) : new Date();
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const dateYear = `${day}${month}${year}`;
+  const unique = Math.floor(100000 + Math.random() * 900000);
+  return `USDF/${dateYear}/${unique}`;
 }
 
 function drawHeader(doc, title, with80G) {
@@ -45,8 +51,8 @@ function drawHeader(doc, title, with80G) {
 
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.text(ORG.name, pageWidth / 2, 16, { align: 'center' });
+  doc.setFontSize(15);
+  doc.text(ORG.fullName, pageWidth / 2, 16, { align: 'center' });
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
@@ -154,7 +160,7 @@ function generateDonationCertificate(data) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const contentWidth = pageWidth - margin * 2;
   const now = new Date();
-  const receiptNo = generateReceiptNumber();
+  const receiptNo = data.receiptNo || generateReceiptNumber(data.date || now);
   const with80G = Boolean(data.with80G);
   const title = with80G ? 'DONATION RECEIPT (80G)' : 'DONATION RECEIPT';
 
@@ -213,7 +219,7 @@ function generateMembershipCertificate(data) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const contentWidth = pageWidth - margin * 2;
   const now = new Date();
-  const receiptNo = generateReceiptNumber();
+  const receiptNo = data.receiptNo || generateReceiptNumber(data.date || now);
 
   let y = drawHeader(doc, 'MEMBERSHIP RECEIPT', false);
 

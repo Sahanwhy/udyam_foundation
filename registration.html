@@ -489,7 +489,8 @@
                     window.generateMembershipCertificate({
                       ...memberDetails,
                       paymentId: response.razorpay_payment_id,
-                      orderId: response.razorpay_order_id
+                      orderId: response.razorpay_order_id,
+                      receiptNo: orderData.receipt
                     });
                   }
                   memberForm.reset();
