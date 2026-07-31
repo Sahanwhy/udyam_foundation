@@ -60,7 +60,7 @@ app.get('/api/test-email', async (req, res) => {
   try {
     const testEmail = req.query.email || 'sahanhasn205@gmail.com';
     const { data, error } = await resend.emails.send({
-      from: 'Udyam Social Development Foundation <noreply@udyamsdf.org>',
+      from: 'Udyam Social Development Foundation <onboarding@resend.dev>',
       to: testEmail,
       subject: 'Test Receipt Email from Udyam Foundation Server',
       text: 'If you receive this email, your server email configuration is working perfectly!',
@@ -556,7 +556,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@udyamsdf.org';
+const EMAIL_FROM = process.env.EMAIL_FROM || 'onboarding@resend.dev';
 const EMAIL_FROM_NAME = 'Udyam Social Development Foundation';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
