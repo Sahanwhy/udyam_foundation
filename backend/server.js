@@ -98,13 +98,13 @@ const userPaymentSchema = new mongoose.Schema({
 const UserPayment = mongoose.model('UserPayment', userPaymentSchema);
 
 const ADMIN_ROLES = [
-  'Executive Member',
   'President',
-  'Office Secretary',
   'Secretary',
-  'Program Incharge',
   'Treasurer',
-  'Communication Public Relations Officer'
+  'Communication Public Relations Officer',
+  'Office Secretary',
+  'Program Incharge',
+  'Executive Member'
 ];
 
 const adminUserSchema = new mongoose.Schema({

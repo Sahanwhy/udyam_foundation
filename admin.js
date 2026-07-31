@@ -162,13 +162,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Registrations Section Logic ---
   const ADMIN_ROLES = [
-    'Executive Member',
     'President',
-    'Office Secretary',
     'Secretary',
-    'Program Incharge',
     'Treasurer',
-    'Communication Public Relations Officer'
+    'Communication Public Relations Officer',
+    'Office Secretary',
+    'Program Incharge',
+    'Executive Member'
   ];
 
   const navDashboard = document.querySelector('.nav-item.active');
