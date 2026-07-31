@@ -288,6 +288,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  const isRegistrationVisibleToUser = (r, filter) => {
+    const status = r.status || 'pending';
+    if (status !== filter) return false;
+
+    const isSecOrPres = user && (user.role === 'Secretary' || user.role === 'President');
+
+    if (filter === 'verified') {
+      if (!isSecOrPres) return false;
+      // If forwarded to a specific President/Secretary, only show to that specific admin
+      if (r.assignedToAdminId) {
+        return r.assignedToAdminId === user._id || r.assignedToAdminEmail === user.email;
+      }
+      if (r.assignedToRole) {
+        return r.assignedToRole === user.role;
+      }
+      return true;
+    }
+
+    if (filter === 'forwarded') {
+      if (r.assignedToAdminId) {
+        return r.assignedToAdminId === user._id || r.assignedToAdminEmail === user.email;
+      }
+      if (r.assignedToRole) {
+        return r.assignedToRole === user.role;
+      }
+      return true;
+    }
+
+    if (filter === 'pending') {
+      return isSecOrPres;
+    }
+
+    if (filter === 'accepted' || filter === 'rejected' || filter === 'issue_reported') {
+      return isSecOrPres;
+    }
+
+    return true;
+  };
+
   const updateSidebarBadges = () => {
     // Remove existing badges
     document.querySelectorAll('.sidebar-badge').forEach(el => el.remove());
@@ -309,7 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Verified badge — applications that completed the review chain, awaiting Secretary's final decision
-      const verifiedCount = allRegistrations.filter(r => r.status === 'verified').length;
+      const verifiedCount = allRegistrations.filter(r => isRegistrationVisibleToUser(r, 'verified')).length;
       if (verifiedCount > 0) {
         const verifiedNav = document.getElementById('nav-verified');
         if (verifiedNav) {
@@ -509,7 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const renderRegistrations = () => {
-    let filtered = allRegistrations.filter(r => (r.status || 'pending') === currentRegFilter);
+    let filtered = allRegistrations.filter(r => isRegistrationVisibleToUser(r, currentRegFilter));
 
     // Apply sort
     filtered.sort((a, b) => {
