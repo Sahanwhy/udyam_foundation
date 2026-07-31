@@ -51,6 +51,11 @@ function drawHeader(doc, title, with80G) {
   doc.setFillColor(...green);
   doc.rect(0, 0, pageWidth, 42, 'F');
 
+  // Logo
+  if (typeof LOGO_BASE64 !== 'undefined' && LOGO_BASE64) {
+    try { doc.addImage(LOGO_BASE64, 'JPEG', 14, 6, 30, 30); } catch(e) {}
+  }
+
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(15);

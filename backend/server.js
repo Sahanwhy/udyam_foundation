@@ -10,6 +10,8 @@ const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
 const { Resend } = require('resend');
+const fs = require('fs');
+const path = require('path');
 const PDFDocument = require('pdfkit');
 
 const app = express();
@@ -625,17 +627,32 @@ function generateReceiptPDF(donor) {
     // Saffron accent stripe
     doc.rect(0, 80, pageWidth, 6).fill(SAFFRON);
 
+    // Logo Image
+    const logoPath = path.join(__dirname, 'images', 'logo.jpg');
+    let hasLogo = false;
+    if (fs.existsSync(logoPath)) {
+      try {
+        doc.image(logoPath, margin + 10, 14, { width: 52, height: 52 });
+        hasLogo = true;
+      } catch (e) {
+        console.error('Failed to render logo in PDF:', e);
+      }
+    }
+
+    const textOffset = hasLogo ? 60 : 0;
+    const textWidth = contentW - textOffset;
+
     // Org Name
-    doc.fillColor(WHITE).font('Helvetica-Bold').fontSize(16)
-      .text(ORG.name, margin, 20, { width: contentW, align: 'center' });
+    doc.fillColor(WHITE).font('Helvetica-Bold').fontSize(15)
+      .text(ORG.name, margin + textOffset, 20, { width: textWidth, align: hasLogo ? 'left' : 'center' });
 
     // Tagline
     doc.fillColor('#A7F3D0').font('Helvetica').fontSize(9)
-      .text(ORG.tagline, margin, 44, { width: contentW, align: 'center' });
+      .text(ORG.tagline, margin + textOffset, 42, { width: textWidth, align: hasLogo ? 'left' : 'center' });
 
     // Address
     doc.fillColor('#D1FAE5').font('Helvetica').fontSize(8)
-      .text(ORG.address, margin, 58, { width: contentW, align: 'center' });
+      .text(ORG.address, margin + textOffset, 56, { width: textWidth, align: hasLogo ? 'left' : 'center' });
 
     // ── Receipt Title Band ─────────────────────────────────────────────────────
     const titleY = 96;
