@@ -9,7 +9,7 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const PDFDocument = require('pdfkit');
 
 const app = express();
@@ -59,22 +59,19 @@ app.get('/', (req, res) => {
 app.get('/api/test-email', async (req, res) => {
   try {
     const testEmail = req.query.email || 'sahanhasn205@gmail.com';
-    const info = await transporter.sendMail({
-      from: `"Udyam Social Development Foundation" <${process.env.EMAIL_USER || 'udyamsdf2022@gmail.com'}>`,
+    const { data, error } = await resend.emails.send({
+      from: 'Udyam Social Development Foundation <noreply@udyamsdf.org>',
       to: testEmail,
       subject: 'Test Receipt Email from Udyam Foundation Server',
       text: 'If you receive this email, your server email configuration is working perfectly!',
       html: '<h3>Udyam Social Development Foundation</h3><p>Your server email configuration is working perfectly!</p>'
     });
-    res.json({ success: true, messageId: info.messageId, emailUser: EMAIL_USER });
+    if (error) throw error;
+    res.json({ success: true, messageId: data.id });
   } catch (err) {
     res.status(500).json({
       success: false,
-      error: err.message,
-      code: err.code,
-      command: err.command,
-      emailUser: EMAIL_USER,
-      hasPassword: Boolean(EMAIL_APP_PASSWORD)
+      error: err.message || JSON.stringify(err)
     });
   }
 });
@@ -559,16 +556,10 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-const EMAIL_USER = process.env.EMAIL_USER || 'udyamsdf2022@gmail.com';
-const EMAIL_APP_PASSWORD = process.env.EMAIL_APP_PASSWORD || 'dzjmvpoiopgolmpy';
+const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@udyamsdf.org';
+const EMAIL_FROM_NAME = 'Udyam Social Development Foundation';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_APP_PASSWORD
-  }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ─── PDF Receipt Generator (server-side) ─────────────────────────────────────
 const ORG = {
@@ -580,7 +571,7 @@ const ORG = {
   reg80G: 'AAETU1234F/80G/2024-25',
   reg12A: 'AAETU1234F/12A/2024-25',
   website: 'udyamfoundation.org',
-  email: EMAIL_USER,
+  email: EMAIL_FROM,
 };
 
 function formatIndianAmount(amount) {
@@ -902,35 +893,47 @@ async function sendDonationConfirmationEmail(donor) {
 </body>
 </html>`;
 
-  const mailOptions = {
-    from: `"Udyam Social Development Foundation" <${EMAIL_USER}>`,
-    replyTo: EMAIL_USER,
-    to: donor.email,
-    subject: `💚 Donation Confirmed — ${amountFormatted} | Receipt ${receiptNo}`,
-    text: `Dear ${donor.fullName},\n\nThank you for your generous donation of ${amountFormatted} to Udyam Social Development Foundation!\n\nReceipt No: ${receiptNo}\nPayment ID: ${donor.paymentId}\nAmount: ${amountFormatted}\n\nYour official receipt is attached to this email. Please save it for your records.\n\nWith gratitude,\nUdyam Social Development Foundation Team`,
-    html: htmlBody,
-    attachments: [
-      {
-        filename: filename,
-        content: pdfBuffer,
-        contentType: 'application/pdf',
-      }
-    ]
-  };
-
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`[Email Success] Receipt ${receiptNo} sent to ${donor.email} (MessageId: ${info.messageId})`);
-    return info;
+    const { data, error } = await resend.emails.send({
+      from: `${EMAIL_FROM_NAME} <${EMAIL_FROM}>`,
+      reply_to: EMAIL_FROM,
+      to: donor.email,
+      subject: `💚 Donation Confirmed — ${amountFormatted} | Receipt ${receiptNo}`,
+      text: `Dear ${donor.fullName},\n\nThank you for your generous donation of ${amountFormatted} to Udyam Social Development Foundation!\n\nReceipt No: ${receiptNo}\nPayment ID: ${donor.paymentId}\nAmount: ${amountFormatted}\n\nYour official receipt is attached to this email. Please save it for your records.\n\nWith gratitude,\nUdyam Social Development Foundation Team`,
+      html: htmlBody,
+      attachments: [
+        {
+          filename: filename,
+          content: pdfBuffer.toString('base64'),
+        }
+      ]
+    });
+    if (error) throw error;
+    console.log(`[Email Success] Receipt ${receiptNo} sent to ${donor.email} (id: ${data.id})`);
+    return data;
   } catch (err) {
-    console.error(`[Email Error - Attempt 1 Failed] Could not send to ${donor.email}:`, err.message);
+    console.error(`[Email Error - Attempt 1 Failed] Could not send to ${donor.email}:`, err.message || JSON.stringify(err));
     await new Promise(r => setTimeout(r, 2000));
     try {
-      const infoRetry = await transporter.sendMail(mailOptions);
-      console.log(`[Email Success - Retry] Receipt ${receiptNo} sent to ${donor.email} (MessageId: ${infoRetry.messageId})`);
-      return infoRetry;
+      const { data: retryData, error: retryError } = await resend.emails.send({
+        from: `${EMAIL_FROM_NAME} <${EMAIL_FROM}>`,
+        reply_to: EMAIL_FROM,
+        to: donor.email,
+        subject: `💚 Donation Confirmed — ${amountFormatted} | Receipt ${receiptNo}`,
+        text: `Dear ${donor.fullName},\n\nThank you for your generous donation of ${amountFormatted} to Udyam Social Development Foundation!\n\nReceipt No: ${receiptNo}\nPayment ID: ${donor.paymentId}\nAmount: ${amountFormatted}\n\nYour official receipt is attached to this email. Please save it for your records.\n\nWith gratitude,\nUdyam Social Development Foundation Team`,
+        html: htmlBody,
+        attachments: [
+          {
+            filename: filename,
+            content: pdfBuffer.toString('base64'),
+          }
+        ]
+      });
+      if (retryError) throw retryError;
+      console.log(`[Email Success - Retry] Receipt ${receiptNo} sent to ${donor.email} (id: ${retryData.id})`);
+      return retryData;
     } catch (retryErr) {
-      console.error(`[Email Error - Attempt 2 Failed] Retry failed for ${donor.email}:`, retryErr.message);
+      console.error(`[Email Error - Attempt 2 Failed] Retry failed for ${donor.email}:`, retryErr.message || JSON.stringify(retryErr));
       throw retryErr;
     }
   }
