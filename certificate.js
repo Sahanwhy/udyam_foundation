@@ -51,19 +51,32 @@ function drawHeader(doc, title, with80G) {
   doc.setFillColor(...green);
   doc.rect(0, 0, pageWidth, 42, 'F');
 
-  // Logo
+  let hasLogo = false;
   if (typeof LOGO_BASE64 !== 'undefined' && LOGO_BASE64) {
-    try { doc.addImage(LOGO_BASE64, 'JPEG', 14, 6, 30, 30); } catch(e) {}
+    try {
+      doc.addImage(LOGO_BASE64, 'JPEG', 12, 6, 30, 30);
+      hasLogo = true;
+    } catch (e1) {
+      try {
+        doc.addImage(LOGO_BASE64, 12, 6, 30, 30);
+        hasLogo = true;
+      } catch (e2) {
+        console.error('Failed to add logo to PDF:', e2);
+      }
+    }
   }
+
+  const textX = hasLogo ? 48 : pageWidth / 2;
+  const textAlign = hasLogo ? 'left' : 'center';
 
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(15);
-  doc.text(ORG.fullName, pageWidth / 2, 16, { align: 'center' });
+  doc.text(ORG.fullName, textX, 18, { align: textAlign });
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.text(ORG.tagline, pageWidth / 2, 24, { align: 'center' });
+  doc.text(ORG.tagline, textX, 26, { align: textAlign });
 
   doc.setTextColor(...green);
   doc.setFillColor(...cream);
