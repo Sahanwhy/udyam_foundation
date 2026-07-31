@@ -307,6 +307,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (filter === 'forwarded') {
+      // Secretary and President can track ALL forwarded registrations across the system
+      if (isSecOrPres) return true;
       if (r.assignedToAdminId) {
         return r.assignedToAdminId === user._id || r.assignedToAdminEmail === user.email;
       }
@@ -344,6 +346,19 @@ document.addEventListener('DOMContentLoaded', () => {
           badge.style.cssText = 'background: #EF4444; color: white; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-left: auto; display: flex; align-items: center; justify-content: center; height: 18px; min-width: 18px;';
           badge.textContent = pendingCount;
           pendingNav.appendChild(badge);
+        }
+      }
+
+      // Forwarded badge for Secretary & President to track items currently in review chain
+      const forwardedCount = allRegistrations.filter(r => isRegistrationVisibleToUser(r, 'forwarded')).length;
+      if (forwardedCount > 0) {
+        const forwardedNav = document.getElementById('nav-forwarded');
+        if (forwardedNav) {
+          const badge = document.createElement('span');
+          badge.className = 'sidebar-badge';
+          badge.style.cssText = 'background: #F59E0B; color: white; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-left: auto; display: flex; align-items: center; justify-content: center; height: 18px; min-width: 18px;';
+          badge.textContent = forwardedCount;
+          forwardedNav.appendChild(badge);
         }
       }
 
