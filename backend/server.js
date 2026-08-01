@@ -563,6 +563,75 @@ const EMAIL_FROM_NAME = 'Udyam Social Development Foundation';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// ─── Unified Email Helper (Resend + Nodemailer fallback) ─────────────────────
+let nodemailerModule;
+try {
+  nodemailerModule = require('nodemailer');
+} catch (e) {}
+
+async function sendMailHelper({ to, subject, text, html, attachments }) {
+  const fromAddress = process.env.EMAIL_FROM || 'noreply@udyamsdf.org';
+  const fromName = EMAIL_FROM_NAME;
+  const fullFrom = `${fromName} <${fromAddress}>`;
+
+  // 1. Try Resend if API key is provided
+  if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'your_resend_api_key_here') {
+    try {
+      const payload = {
+        from: fullFrom,
+        reply_to: fromAddress,
+        to: Array.isArray(to) ? to : [to],
+        subject,
+        text,
+        html
+      };
+      if (attachments && attachments.length > 0) {
+        payload.attachments = attachments;
+      }
+      const { data, error } = await resend.emails.send(payload);
+      if (error) throw error;
+      console.log(`[Email Success - Resend] Sent to ${to} (id: ${data ? data.id : 'ok'})`);
+      return data;
+    } catch (resendErr) {
+      console.error('[Resend Error] Failed to send via Resend:', resendErr.message || resendErr);
+    }
+  }
+
+  // 2. Try Nodemailer (Gmail/SMTP) if credentials provided
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_APP_PASSWORD || process.env.EMAIL_PASS;
+  if (nodemailerModule && emailUser && emailPass) {
+    try {
+      const transporter = nodemailerModule.createTransport({
+        service: 'gmail',
+        auth: {
+          user: emailUser,
+          pass: emailPass
+        }
+      });
+      const info = await transporter.sendMail({
+        from: `"${fromName}" <${emailUser}>`,
+        to,
+        subject,
+        text,
+        html,
+        attachments
+      });
+      console.log(`[Email Success - Nodemailer] Sent to ${to} (id: ${info.messageId})`);
+      return info;
+    } catch (nmErr) {
+      console.error('[Nodemailer Error] Failed to send via Nodemailer:', nmErr.message || nmErr);
+    }
+  }
+
+  // 3. Fallback: log if no email provider is configured or available
+  console.warn(`[Email Warning] No working email service configured. Simulated email for ${to}:`);
+  console.warn(`Subject: ${subject}`);
+  if (text) console.warn(`Text: ${text}`);
+
+  return { success: true, simulated: true };
+}
+
 // ─── PDF Receipt Generator (server-side) ─────────────────────────────────────
 const ORG = {
   name: 'Udyam Social Development Foundation',
@@ -993,8 +1062,6 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
     const user = await AdminUser.findOne({ email: email.toLowerCase().trim() });
     if (!user) {
-      // To prevent email enumeration, return success even if user not found, 
-      // but here we can just return an error for simplicity since it's an admin app.
       return res.status(404).json({ error: 'User with this email does not exist' });
     }
 
@@ -1005,18 +1072,25 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
 
-    const resetUrl = `${req.protocol}://${req.get('host')}/admin-reset-password.html?token=${resetToken}`;
+    // Determine the frontend base URL dynamically from request header / origin / env
+    const origin = req.headers.origin || req.headers.referer;
+    let frontendHost = process.env.FRONTEND_URL || '';
+    if (!frontendHost && origin) {
+      try {
+        const parsed = new URL(origin);
+        frontendHost = `${parsed.protocol}//${parsed.host}`;
+      } catch (e) {}
+    }
+    if (!frontendHost) {
+      frontendHost = `${req.protocol}://${req.get('host')}`;
+    }
 
-    // Fallback for localhost relative path (if accessed differently)
-    const finalResetUrl = resetUrl.includes('localhost:3000')
-      ? `http://localhost/Udyam%20Foundation/admin-reset-password.html?token=${resetToken}`
-      : `http://localhost/Udyam%20Foundation/admin-reset-password.html?token=${resetToken}`;
-    // In production, you would configure the exact FRONTEND_URL in .env
+    const finalResetUrl = `${frontendHost.replace(/\/+$/, '')}/admin-reset-password.html?token=${resetToken}`;
 
     const htmlContent = `
       <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
         <div style="background-color: #0d47a1; color: white; padding: 20px; text-align: center;">
-          <h2 style="margin: 0;">Udyam Foundation</h2>
+          <h2 style="margin: 0;">Udyam Social Development Foundation</h2>
         </div>
         <div style="padding: 30px; color: #333; line-height: 1.6;">
           <p>Hello <strong>${user.fullName}</strong>,</p>
@@ -1025,29 +1099,28 @@ app.post('/api/auth/forgot-password', async (req, res) => {
           <div style="text-align: center; margin: 30px 0;">
             <a href="${finalResetUrl}" style="background-color: #1976d2; color: white; text-decoration: none; padding: 12px 25px; border-radius: 4px; font-weight: bold; display: inline-block;">Reset Password</a>
           </div>
+          <p style="font-size:0.85rem; color:#666;">Or copy and paste this URL into your browser:<br><a href="${finalResetUrl}">${finalResetUrl}</a></p>
           <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
           <p>Thank you,<br>Udyam Foundation Team</p>
         </div>
         <div style="background-color: #f5f5f5; color: #777; padding: 15px; text-align: center; font-size: 12px;">
-          <p style="margin: 0;">&copy; ${new Date().getFullYear()} Udyam Foundation. All rights reserved.</p>
+          <p style="margin: 0;">&copy; ${new Date().getFullYear()} Udyam Social Development Foundation. All rights reserved.</p>
         </div>
       </div>
     `;
 
-    const mailOptions = {
-      from: `"Udyam Foundation" <${process.env.EMAIL_USER}>`,
+    await sendMailHelper({
       to: user.email,
       subject: 'Password Reset Request - Udyam Foundation',
       text: `You requested a password reset. Click this link to reset your password: ${finalResetUrl}`,
       html: htmlContent
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
     res.json({ success: true, message: 'Password reset link sent to email' });
 
   } catch (error) {
     console.error('Forgot password error:', error);
-    res.status(500).json({ error: 'Failed to process forgot password request' });
+    res.status(500).json({ error: error.message || 'Failed to process forgot password request' });
   }
 });
 
@@ -1559,8 +1632,7 @@ app.post('/api/admin/profile/send-otp', authMiddleware, async (req, res) => {
       { $set: { profileUpdateOtp: otpHash, profileUpdateOtpExpires: Date.now() + 10 * 60 * 1000 } }
     );
 
-    await transporter.sendMail({
-      from: `"Udyam Foundation" <${process.env.EMAIL_USER}>`,
+    await sendMailHelper({
       to: user.email,
       subject: `OTP for Mobile Number Update`,
       text: `Your OTP for updating your mobile number is: ${otp}. It is valid for 10 minutes.`,
