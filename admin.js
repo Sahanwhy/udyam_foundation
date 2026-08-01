@@ -234,6 +234,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const pendingBtn = document.getElementById('nav-pending');
   const forwardedBtn = document.getElementById('nav-forwarded');
+  const forwardedText = document.getElementById('nav-forwarded-text');
+
+  if (user && (user.role === 'Secretary' || user.role === 'President')) {
+    if (forwardedText) {
+      forwardedText.textContent = 'Track';
+    } else if (forwardedBtn) {
+      const textNode = Array.from(forwardedBtn.childNodes).find(n => n.nodeType === Node.TEXT_NODE || n.tagName === 'SPAN');
+      if (textNode) textNode.textContent = 'Track';
+    }
+  }
 
   if (user && user.role !== 'Secretary' && user.role !== 'President') {
     if (pendingBtn) {
@@ -279,8 +289,12 @@ document.addEventListener('DOMContentLoaded', () => {
       // Update section header
       const headerTitle = registrationsSection.querySelector('h2');
       if (headerTitle) {
-        const filterName = currentRegFilter.replace('_', ' ');
-        headerTitle.textContent = filterName.charAt(0).toUpperCase() + filterName.slice(1) + ' Registrations';
+        if (currentRegFilter === 'forwarded' && user && (user.role === 'Secretary' || user.role === 'President')) {
+          headerTitle.textContent = 'Track Forwarded Applications';
+        } else {
+          const filterName = currentRegFilter.replace('_', ' ');
+          headerTitle.textContent = filterName.charAt(0).toUpperCase() + filterName.slice(1) + ' Registrations';
+        }
       }
       
       renderRegistrations();
@@ -290,25 +304,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const isRegistrationVisibleToUser = (r, filter) => {
     const status = r.status || 'pending';
-    if (status !== filter) return false;
-
     const isSecOrPres = user && (user.role === 'Secretary' || user.role === 'President');
+
+    if (filter === 'forwarded') {
+      // Secretary and President can track ALL forwarded registrations across the system
+      if (isSecOrPres) {
+        return status === 'forwarded' || (r.assignedToRole && r.assignedToRole !== 'Secretary' && r.assignedToRole !== 'President' && status !== 'accepted' && status !== 'rejected');
+      }
+      if (r.assignedToAdminId) {
+        return (r.assignedToAdminId === user._id || r.assignedToAdminEmail === user.email) && status === 'forwarded';
+      }
+      if (r.assignedToRole) {
+        return r.assignedToRole === user.role && status === 'forwarded';
+      }
+      return status === 'forwarded';
+    }
+
+    if (status !== filter) return false;
 
     if (filter === 'verified') {
       if (!isSecOrPres) return false;
       // If forwarded to a specific President/Secretary, only show to that specific admin
-      if (r.assignedToAdminId) {
-        return r.assignedToAdminId === user._id || r.assignedToAdminEmail === user.email;
-      }
-      if (r.assignedToRole) {
-        return r.assignedToRole === user.role;
-      }
-      return true;
-    }
-
-    if (filter === 'forwarded') {
-      // Secretary and President can track ALL forwarded registrations across the system
-      if (isSecOrPres) return true;
       if (r.assignedToAdminId) {
         return r.assignedToAdminId === user._id || r.assignedToAdminEmail === user.email;
       }
@@ -573,7 +589,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (filtered.length === 0) {
-      registrationsContainer.innerHTML = `<div style="padding: 3rem; text-align: center; color: var(--text-muted); background: white; border-radius: 8px; border: 1px solid var(--border);">No ${currentRegFilter} registrations found.</div>`;
+      const isSecOrPres = user && (user.role === 'Secretary' || user.role === 'President');
+      const emptyText = (currentRegFilter === 'forwarded' && isSecOrPres) ? 'No applications are currently being tracked or forwarded.' : `No ${currentRegFilter} registrations found.`;
+      registrationsContainer.innerHTML = `<div style="padding: 3rem; text-align: center; color: var(--text-muted); background: white; border-radius: 8px; border: 1px solid var(--border);">${emptyText}</div>`;
       return;
     }
 
@@ -722,24 +740,73 @@ document.addEventListener('DOMContentLoaded', () => {
               const isSecretaryForwardedView = (user.role === 'Secretary' || user.role === 'President') && currentRegFilter === 'forwarded';
               if (isSecretaryForwardedView) {
                 const verifiedList = Array.isArray(reg.verifiedBy) ? reg.verifiedBy : (reg.verifiedBy ? [reg.verifiedBy] : []);
-                const currentRole = reg.assignedToRole;
+                const currentRole = reg.assignedToRole || 'Unassigned';
+                const currentName = reg.assignedToAdminName || '';
+                const currentEmail = reg.assignedToAdminEmail || '';
                 const checkSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>`;
                 const clockSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
-                const arrowSpan = `<span style="color:#CBD5E1;font-size:0.75rem;">→</span>`;
-                const chainParts = verifiedList.map(v =>
-                  `<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;background:#10B981;color:white;font-size:0.65rem;font-weight:700;white-space:nowrap;">${checkSvg}${v.role}</span>`
-                );
-                const isCurrentIntermediate = currentRole && currentRole !== 'Secretary' && currentRole !== 'President';
-                if (isCurrentIntermediate) {
-                  const roleLabel = currentRole + (reg.assignedToAdminName ? ` (${reg.assignedToAdminName})` : '');
-                  chainParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;background:#F59E0B;color:white;font-size:0.65rem;font-weight:700;white-space:nowrap;">${clockSvg}${roleLabel}</span>`);
+                const arrowSpan = `<span style="color:#94A3B8; font-size:0.85rem; font-weight:bold;">→</span>`;
+
+                const chainParts = [];
+                if (verifiedList.length === 0) {
+                  chainParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;background:#10B981;color:white;font-size:0.68rem;font-weight:700;white-space:nowrap;">${checkSvg}Forwarded</span>`);
                 }
-                const chainHtml = chainParts.reduce((acc, part, i) => i === 0 ? part : acc + arrowSpan + part, '');
+                verifiedList.forEach(v => {
+                  chainParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;background:#10B981;color:white;font-size:0.68rem;font-weight:700;white-space:nowrap;">${checkSvg}${v.role}${v.name ? ` (${v.name})` : ''}</span>`);
+                });
+
+                if (currentRole) {
+                  const roleLabel = currentRole + (currentName ? ` (${currentName})` : '');
+                  chainParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;background:#F59E0B;color:white;font-size:0.68rem;font-weight:700;white-space:nowrap;">${clockSvg}Pending: ${roleLabel}</span>`);
+                }
+
+                const chainHtml = chainParts.join(` ${arrowSpan} `);
+
                 return `
-                  <div style="background:#F8FAFC;padding:0.6rem 0.9rem;border-radius:8px;border:1px solid #E2E8F0;display:flex;flex-direction:column;justify-content:center;flex:1;min-width:160px;">
-                    <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#64748B;margin-bottom:6px;">Review Chain</div>
-                    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;row-gap:4px;">
-                      ${chainHtml || `<span style="color:#9CA3AF;font-size:0.8rem;">Pending review</span>`}
+                  <div style="background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); border: 1.5px solid #93C5FD; border-radius: 10px; padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; width: 100%; box-sizing: border-box;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; border-bottom: 1px solid rgba(59, 130, 246, 0.2); padding-bottom: 0.6rem;">
+                      <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#1D4ED8" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <span style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #1E40AF;">
+                          Application Tracking Status
+                        </span>
+                      </div>
+                      <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; background: #2563EB; color: white; font-size: 0.75rem; font-weight: 700; box-shadow: 0 1px 2px rgba(37,99,235,0.3);">
+                        <span style="width:7px; height:7px; border-radius:50%; background:#60A5FA; display:inline-block;"></span>
+                        Currently Forwarded
+                      </span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.85rem;">
+                      <div style="background: white; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #BFDBFE;">
+                        <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #64748B; display: block; margin-bottom: 3px;">
+                          Forwarded To (Where)
+                        </span>
+                        <div style="font-size: 0.92rem; font-weight: 700; color: #1E3A8A; display: flex; align-items: center; gap: 6px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-4 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                          ${currentRole}
+                        </div>
+                      </div>
+
+                      <div style="background: white; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #BFDBFE;">
+                        <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #64748B; display: block; margin-bottom: 3px;">
+                          Assigned Person (Who)
+                        </span>
+                        <div style="font-size: 0.92rem; font-weight: 700; color: #1E3A8A; display: flex; align-items: center; gap: 6px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                          ${currentName ? currentName : 'All Admins in Role'}
+                        </div>
+                        ${currentEmail ? `<div style="font-size:0.75rem; color:#3B82F6; margin-top:2px;">${currentEmail}</div>` : ''}
+                      </div>
+                    </div>
+
+                    <div style="background: white; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #BFDBFE;">
+                      <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #64748B; display: block; margin-bottom: 6px;">
+                        Review Chain Progress
+                      </span>
+                      <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px; row-gap: 6px;">
+                        ${chainHtml}
+                      </div>
                     </div>
                   </div>`;
               } else {
@@ -748,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#64748B;margin-bottom:6px;">Current Access</div>
                     <div style="display:inline-flex;align-items:center;gap:5px;padding:0.3rem 0.8rem;border-radius:50px;font-size:0.8rem;background:${user.role === reg.assignedToRole ? 'var(--primary)' : '#E2E8F0'};color:${user.role === reg.assignedToRole ? 'white' : '#475569'};font-weight:600;width:fit-content;">
                       ${user.role === reg.assignedToRole ? `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
-                      ${reg.assignedToRole}${reg.assignedToAdminName ? ' (' + reg.assignedToAdminName + ')' : ''}
+                      ${reg.assignedToRole || 'Admin'}${reg.assignedToAdminName ? ' (' + reg.assignedToAdminName + ')' : ''}
                     </div>
                   </div>`;
               }
