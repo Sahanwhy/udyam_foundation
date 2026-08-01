@@ -1647,10 +1647,21 @@ app.put('/api/admin/profile', authMiddleware, upload.single('photo'), async (req
     }
     await user.save();
 
-    res.json({ success: true, message: 'Profile updated successfully', user: { fullName: user.fullName, email: user.email, role: user.role, phone: user.phone, photo: user.photo }, token });
+    const token = jwt.sign(
+      { id: user._id, role: user.role, email: user.email, fullName: user.fullName, photo: user.photo },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: { fullName: user.fullName, email: user.email, role: user.role, phone: user.phone, photo: user.photo },
+      token
+    });
   } catch (error) {
     console.error('Error updating profile:', error);
-    res.status(500).json({ error: 'Failed to update profile' });
+    res.status(500).json({ error: error.message || 'Failed to update profile' });
   }
 });
 

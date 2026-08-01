@@ -1526,19 +1526,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.success) {
           alert('Profile updated successfully!');
-          if (data.token) localStorage.setItem('token', data.token);
-          if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
-          
-          userNameEl.textContent = data.user.fullName || 'Admin';
-          if (data.user.photo) {
-            userAvatarEl.innerHTML = `<img src="${data.user.photo}" alt="Avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-            userAvatarEl.style.backgroundColor = 'transparent';
+          if (typeof setAuthSession === 'function' && data.token && data.user) {
+            setAuthSession(data.token, data.user);
           } else {
-            userAvatarEl.innerHTML = (data.user.fullName || 'A').charAt(0).toUpperCase();
-            userAvatarEl.style.backgroundColor = 'var(--accent)';
+            if (data.token) localStorage.setItem('udyam_admin_token', data.token);
+            if (data.user) localStorage.setItem('udyam_admin_user', JSON.stringify(data.user));
+          }
+          
+          if (userNameEl) userNameEl.textContent = data.user.fullName || 'Admin';
+          const sidebarUserNameEl = document.getElementById('sidebarUserName');
+          if (sidebarUserNameEl) sidebarUserNameEl.textContent = data.user.fullName || 'Admin';
+
+          if (userAvatarEl) {
+            if (data.user.photo) {
+              userAvatarEl.innerHTML = `<img src="${data.user.photo}" alt="Avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+              userAvatarEl.style.backgroundColor = 'transparent';
+            } else {
+              userAvatarEl.innerHTML = (data.user.fullName || 'A').charAt(0).toUpperCase();
+              userAvatarEl.style.backgroundColor = 'var(--accent)';
+            }
           }
           if (document.getElementById('dynamicGreeting')) {
-            document.getElementById('dynamicGreeting').textContent = `Welcome back, ${data.user.fullName.split(' ')[0]}!`;
+            const hour = new Date().getHours();
+            let greeting = 'Good evening';
+            if (hour < 12) greeting = 'Good morning';
+            else if (hour < 17) greeting = 'Good afternoon';
+            document.getElementById('dynamicGreeting').textContent = `${greeting}, ${data.user.fullName.split(' ')[0]}!`;
           }
           originalPhone = data.user.phone || '';
 
