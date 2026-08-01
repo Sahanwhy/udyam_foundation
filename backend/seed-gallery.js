@@ -1,6 +1,6 @@
-require('dotenv').config();
-const fs = require('fs');
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+const fs = require('fs');
 const mongoose = require('mongoose');
 const cloudinary = require('cloudinary').v2;
 
@@ -15,14 +15,20 @@ const galleryPhotoSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now }
 }, { collection: 'gallery' });
 
+const galleryCategorySchema = new mongoose.Schema({
+  category: { type: String, required: true, unique: true },
+  description: { type: String, default: '' },
+  updatedAt: { type: Date, default: Date.now }
+}, { collection: 'gallery_categories' });
+
 const categories = [
-  { folder: '4th year establishment day celebration', name: 'Establishment Day' },
-  { folder: 'activities-1', name: 'Activities' },
-  { folder: 'blood donation', name: 'Blood Donation' },
-  { folder: 'eye camp1(2024)', name: 'Eye Camp 2024' },
-  { folder: 'eyecamp2(2026)', name: 'Eye Camp 2026' },
-  { folder: 'tree plantation', name: 'Tree Plantation' },
-  { folder: 'women empowerment', name: 'Women Empowerment' }
+  { folder: '4th year establishment day celebration', name: 'Establishment Day', description: 'Celebrating four impactful years of community service, growth, and empowerment with our dedicated team and supporters.' },
+  { folder: 'activities-1', name: 'Activities', description: 'Highlighting our regular grassroots community initiatives, workshops, and social welfare drives.' },
+  { folder: 'blood donation', name: 'Blood Donation', description: 'Organizing voluntary blood donation camps to save lives and support healthcare needs across communities.' },
+  { folder: 'eye camp1(2024)', name: 'Eye Camp 2024', description: 'Providing free eye tests, consultations, and vision care assistance to under-served communities during 2024.' },
+  { folder: 'eyecamp2(2026)', name: 'Eye Camp 2026', description: 'Continuing our commitment to vision care with free eye examinations and treatment guidance in 2026.' },
+  { folder: 'tree plantation', name: 'Tree Plantation', description: 'Promoting environmental sustainability through community tree plantation drives and green awareness campaigns.' },
+  { folder: 'women empowerment', name: 'Women Empowerment', description: 'Empowering women through skill development, self-reliance training, and livelihood generation initiatives.' }
 ];
 
 const IMAGES_DIR = path.join(__dirname, '..', 'images');
@@ -34,10 +40,21 @@ const seedGallery = async () => {
     
     const galleryDb = mongoose.connection.useDb('Gallery');
     const GalleryPhoto = galleryDb.model('GalleryPhoto', galleryPhotoSchema);
+    const GalleryCategory = galleryDb.model('GalleryCategory', galleryCategorySchema);
     
     // Clear existing
     await GalleryPhoto.deleteMany({});
-    console.log('Cleared existing gallery photos');
+    await GalleryCategory.deleteMany({});
+    console.log('Cleared existing gallery photos & categories');
+
+    for (const cat of categories) {
+      await GalleryCategory.updateOne(
+        { category: cat.name },
+        { description: cat.description, updatedAt: Date.now() },
+        { upsert: true }
+      );
+    }
+    console.log('Saved default category descriptions');
 
     let featuredCount = 0;
 

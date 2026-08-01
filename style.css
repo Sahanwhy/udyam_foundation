@@ -3266,6 +3266,43 @@ select {
   /* Hide scrollbar Chrome/Safari */
 }
 
+/* Category Description Box */
+.category-description-card {
+  background: linear-gradient(135deg, rgba(27, 67, 50, 0.04) 0%, rgba(64, 145, 108, 0.08) 100%);
+  border-left: 4px solid var(--primary);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-top: -2rem;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.category-description-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.category-badge-pill {
+  background-color: var(--primary);
+  color: var(--white);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.category-description-text {
+  color: var(--text-main);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  margin: 0;
+}
+
 .gallery-filter-btn {
   padding: 0.6rem 1.8rem;
   background: var(--white);

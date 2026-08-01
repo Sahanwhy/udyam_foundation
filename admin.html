@@ -979,6 +979,10 @@
               <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Date / Year</label>
               <input type="text" id="uploadDate" placeholder="e.g. 2024 or March 2024" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px;">
             </div>
+            <div style="grid-column: 1 / -1;">
+              <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Category Description <span style="font-weight:400; color:var(--text-muted);">(Optional - set or update summary for this category)</span></label>
+              <textarea id="uploadCategoryDescription" rows="2" placeholder="Brief description of this image category..." style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
+            </div>
             <div>
               <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Select Images (Batch Upload)</label>
               <input type="file" id="uploadFile" accept="image/*" multiple required style="width: 100%; padding: 0.65rem; border: 1px solid var(--border); border-radius: 8px;">
@@ -992,6 +996,35 @@
             </div>
           </form>
           <div id="uploadProgress" style="display:none; margin-top:1rem; color:var(--primary); font-weight:500;">Uploading photo(s)...</div>
+        </div>
+      </div>
+
+      <!-- Category Descriptions Management -->
+      <div class="data-section" style="margin-bottom: 2rem;">
+        <div class="data-section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+          <h2>Category Descriptions</h2>
+          <span style="font-size: 0.85rem; color: var(--text-muted);">Add or edit description for uploaded category images</span>
+        </div>
+        <div style="padding: 1.5rem;">
+          <div style="display: grid; grid-template-columns: 1fr 2fr auto; gap: 1rem; align-items: start;">
+            <div>
+              <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Select Category</label>
+              <select id="editCategoryDescSelect" onchange="onAdminCategoryDescSelectChange()" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text-main); font-weight: 500; outline: none; cursor: pointer;">
+                <option value="">-- Choose Category --</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Category Description</label>
+              <textarea id="editCategoryDescText" rows="3" placeholder="Write a short description summarizing this category of activities or photos..." style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; outline: none; resize: vertical;"></textarea>
+            </div>
+            <div style="padding-top: 1.8rem;">
+              <button type="button" onclick="saveAdminCategoryDescription()" class="refresh-btn" style="padding: 0.75rem 1.25rem; font-weight: 600;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                Save Description
+              </button>
+            </div>
+          </div>
+          <div id="categoryDescStatus" style="display:none; margin-top: 0.75rem; font-size: 0.88rem; font-weight: 500;"></div>
         </div>
       </div>
 

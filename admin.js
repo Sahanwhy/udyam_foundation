@@ -1150,6 +1150,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   window.adminGalleryPhotos = [];
+  window.adminCategoryDescriptions = {};
 
   window.fetchAdminGallery = function() {
     fetch(`${API_BASE}/api/gallery`)
@@ -1157,9 +1158,109 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(photos => {
         window.adminGalleryPhotos = photos || [];
         updateAdminCategoryFilterOptions();
+        populateAdminCategoryDescSelectOptions();
         window.filterAdminGallery();
       })
       .catch(err => console.error('Error fetching gallery:', err));
+
+    fetch(`${API_BASE}/api/gallery/category-descriptions`)
+      .then(res => res.json())
+      .then(descMap => {
+        window.adminCategoryDescriptions = descMap || {};
+        populateAdminCategoryDescSelectOptions();
+        onAdminCategoryDescSelectChange();
+      })
+      .catch(err => console.error('Error fetching category descriptions:', err));
+  }
+
+  function populateAdminCategoryDescSelectOptions() {
+    const select = document.getElementById('editCategoryDescSelect');
+    if (!select) return;
+
+    const currentVal = select.value || '';
+    const categories = Array.from(new Set(window.adminGalleryPhotos.map(p => p.category).filter(Boolean))).sort();
+    
+    Object.keys(window.adminCategoryDescriptions || {}).forEach(cat => {
+      if (cat && !categories.includes(cat)) categories.push(cat);
+    });
+    categories.sort();
+
+    let html = '<option value="">-- Choose Category --</option>';
+    categories.forEach(cat => {
+      const hasDesc = !!(window.adminCategoryDescriptions && window.adminCategoryDescriptions[cat]);
+      const badge = hasDesc ? ' (Has description)' : '';
+      html += `<option value="${escapeHtml(cat)}"${cat === currentVal ? ' selected' : ''}>${escapeHtml(cat)}${badge}</option>`;
+    });
+
+    select.innerHTML = html;
+  }
+
+  window.getAdminCategoryDescription = function(catName) {
+    if (!catName || !window.adminCategoryDescriptions) return '';
+    if (window.adminCategoryDescriptions[catName]) return window.adminCategoryDescriptions[catName];
+    const target = String(catName).trim().toLowerCase();
+    const match = Object.keys(window.adminCategoryDescriptions).find(k => k.trim().toLowerCase() === target);
+    return match ? window.adminCategoryDescriptions[match] : '';
+  };
+
+  window.onAdminCategoryDescSelectChange = function() {
+    const select = document.getElementById('editCategoryDescSelect');
+    const textarea = document.getElementById('editCategoryDescText');
+    const status = document.getElementById('categoryDescStatus');
+    if (!select || !textarea) return;
+
+    const selectedCategory = select.value;
+    if (status) status.style.display = 'none';
+
+    if (!selectedCategory) {
+      textarea.value = '';
+      return;
+    }
+
+    textarea.value = getAdminCategoryDescription(selectedCategory);
+  }
+
+  window.saveAdminCategoryDescription = function() {
+    const select = document.getElementById('editCategoryDescSelect');
+    const textarea = document.getElementById('editCategoryDescText');
+    const status = document.getElementById('categoryDescStatus');
+
+    const categoryName = select ? select.value.trim() : '';
+    const description = textarea ? textarea.value.trim() : '';
+
+    if (!categoryName) {
+      return alert('Please select a category to save description for.');
+    }
+
+    fetch(`${API_BASE}/api/gallery/categories/${encodeURIComponent(categoryName)}/description`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}`
+      },
+      body: JSON.stringify({ description })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        if (!window.adminCategoryDescriptions) window.adminCategoryDescriptions = {};
+        window.adminCategoryDescriptions[categoryName] = description;
+        populateAdminCategoryDescSelectOptions();
+        
+        if (status) {
+          status.style.display = 'block';
+          status.style.color = 'var(--success)';
+          status.textContent = `✓ Description for "${categoryName}" saved successfully!`;
+          setTimeout(() => { status.style.display = 'none'; }, 4000);
+        }
+      } else {
+        alert(data.error || 'Failed to save category description');
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Error saving category description');
+    });
   }
 
   function updateAdminCategoryFilterOptions() {
@@ -1243,11 +1344,13 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const categoryEl = document.getElementById('uploadCategory');
       const dateEl = document.getElementById('uploadDate');
+      const descEl = document.getElementById('uploadCategoryDescription');
       const featuredEl = document.getElementById('uploadFeatured');
       const fileInput = document.getElementById('uploadFile');
       
       const category = categoryEl ? categoryEl.value.trim() : '';
       const date = dateEl ? dateEl.value.trim() : '';
+      const description = descEl ? descEl.value.trim() : '';
       const featured = featuredEl ? featuredEl.checked : false;
       const files = fileInput ? fileInput.files : null;
       
@@ -1257,6 +1360,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const formData = new FormData();
       formData.append('category', category);
       formData.append('date', date);
+      formData.append('categoryDescription', description);
       formData.append('featured', featured);
       
       for (let i = 0; i < files.length; i++) {

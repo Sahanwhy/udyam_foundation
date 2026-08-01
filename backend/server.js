@@ -200,6 +200,12 @@ const galleryPhotoSchema = new mongoose.Schema({
   date: { type: String, default: '' }
 }, { collection: 'gallery' });
 
+const galleryCategorySchema = new mongoose.Schema({
+  category: { type: String, required: true, unique: true },
+  description: { type: String, default: '' },
+  updatedAt: { type: Date, default: Date.now }
+}, { collection: 'gallery_categories' });
+
 const adminMessageSchema = new mongoose.Schema({
   senderId: { type: String, required: true },
   senderName: { type: String, required: true },
@@ -217,7 +223,7 @@ const adminMessageSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }, { collection: 'admin_messages' });
 
-let AdminUser, Volunteer, Employee, Member, GalleryPhoto, AdminMessage;
+let AdminUser, Volunteer, Employee, Member, GalleryPhoto, AdminMessage, GalleryCategory;
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
@@ -233,6 +239,7 @@ mongoose.connect(process.env.MONGO_URI)
 
     const galleryDb = mongoose.connection.useDb('Gallery');
     GalleryPhoto = galleryDb.model('GalleryPhoto', galleryPhotoSchema);
+    GalleryCategory = galleryDb.model('GalleryCategory', galleryCategorySchema);
   })
   .catch(err => console.error('MongoDB connection error:', err));
 
@@ -1482,6 +1489,63 @@ app.get('/api/gallery/categories', async (req, res) => {
   }
 });
 
+// Get category descriptions map (public)
+app.get('/api/gallery/category-descriptions', async (req, res) => {
+  try {
+    if (!GalleryCategory) return res.json({});
+    const items = await GalleryCategory.find();
+    const descriptionsMap = {};
+    items.forEach(item => {
+      descriptionsMap[item.category] = item.description;
+    });
+    res.json(descriptionsMap);
+  } catch (error) {
+    console.error('Error fetching category descriptions:', error);
+    res.status(500).json({ error: 'Failed to fetch category descriptions' });
+  }
+});
+
+// Create or update category description (admin only)
+app.put('/api/gallery/categories/:categoryName/description', authMiddleware, async (req, res) => {
+  try {
+    const categoryName = decodeURIComponent(req.params.categoryName).trim();
+    const { description } = req.body;
+    
+    if (!categoryName) {
+      return res.status(400).json({ error: 'Category name is required' });
+    }
+
+    if (!GalleryCategory) {
+      return res.status(503).json({ error: 'Database not ready' });
+    }
+
+    const regex = new RegExp(`^${categoryName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i');
+    let updatedCategory = await GalleryCategory.findOne({ category: regex });
+
+    if (updatedCategory) {
+      updatedCategory.category = categoryName; // sync exact casing
+      updatedCategory.description = description || '';
+      updatedCategory.updatedAt = Date.now();
+      await updatedCategory.save();
+    } else {
+      updatedCategory = new GalleryCategory({
+        category: categoryName,
+        description: description || ''
+      });
+      await updatedCategory.save();
+    }
+
+    res.json({
+      success: true,
+      message: `Description for category "${categoryName}" updated successfully`,
+      data: updatedCategory
+    });
+  } catch (error) {
+    console.error('Error updating category description:', error);
+    res.status(500).json({ error: 'Failed to update category description' });
+  }
+});
+
 // Upload new gallery photo(s) (admin only - supports single or multiple uploads)
 app.post('/api/gallery/upload', authMiddleware, (req, res, next) => {
   uploadGallery.any()(req, res, async (err) => {
@@ -1495,16 +1559,36 @@ app.post('/api/gallery/upload', authMiddleware, (req, res, next) => {
         return res.status(400).json({ error: 'No photos provided' });
       }
       
-      const { category, date, year, featured } = req.body;
+      const { category, date, year, featured, description, categoryDescription } = req.body;
       const photoDate = date || year || '';
       const isFeatured = featured === 'true' || featured === true;
+      const catDesc = (description || categoryDescription || '').trim();
+
+      const catName = (category || 'Uncategorized').trim();
+
+      // If description provided during upload, save/update category description
+      if (catDesc && GalleryCategory && catName) {
+        const regex = new RegExp(`^${catName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i');
+        let existingCat = await GalleryCategory.findOne({ category: regex });
+        if (existingCat) {
+          existingCat.description = catDesc;
+          existingCat.updatedAt = Date.now();
+          await existingCat.save();
+        } else {
+          const newCat = new GalleryCategory({
+            category: catName,
+            description: catDesc
+          });
+          await newCat.save();
+        }
+      }
       
       const savedPhotos = [];
       for (const file of filesList) {
         const imageUrl = file.path || file.secure_url || file.url || '';
         const newPhoto = new GalleryPhoto({
           title: '',
-          category: category || 'Uncategorized',
+          category: catName,
           imageUrl: imageUrl,
           featured: isFeatured,
           date: photoDate
@@ -1545,6 +1629,9 @@ app.delete('/api/gallery/category/:categoryName', authMiddleware, async (req, re
   try {
     const categoryName = decodeURIComponent(req.params.categoryName);
     const result = await GalleryPhoto.deleteMany({ category: categoryName });
+    if (GalleryCategory) {
+      await GalleryCategory.deleteOne({ category: categoryName });
+    }
     res.json({ 
       success: true, 
       message: `Deleted ${result.deletedCount} photo(s) in category "${categoryName}"`,

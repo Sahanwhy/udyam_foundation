@@ -584,6 +584,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadMoreBtn = document.getElementById('loadMoreBtn');
     const loadMoreContainer = document.getElementById('loadMoreContainer');
     
+    let categoryDescriptions = {};
+    const descBox = document.getElementById('categoryDescriptionBox');
+    const descBadge = document.getElementById('categoryDescBadge');
+    const descText = document.getElementById('categoryDescText');
+
+    // Fetch Category Descriptions
+    fetch(`${API_URL}/api/gallery/category-descriptions`)
+      .then(res => res.json())
+      .then(descMap => {
+        categoryDescriptions = descMap || {};
+        updateCategoryDescriptionBanner();
+      })
+      .catch(err => console.error('Error fetching category descriptions:', err));
+
+    function getCategoryDescription(catName) {
+      if (!catName || catName === 'all') return '';
+      if (categoryDescriptions[catName]) return categoryDescriptions[catName];
+
+      const cleanTarget = String(catName).trim().toLowerCase();
+      const matchedKey = Object.keys(categoryDescriptions).find(
+        key => key.trim().toLowerCase() === cleanTarget
+      );
+      return matchedKey ? categoryDescriptions[matchedKey] : '';
+    }
+
+    function updateCategoryDescriptionBanner() {
+      if (!descBox || !descText || !descBadge) return;
+      
+      descBox.style.display = 'block';
+
+      const foundDesc = getCategoryDescription(currentCategory);
+
+      if (currentCategory === 'all') {
+        descBadge.textContent = 'All Categories';
+        descText.textContent = 'Showing photos from all our social welfare initiatives, healthcare camps, environmental drives, and community establishment programs. Select a specific category above to filter photos and read its category description.';
+      } else if (foundDesc) {
+        descBadge.textContent = currentCategory;
+        descText.textContent = foundDesc;
+      } else {
+        descBadge.textContent = currentCategory;
+        descText.textContent = `Explore photos and activities under the "${currentCategory}" initiative. (No custom description added yet — admins can add a custom description in the Admin Gallery section).`;
+      }
+    }
+
     // Load Categories
     fetch(`${API_URL}/api/gallery/categories`)
       .then(res => res.json())
@@ -631,6 +675,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
       window.currentGalleryPhotos = filtered; // For lightbox to navigate all filtered items
       
+      updateCategoryDescriptionBanner();
+
       const displayPhotos = filtered.slice(0, visibleCount);
       fullGalleryGrid.innerHTML = createGalleryHTML(displayPhotos);
       fullGalleryGrid.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
