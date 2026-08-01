@@ -563,73 +563,30 @@ const EMAIL_FROM_NAME = 'Udyam Social Development Foundation';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// ─── Unified Email Helper (Resend + Nodemailer fallback) ─────────────────────
-let nodemailerModule;
-try {
-  nodemailerModule = require('nodemailer');
-} catch (e) {}
-
 async function sendMailHelper({ to, subject, text, html, attachments }) {
   const fromAddress = process.env.EMAIL_FROM || 'noreply@udyamsdf.org';
   const fromName = EMAIL_FROM_NAME;
   const fullFrom = `${fromName} <${fromAddress}>`;
 
-  // 1. Try Resend if API key is provided
-  if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'your_resend_api_key_here') {
-    try {
-      const payload = {
-        from: fullFrom,
-        reply_to: fromAddress,
-        to: Array.isArray(to) ? to : [to],
-        subject,
-        text,
-        html
-      };
-      if (attachments && attachments.length > 0) {
-        payload.attachments = attachments;
-      }
-      const { data, error } = await resend.emails.send(payload);
-      if (error) throw error;
-      console.log(`[Email Success - Resend] Sent to ${to} (id: ${data ? data.id : 'ok'})`);
-      return data;
-    } catch (resendErr) {
-      console.error('[Resend Error] Failed to send via Resend:', resendErr.message || resendErr);
-    }
+  const payload = {
+    from: fullFrom,
+    reply_to: fromAddress,
+    to: Array.isArray(to) ? to : [to],
+    subject,
+    text,
+    html
+  };
+  if (attachments && attachments.length > 0) {
+    payload.attachments = attachments;
   }
 
-  // 2. Try Nodemailer (Gmail/SMTP) if credentials provided
-  const emailUser = process.env.EMAIL_USER;
-  const emailPass = process.env.EMAIL_APP_PASSWORD || process.env.EMAIL_PASS;
-  if (nodemailerModule && emailUser && emailPass) {
-    try {
-      const transporter = nodemailerModule.createTransport({
-        service: 'gmail',
-        auth: {
-          user: emailUser,
-          pass: emailPass
-        }
-      });
-      const info = await transporter.sendMail({
-        from: `"${fromName}" <${emailUser}>`,
-        to,
-        subject,
-        text,
-        html,
-        attachments
-      });
-      console.log(`[Email Success - Nodemailer] Sent to ${to} (id: ${info.messageId})`);
-      return info;
-    } catch (nmErr) {
-      console.error('[Nodemailer Error] Failed to send via Nodemailer:', nmErr.message || nmErr);
-    }
+  const { data, error } = await resend.emails.send(payload);
+  if (error) {
+    console.error('[Resend Email Error]:', error);
+    throw new Error(error.message || (typeof error === 'string' ? error : 'Failed to send email via Resend'));
   }
-
-  // 3. Fallback: log if no email provider is configured or available
-  console.warn(`[Email Warning] No working email service configured. Simulated email for ${to}:`);
-  console.warn(`Subject: ${subject}`);
-  if (text) console.warn(`Text: ${text}`);
-
-  return { success: true, simulated: true };
+  console.log(`[Resend Email Success] Sent to ${to} (id: ${data ? data.id : 'ok'})`);
+  return data;
 }
 
 // ─── PDF Receipt Generator (server-side) ─────────────────────────────────────
