@@ -591,7 +591,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fetch Category Descriptions
     fetch(`${API_URL}/api/gallery/category-descriptions`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) return {};
+        return res.json().catch(() => ({}));
+      })
       .then(descMap => {
         categoryDescriptions = descMap || {};
         updateCategoryDescriptionBanner();

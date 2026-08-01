@@ -1164,7 +1164,10 @@ document.addEventListener('DOMContentLoaded', () => {
       .catch(err => console.error('Error fetching gallery:', err));
 
     fetch(`${API_BASE}/api/gallery/category-descriptions`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) return {};
+        return res.json().catch(() => ({}));
+      })
       .then(descMap => {
         window.adminCategoryDescriptions = descMap || {};
         populateAdminCategoryDescSelectOptions();
@@ -1240,9 +1243,17 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       body: JSON.stringify({ description })
     })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
+    .then(async res => {
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (e) {
+        data = { error: res.status === 404 ? 'The backend API route is not running on your live server yet. Please redeploy/restart your backend server code.' : `Server error (${res.status})` };
+      }
+      return { ok: res.ok, data };
+    })
+    .then(({ ok, data }) => {
+      if (ok && data.success) {
         if (!window.adminCategoryDescriptions) window.adminCategoryDescriptions = {};
         window.adminCategoryDescriptions[categoryName] = description;
         populateAdminCategoryDescSelectOptions();
