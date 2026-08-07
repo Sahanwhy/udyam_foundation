@@ -560,7 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Render Homepage Highlights
   if (homepageGalleryGrid) {
-    fetch(`${API_URL}/api/gallery?featured=true`)
+    fetch(`${GALLERY_API}?action=list&featured=true`)
       .then(res => res.json())
       .then(photos => {
         // Limit to 8 for homepage
@@ -590,7 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const descText = document.getElementById('categoryDescText');
 
     // Fetch Category Descriptions
-    fetch(`${API_URL}/api/gallery/category-descriptions`)
+    fetch(`${GALLERY_API}?action=category-descriptions`)
       .then(res => {
         if (!res.ok) return {};
         return res.json().catch(() => ({}));
@@ -617,6 +617,20 @@ document.addEventListener('DOMContentLoaded', () => {
       
       descBox.style.display = 'block';
 
+      // Trigger smooth pulse entrance animation on filter change
+      descBox.classList.remove('card-pulse-anim');
+      void descBox.offsetWidth;
+      descBox.classList.add('card-pulse-anim');
+
+      const countTextEl = document.getElementById('categoryCountText');
+      const filteredPhotos = currentCategory === 'all' 
+        ? allPhotos 
+        : allPhotos.filter(p => p.category === currentCategory);
+
+      if (countTextEl) {
+        countTextEl.textContent = `${filteredPhotos.length} ${filteredPhotos.length === 1 ? 'photo' : 'photos'}`;
+      }
+
       const foundDesc = getCategoryDescription(currentCategory);
 
       if (currentCategory === 'all') {
@@ -627,12 +641,12 @@ document.addEventListener('DOMContentLoaded', () => {
         descText.textContent = foundDesc;
       } else {
         descBadge.textContent = currentCategory;
-        descText.textContent = `Explore photos and activities under the "${currentCategory}" initiative. (No custom description added yet — admins can add a custom description in the Admin Gallery section).`;
+        descText.textContent = `Explore photos and activities under the "${currentCategory}" initiative.`;
       }
     }
 
     // Load Categories
-    fetch(`${API_URL}/api/gallery/categories`)
+    fetch(`${GALLERY_API}?action=categories`)
       .then(res => res.json())
       .then(categories => {
         const filterHTML = [
@@ -660,7 +674,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       
     // Load all photos
-    fetch(`${API_URL}/api/gallery`)
+    fetch(`${GALLERY_API}?action=list`)
       .then(res => res.json())
       .then(photos => {
         allPhotos = photos;

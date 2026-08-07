@@ -992,10 +992,24 @@
                 <input type="checkbox" id="uploadFeatured" style="width:18px; height:18px;">
                 Feature on Homepage
               </label>
-              <button type="submit" class="refresh-btn" style="width: 100%; justify-content:center; padding: 0.75rem;">Upload Photo(s)</button>
+              <button type="submit" id="uploadSubmitBtn" class="refresh-btn" style="width: 100%; justify-content:center; padding: 0.75rem;">Upload Photo(s)</button>
             </div>
           </form>
-          <div id="uploadProgress" style="display:none; margin-top:1rem; color:var(--primary); font-weight:500;">Uploading photo(s)...</div>
+          <div id="uploadProgressContainer" style="display:none; margin-top:1.25rem; padding: 1rem; background: var(--surface, #f9fafb); border: 1px solid var(--border, #e5e7eb); border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span style="font-weight: 600; font-size: 0.88rem; color: var(--primary, #1B4332); display: flex; align-items: center; gap: 8px;">
+                <svg style="animation: spin 1s linear infinite; width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+                  <path d="M12 2 a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+                </svg>
+                <span id="uploadStatusText">Uploading photo(s)...</span>
+              </span>
+              <span id="uploadPercentage" style="font-weight: 700; font-size: 0.9rem; color: var(--primary, #1B4332);">0%</span>
+            </div>
+            <div style="width: 100%; height: 10px; background: rgba(27,67,50,0.12); border-radius: 10px; overflow: hidden;">
+              <div id="uploadProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #2D6A4F, #52B788); border-radius: 10px; transition: width 0.2s ease-out;"></div>
+            </div>
+          </div>
         </div>
       </div>
 

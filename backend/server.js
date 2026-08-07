@@ -141,6 +141,7 @@ const volunteerSchema = new mongoose.Schema({
   forwardNotes: [{ note: String, authorName: String, authorRole: String, date: { type: Date, default: Date.now } }],
   verifiedBy: [{ name: String, role: String, date: { type: Date, default: Date.now } }],
   issueText: String,
+  registrationNo: { type: String, default: null },
   date: { type: Date, default: Date.now }
 }, { collection: 'volunteer' });
 
@@ -164,6 +165,7 @@ const employeeSchema = new mongoose.Schema({
   forwardNotes: [{ note: String, authorName: String, authorRole: String, date: { type: Date, default: Date.now } }],
   verifiedBy: [{ name: String, role: String, date: { type: Date, default: Date.now } }],
   issueText: String,
+  registrationNo: { type: String, default: null },
   date: { type: Date, default: Date.now }
 }, { collection: 'employee' });
 
@@ -192,6 +194,7 @@ const memberSchema = new mongoose.Schema({
   forwardNotes: [{ note: String, authorName: String, authorRole: String, date: { type: Date, default: Date.now } }],
   verifiedBy: [{ name: String, role: String, date: { type: Date, default: Date.now } }],
   issueText: String,
+  registrationNo: { type: String, default: null },
   date: { type: Date, default: Date.now }
 }, { collection: 'member' });
 
@@ -619,6 +622,120 @@ async function sendMailHelper({ to, subject, text, html, attachments }) {
   }
   console.log(`[Resend Email Success] Sent to ${to} (id: ${data ? data.id : 'ok'})`);
   return data;
+}
+
+function generateRegistrationNo(type) {
+  const prefixMap = {
+    volunteer: 'VOL',
+    employee: 'EMP',
+    member: 'MEM'
+  };
+  const prefix = prefixMap[type] || 'REG';
+  const year = new Date().getFullYear();
+  const randomCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+  return `UDYAM-${prefix}-${year}-${randomCode}`;
+}
+
+async function sendApprovalEmail(doc, type, registrationNo) {
+  const typeLabelMap = {
+    volunteer: 'Volunteer',
+    employee: 'Employee',
+    member: 'Member'
+  };
+  const typeLabel = typeLabelMap[type] || 'Registration';
+  const applicantName = doc.fullName || 'Applicant';
+  const applicantEmail = doc.email;
+
+  if (!applicantEmail || !applicantEmail.trim()) {
+    console.log('[Approval Email] Skipping: Applicant email is missing');
+    return null;
+  }
+
+  const subject = `Congratulations! Your ${typeLabel} Registration Has Been Approved - Udyam Foundation`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; color: #333333; }
+        .email-container { max-width: 600px; background-color: #ffffff; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e1e8ed; }
+        .email-header { background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%); padding: 30px 20px; text-align: center; color: #ffffff; }
+        .email-header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px; }
+        .email-header p { margin: 5px 0 0 0; font-size: 14px; opacity: 0.9; }
+        .email-body { padding: 30px 25px; line-height: 1.6; font-size: 15px; }
+        .badge-approved { display: inline-block; background-color: #D1FAE5; color: #065F46; font-weight: 700; padding: 6px 16px; border-radius: 50px; font-size: 13px; text-transform: uppercase; margin-bottom: 15px; }
+        .details-box { background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #1B4332; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .details-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #E2E8F0; }
+        .details-row:last-child { border-bottom: none; }
+        .details-label { font-weight: 600; color: #64748B; }
+        .details-value { font-weight: 700; color: #1E293B; }
+        .email-footer { background-color: #F1F5F9; padding: 20px; text-align: center; font-size: 12px; color: #64748B; border-top: 1px solid #E2E8F0; }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="email-header">
+          <h1>Udyam Social Development Foundation</h1>
+          <p>Selection & Registration Approval Notice</p>
+        </div>
+        <div class="email-body">
+          <div class="badge-approved">✓ Application Approved</div>
+          <p>Dear <strong>${applicantName}</strong>,</p>
+          <p>We are delighted to inform you that your application for <strong>${typeLabel}</strong> registration with <strong>Udyam Social Development Foundation</strong> has been officially reviewed and <strong>Approved</strong> by the Executive Board (President / Secretary).</p>
+
+          <p>Below are your official registration details:</p>
+          <div class="details-box">
+            <div class="details-row">
+              <span class="details-label">Applicant Name:</span>
+              <span class="details-value">${applicantName}</span>
+            </div>
+            <div class="details-row">
+              <span class="details-label">Registration Type:</span>
+              <span class="details-value">${typeLabel}</span>
+            </div>
+            <div class="details-row">
+              <span class="details-label">Unique Registration No:</span>
+              <span class="details-value" style="color: #1B4332; font-family: monospace; font-size: 16px;">${registrationNo}</span>
+            </div>
+            <div class="details-row">
+              <span class="details-label">Status:</span>
+              <span class="details-value" style="color: #059669;">Accepted & Selected</span>
+            </div>
+            <div class="details-row">
+              <span class="details-label">Approval Date:</span>
+              <span class="details-value">${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            </div>
+          </div>
+
+          <p>Welcome to the Udyam Foundation family! We look forward to working together towards empowering youth, transforming communities, and social development.</p>
+          <p>If you have any questions or require further assistance, please feel free to reach out to us at <a href="mailto:info@udyamsdf.org" style="color: #1B4332; font-weight: 600;">info@udyamsdf.org</a>.</p>
+
+          <p style="margin-top: 25px; margin-bottom: 0;">Warm regards,<br><strong>Executive Board</strong><br>Udyam Social Development Foundation</p>
+        </div>
+        <div class="email-footer">
+          <p>© ${new Date().getFullYear()} Udyam Social Development Foundation. All rights reserved.<br>Kakodonga, Golaghat, Assam — 785621, India</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `Dear ${applicantName},\n\n` +
+    `We are delighted to inform you that your ${typeLabel} application at Udyam Social Development Foundation has been Approved!\n\n` +
+    `Registration No: ${registrationNo}\n` +
+    `Status: Accepted\n` +
+    `Date: ${new Date().toLocaleDateString('en-IN')}\n\n` +
+    `Welcome to Udyam Foundation!\n\n` +
+    `Regards,\nExecutive Board\nUdyam Social Development Foundation`;
+
+  return sendMailHelper({
+    to: applicantEmail,
+    subject,
+    text,
+    html
+  });
 }
 
 // ─── PDF Receipt Generator (server-side) ─────────────────────────────────────
@@ -1209,26 +1326,48 @@ app.patch('/api/admin/registrations/:type/:id/status', authMiddleware, async (re
     const { type, id } = req.params;
     const { status } = req.body;
 
-    if (!['pending', 'accepted', 'rejected', 'forwarded'].includes(status)) {
+    if (!['pending', 'accepted', 'rejected', 'forwarded', 'verified', 'issue_reported'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
-    let updatedDoc;
-    if (type === 'volunteer') {
-      updatedDoc = await Volunteer.findByIdAndUpdate(id, { status }, { new: true });
-    } else if (type === 'employee') {
-      updatedDoc = await Employee.findByIdAndUpdate(id, { status }, { new: true });
-    } else if (type === 'member') {
-      updatedDoc = await Member.findByIdAndUpdate(id, { status }, { new: true });
-    } else {
-      return res.status(400).json({ error: 'Invalid type' });
-    }
+    let Model;
+    if (type === 'volunteer') Model = Volunteer;
+    else if (type === 'employee') Model = Employee;
+    else if (type === 'member') Model = Member;
+    else return res.status(400).json({ error: 'Invalid type' });
 
-    if (!updatedDoc) {
+    const existingDoc = await Model.findById(id);
+    if (!existingDoc) {
       return res.status(404).json({ error: 'Registration not found' });
     }
 
-    res.json({ success: true, message: 'Status updated successfully', data: updatedDoc });
+    const updatePayload = { status };
+    let generatedNo = existingDoc.registrationNo;
+
+    if (status === 'accepted') {
+      if (!generatedNo) {
+        generatedNo = generateRegistrationNo(type);
+      }
+      updatePayload.registrationNo = generatedNo;
+    }
+
+    const updatedDoc = await Model.findByIdAndUpdate(id, updatePayload, { new: true });
+
+    // Send email notification to applicant upon acceptance/approval
+    if (status === 'accepted' && updatedDoc && updatedDoc.email) {
+      sendApprovalEmail(updatedDoc, type, generatedNo).catch(err => {
+        console.error('Error sending approval email to applicant:', err);
+      });
+    }
+
+    res.json({
+      success: true,
+      message: status === 'accepted'
+        ? `Registration approved successfully! Unique Registration No: ${generatedNo}`
+        : 'Status updated successfully',
+      data: updatedDoc,
+      registrationNo: generatedNo
+    });
   } catch (error) {
     console.error('Error updating status:', error);
     res.status(500).json({ error: 'Failed to update status' });

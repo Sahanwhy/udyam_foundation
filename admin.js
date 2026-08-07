@@ -1153,7 +1153,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.adminCategoryDescriptions = {};
 
   window.fetchAdminGallery = function() {
-    fetch(`${API_BASE}/api/gallery`)
+    fetch(`${GALLERY_API}?action=list`)
       .then(res => res.json())
       .then(photos => {
         window.adminGalleryPhotos = photos || [];
@@ -1163,7 +1163,7 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch(err => console.error('Error fetching gallery:', err));
 
-    fetch(`${API_BASE}/api/gallery/category-descriptions`)
+    fetch(`${GALLERY_API}?action=category-descriptions`)
       .then(res => {
         if (!res.ok) return {};
         return res.json().catch(() => ({}));
@@ -1235,13 +1235,13 @@ document.addEventListener('DOMContentLoaded', () => {
       return alert('Please select a category to save description for.');
     }
 
-    fetch(`${API_BASE}/api/gallery/categories/${encodeURIComponent(categoryName)}/description`, {
-      method: 'PUT',
+    fetch(`${GALLERY_API}?action=update-description&_token=${encodeURIComponent(getAuthToken())}`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${getAuthToken()}`
       },
-      body: JSON.stringify({ description })
+      body: JSON.stringify({ category: categoryName, description, _token: getAuthToken() })
     })
     .then(async res => {
       let data = {};
@@ -1369,61 +1369,100 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!files || files.length === 0) return alert('Please select at least one image file');
       
       const formData = new FormData();
+      formData.append('_token', getAuthToken());
       formData.append('category', category);
       formData.append('date', date);
       formData.append('categoryDescription', description);
       formData.append('featured', featured);
       
       for (let i = 0; i < files.length; i++) {
-        formData.append('photos', files[i]);
+        formData.append('photos[]', files[i]);
       }
       
-      const progress = document.getElementById('uploadProgress');
-      if (progress) {
-        progress.textContent = `Uploading ${files.length} photo(s)...`;
-        progress.style.display = 'block';
+      const progressContainer = document.getElementById('uploadProgressContainer');
+      const progressBar = document.getElementById('uploadProgressBar');
+      const progressText = document.getElementById('uploadStatusText');
+      const progressPercent = document.getElementById('uploadPercentage');
+      const submitBtn = document.getElementById('uploadSubmitBtn') || this.querySelector('button[type="submit"]');
+
+      if (progressContainer) {
+        progressContainer.style.display = 'block';
+        if (progressBar) progressBar.style.width = '0%';
+        if (progressPercent) progressPercent.textContent = '0%';
+        if (progressText) progressText.textContent = `Uploading ${files.length} photo(s)...`;
       }
-      
-      fetch(`${API_BASE}/api/gallery/upload`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-        body: formData
-      })
-      .then(async res => {
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.65';
+        submitBtn.style.cursor = 'not-allowed';
+      }
+
+      const resetUploadUI = () => {
+        if (progressContainer) progressContainer.style.display = 'none';
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+          submitBtn.style.cursor = 'pointer';
+        }
+      };
+
+      const xhr = new XMLHttpRequest();
+      const uploadUrl = `${GALLERY_API}?action=upload&_token=${encodeURIComponent(getAuthToken())}`;
+
+      xhr.open('POST', uploadUrl, true);
+      xhr.setRequestHeader('Authorization', `Bearer ${getAuthToken()}`);
+
+      xhr.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          if (progressBar) progressBar.style.width = `${percent}%`;
+          if (progressPercent) progressPercent.textContent = `${percent}%`;
+          if (progressText) {
+            if (percent < 100) {
+              progressText.textContent = `Uploading ${files.length} photo(s)...`;
+            } else {
+              progressText.textContent = `Processing ${files.length} photo(s) on server...`;
+            }
+          }
+        }
+      };
+
+      xhr.onload = function() {
+        resetUploadUI();
         let data = {};
         try {
-          data = await res.json();
-        } catch(e) {
-          data = { error: `Server error (${res.status})` };
+          data = JSON.parse(xhr.responseText);
+        } catch(err) {
+          data = { error: `Server error (${xhr.status})` };
         }
-        return { ok: res.ok, data };
-      })
-      .then(({ ok, data }) => {
-        if (progress) progress.style.display = 'none';
-        if (ok && data.success) {
+
+        if (xhr.status >= 200 && xhr.status < 300 && data.success) {
           alert(data.message || 'Photo(s) uploaded successfully!');
-          this.reset();
+          uploadForm.reset();
           fetchAdminGallery();
         } else {
           alert(data.error || 'Failed to upload photo(s)');
         }
-      })
-      .catch(err => {
-        if (progress) progress.style.display = 'none';
-        console.error(err);
-        alert(err.message || 'An error occurred during upload');
-      });
+      };
+
+      xhr.onerror = function() {
+        resetUploadUI();
+        alert('An error occurred during upload. Please check your connection.');
+      };
+
+      xhr.send(formData);
     });
   }
 
   window.toggleFeatured = function(id, featured) {
-    fetch(`${API_BASE}/api/gallery/${id}/featured`, {
-      method: 'PATCH',
+    fetch(`${GALLERY_API}?action=toggle-featured&_token=${encodeURIComponent(getAuthToken())}`, {
+      method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${getAuthToken()}` 
       },
-      body: JSON.stringify({ featured })
+      body: JSON.stringify({ id, featured, _token: getAuthToken() })
     })
     .then(res => res.json())
     .then(data => {
@@ -1438,9 +1477,13 @@ document.addEventListener('DOMContentLoaded', () => {
   window.deleteGalleryPhoto = function(id) {
     if (!confirm('Are you sure you want to delete this photo?')) return;
     
-    fetch(`${API_BASE}/api/gallery/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    fetch(`${GALLERY_API}?action=delete&_token=${encodeURIComponent(getAuthToken())}`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}` 
+      },
+      body: JSON.stringify({ id, _token: getAuthToken() })
     })
     .then(res => res.json())
     .then(data => {
@@ -1479,9 +1522,13 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
-    fetch(`${API_BASE}/api/gallery/category/${encodeURIComponent(selectedCategory)}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    fetch(`${GALLERY_API}?action=delete-category&_token=${encodeURIComponent(getAuthToken())}`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}` 
+      },
+      body: JSON.stringify({ category: selectedCategory, _token: getAuthToken() })
     })
     .then(res => res.json())
     .then(data => {

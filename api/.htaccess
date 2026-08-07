@@ -1,0 +1,12 @@
+# Pass Authorization header to PHP (GoDaddy/shared hosting strips it by default)
+RewriteEngine On
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
+
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+
+# Protect sensitive files from direct browser access
+<FilesMatch "(config\.php|gallery-data\.json)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
