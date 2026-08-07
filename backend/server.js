@@ -14,6 +14,9 @@ const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 
+// ── Gallery: local disk storage (images saved to ../images/<category>/) ──
+const IMAGES_DIR = path.join(__dirname, '..', 'images');
+
 const app = express();
 
 // ── CORS: allow GitHub Pages frontend + local dev ──
@@ -281,14 +284,36 @@ const forwardAttachmentStorage = new CloudinaryStorage({
 });
 const uploadForwardAttachments = multer({ storage: forwardAttachmentStorage });
 
-const galleryStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'udyam_foundation/gallery',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'heic']
+// Gallery local disk storage — saves to ../images/<categoryName>/
+const galleryStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const catName = (req.body.category || 'uncategorized').trim();
+    // Sanitise: strip characters unsafe for directory names
+    const safeFolder = catName.replace(/[<>:"/\\|?*]/g, '_');
+    const folderPath = path.join(IMAGES_DIR, safeFolder);
+    fs.mkdirSync(folderPath, { recursive: true });
+    cb(null, folderPath);
+  },
+  filename: function (req, file, cb) {
+    // Keep original filename but ensure uniqueness by prepending timestamp if file already exists
+    const ext = path.extname(file.originalname).toLowerCase();
+    const base = path.basename(file.originalname, ext).replace(/\s+/g, '_');
+    const unique = Date.now();
+    cb(null, `${base}_${unique}${ext}`);
   }
 });
-const uploadGallery = multer({ storage: galleryStorage });
+const uploadGallery = multer({
+  storage: galleryStorage,
+  fileFilter: (req, file, cb) => {
+    const allowed = /\.(jpg|jpeg|png|webp|heic|gif)$/i;
+    if (allowed.test(file.originalname)) cb(null, true);
+    else cb(new Error('Only image files are allowed (jpg, jpeg, png, webp, heic, gif)'));
+  },
+  limits: { fileSize: 20 * 1024 * 1024 } // 20 MB per file
+});
+
+// Serve gallery images statically at /images
+app.use('/images', express.static(IMAGES_DIR));
 
 app.post('/api/register/volunteer', upload.fields([
   { name: 'addressProofs', maxCount: 5 },
@@ -1585,7 +1610,17 @@ app.post('/api/gallery/upload', authMiddleware, (req, res, next) => {
       
       const savedPhotos = [];
       for (const file of filesList) {
-        const imageUrl = file.path || file.secure_url || file.url || '';
+        // Build a relative URL: images/<category>/<filename>
+        // file.path is the absolute path on disk; derive relative from IMAGES_DIR
+        let imageUrl = '';
+        if (file.path) {
+          // Convert absolute path to URL-friendly relative path with forward slashes
+          const rel = path.relative(path.join(IMAGES_DIR, '..'), file.path);
+          imageUrl = rel.split(path.sep).join('/');
+        } else {
+          // Fallback (shouldn't happen with diskStorage)
+          imageUrl = file.secure_url || file.url || '';
+        }
         const newPhoto = new GalleryPhoto({
           title: '',
           category: catName,
@@ -1617,6 +1652,13 @@ app.delete('/api/gallery/:id', authMiddleware, async (req, res) => {
     if (!photo) {
       return res.status(404).json({ error: 'Photo not found' });
     }
+    // Also delete the file from disk (only for local paths, not cloudinary URLs)
+    if (photo.imageUrl && !photo.imageUrl.startsWith('http')) {
+      const filePath = path.join(IMAGES_DIR, '..', photo.imageUrl);
+      fs.unlink(filePath, (err) => {
+        if (err && err.code !== 'ENOENT') console.error('Error deleting file from disk:', err);
+      });
+    }
     res.json({ success: true, message: 'Photo deleted successfully' });
   } catch (error) {
     console.error('Error deleting photo:', error);
@@ -1632,6 +1674,11 @@ app.delete('/api/gallery/category/:categoryName', authMiddleware, async (req, re
     if (GalleryCategory) {
       await GalleryCategory.deleteOne({ category: categoryName });
     }
+    // Also delete the category folder from disk
+    const folderPath = path.join(IMAGES_DIR, categoryName);
+    fs.rm(folderPath, { recursive: true, force: true }, (err) => {
+      if (err && err.code !== 'ENOENT') console.error('Error deleting folder from disk:', err);
+    });
     res.json({ 
       success: true, 
       message: `Deleted ${result.deletedCount} photo(s) in category "${categoryName}"`,

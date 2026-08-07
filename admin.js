@@ -1330,7 +1330,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     grid.innerHTML = displayPhotos.map(photo => `
       <div style="background:white; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.1); display:flex; flex-direction:column;">
-        <img src="${photo.imageUrl}" alt="${photo.category || 'Gallery Photo'}" style="width:100%; height:150px; object-fit:cover;">
+        <img src="${photo.imageUrl && photo.imageUrl.startsWith('http') ? photo.imageUrl : '/' + photo.imageUrl}" alt="${photo.category || 'Gallery Photo'}" style="width:100%; height:150px; object-fit:cover;">
         <div style="padding: 1rem; flex: 1; display:flex; flex-direction:column; gap:0.5rem;">
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.3rem;">
             <span style="background:var(--saffron); color:white; font-size:0.7rem; padding:0.2rem 0.6rem; border-radius:20px;">${photo.category}</span>
