@@ -636,6 +636,29 @@ function generateRegistrationNo(type) {
   return `UDYAM-${prefix}-${year}-${randomCode}`;
 }
 
+function getLogoDataUri() {
+  const possiblePaths = [
+    path.join(__dirname, 'images', 'logo.jpg'),
+    path.join(__dirname, '..', 'images', 'logo.jpg'),
+    path.join(__dirname, 'images', 'logo.png'),
+    path.join(__dirname, '..', 'images', 'logo.png')
+  ];
+
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      try {
+        const fileData = fs.readFileSync(p);
+        const base64 = fileData.toString('base64');
+        const ext = path.extname(p).toLowerCase() === '.png' ? 'png' : 'jpeg';
+        return `data:image/${ext};base64,${base64}`;
+      } catch (e) {
+        console.error('Error reading logo file for email:', e);
+      }
+    }
+  }
+  return 'https://udyamsdf.org/images/logo.jpg';
+}
+
 async function sendApprovalEmail(doc, type, registrationNo) {
   const typeLabelMap = {
     volunteer: 'Volunteer',
@@ -651,6 +674,7 @@ async function sendApprovalEmail(doc, type, registrationNo) {
     return null;
   }
 
+  const logoSrc = getLogoDataUri();
   const subject = `Congratulations! Your ${typeLabel} Registration Has Been Approved - Udyam Foundation`;
 
   const html = `
@@ -662,7 +686,8 @@ async function sendApprovalEmail(doc, type, registrationNo) {
         body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; color: #333333; }
         .email-container { max-width: 600px; background-color: #ffffff; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e1e8ed; }
         .email-header { background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%); padding: 30px 20px; text-align: center; color: #ffffff; }
-        .email-header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px; }
+        .email-logo { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); margin-bottom: 12px; }
+        .email-header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
         .email-header p { margin: 5px 0 0 0; font-size: 14px; opacity: 0.9; }
         .email-body { padding: 30px 25px; line-height: 1.6; font-size: 15px; }
         .badge-approved { display: inline-block; background-color: #D1FAE5; color: #065F46; font-weight: 700; padding: 6px 16px; border-radius: 50px; font-size: 13px; text-transform: uppercase; margin-bottom: 15px; }
@@ -677,6 +702,7 @@ async function sendApprovalEmail(doc, type, registrationNo) {
     <body>
       <div class="email-container">
         <div class="email-header">
+          <img src="${logoSrc}" alt="Udyam Foundation Logo" class="email-logo" />
           <h1>Udyam Social Development Foundation</h1>
           <p>Selection & Registration Approval Notice</p>
         </div>
