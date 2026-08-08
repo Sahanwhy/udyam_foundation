@@ -2223,9 +2223,131 @@ document.addEventListener('DOMContentLoaded', () => {
 
           <!-- Attachments -->
           ${attachmentsHtml}
+
+          <!-- Reply Section -->
+          ${m.reply && m.reply.replyText ? `
+            <div style="margin-top: 0.85rem; padding: 1rem; background: #F0FDF4; border: 1px solid #BBF7D0; border-left: 4px solid #16A34A; border-radius: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.4rem;">
+                <span style="font-size: 0.85rem; font-weight: 700; color: #15803D; display: flex; align-items: center; gap: 6px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                  Reply from ${m.reply.senderName} (${m.reply.senderRole})
+                </span>
+                <span style="font-size: 0.75rem; color: #166534; font-weight: 500;">
+                  ${m.reply.createdAt ? new Date(m.reply.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                </span>
+              </div>
+              <div style="font-size: 0.9rem; color: #1E293B; white-space: pre-wrap; line-height: 1.5;">
+                ${m.reply.replyText}
+              </div>
+              ${m.reply.attachments && m.reply.attachments.length > 0 ? `
+                <div style="margin-top: 0.5rem; font-size: 0.8rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                  ${m.reply.attachments.map((att, idx) => {
+                    const url = typeof att === 'object' ? att.url : att;
+                    const name = typeof att === 'object' && att.name ? att.name : `Attachment ${idx + 1}`;
+                    return `<a href="${url}" target="_blank" style="color: #15803D; text-decoration: underline; font-weight: 600; font-size: 0.8rem;">📎 ${name}</a>`;
+                  }).join(' ')}
+                </div>` : ''}
+              <div style="margin-top: 0.65rem; display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 0.72rem; font-weight: 700; color: #15803D; background: rgba(22,163,74,0.15); padding: 3px 10px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px;">
+                  🔒 Thread Closed (1/1 Reply Used)
+                </span>
+              </div>
+            </div>
+          ` : `
+            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #F1F5F9; display: flex; flex-direction: column; gap: 0.75rem;">
+              <button onclick="window.toggleAdminReplyForm('${m._id}')" style="align-self: flex-start; background: #F3F4F6; color: #374151; border: 1px solid #D1D5DB; padding: 0.4rem 0.9rem; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;" onmouseover="this.style.background='var(--primary)'; this.style.color='white';" onmouseout="this.style.background='#F3F4F6'; this.style.color='#374151';">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                Reply (1 Option Available)
+              </button>
+
+              <form id="replyForm_${m._id}" onsubmit="window.submitAdminReply(event, '${m._id}')" style="display: none; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1rem; border-radius: 8px; flex-direction: column; gap: 0.75rem;">
+                <div style="font-size: 0.82rem; font-weight: 700; color: var(--primary);">
+                  Send Final Reply to ${m.senderName} (Thread will be closed after this reply)
+                </div>
+                <textarea id="replyText_${m._id}" required rows="3" placeholder="Write your response..." style="width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #CBD5E1; border-radius: 6px; font-family: inherit; font-size: 0.88rem; outline: none; resize: vertical;"></textarea>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                  <input type="file" id="replyFile_${m._id}" multiple style="font-size: 0.78rem; color: #64748B;">
+                  <div style="display: flex; gap: 0.5rem;">
+                    <button type="button" onclick="window.toggleAdminReplyForm('${m._id}')" style="padding: 0.4rem 0.85rem; background: #E2E8F0; color: #475569; border: none; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer;">Cancel</button>
+                    <button type="submit" id="replySubmitBtn_${m._id}" style="padding: 0.4rem 1rem; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                      Send Reply & Close Thread
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          `}
         </div>
       `;
     }).join('');
+  };
+
+  // Toggle inline reply form
+  window.toggleAdminReplyForm = (id) => {
+    const form = document.getElementById(`replyForm_${id}`);
+    if (!form) return;
+    if (form.style.display === 'none' || !form.style.display) {
+      form.style.display = 'flex';
+    } else {
+      form.style.display = 'none';
+    }
+  };
+
+  // Submit admin message reply
+  window.submitAdminReply = async (e, id) => {
+    e.preventDefault();
+    const textarea = document.getElementById(`replyText_${id}`);
+    const fileInput = document.getElementById(`replyFile_${id}`);
+    const submitBtn = document.getElementById(`replySubmitBtn_${id}`);
+
+    const replyText = textarea ? textarea.value.trim() : '';
+    if (!replyText) return alert('Please enter a reply message.');
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.6';
+      submitBtn.textContent = 'Sending...';
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('replyText', replyText);
+
+      if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        for (let i = 0; i < fileInput.files.length; i++) {
+          formData.append('attachments', fileInput.files[i]);
+        }
+      }
+
+      const token = getAuthToken();
+      const res = await fetch(`${API_BASE}/api/admin/messages/${id}/reply`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert(data.message || 'Reply sent successfully! Message thread is now closed.');
+        fetchAdminMessages();
+      } else {
+        alert(data.error || 'Failed to send reply');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+          submitBtn.textContent = 'Send Reply & Close Thread';
+        }
+      }
+    } catch (err) {
+      console.error('Error submitting reply:', err);
+      alert('An error occurred while sending reply');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        submitBtn.textContent = 'Send Reply & Close Thread';
+      }
+    }
   };
 
   // Delete message window function

@@ -193,7 +193,14 @@
       background: var(--surface);
       border-radius: var(--radius);
       box-shadow: var(--shadow-sm);
-      overflow: hidden;
+      position: relative;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .main-column {
+      min-width: 0;
+      max-width: 100%;
     }
 
     .data-section-header {
@@ -228,12 +235,48 @@
     }
 
     .table-container {
-      overflow-x: auto;
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: auto !important;
+      scrollbar-color: #1B4332 #E5E7EB !important;
+      padding: 0 0.5rem 1rem 0.5rem !important;
+      margin-bottom: 0.5rem;
+      display: block !important;
     }
 
-    table {
-      width: 100%;
+    .table-container::-webkit-scrollbar {
+      height: 12px !important;
+      display: block !important;
+    }
+
+    .table-container::-webkit-scrollbar-track {
+      background: #E5E7EB !important;
+      border-radius: 10px !important;
+      margin: 0 0.5rem !important;
+    }
+
+    .table-container::-webkit-scrollbar-thumb {
+      background: #1B4332 !important;
+      border-radius: 10px !important;
+      border: 2px solid #E5E7EB !important;
+    }
+
+    .table-container::-webkit-scrollbar-thumb:hover {
+      background: #2D6A4F !important;
+    }
+
+    .table-container table {
+      width: max-content !important;
+      min-width: 850px !important;
       border-collapse: collapse;
+    }
+
+    @media (max-width: 768px) {
+      .mobile-scroll-hint {
+        display: inline-flex !important;
+      }
     }
 
     th, td {
@@ -717,6 +760,39 @@
         gap: 0.75rem !important;
       }
 
+      /* Force horizontal table scrolling on mobile */
+      .data-section {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: visible !important;
+      }
+      .table-container {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: scroll !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: auto !important;
+        scrollbar-color: #1B4332 #E5E7EB !important;
+        padding-bottom: 12px !important;
+      }
+      .table-container::-webkit-scrollbar {
+        height: 12px !important;
+        display: block !important;
+      }
+      .table-container::-webkit-scrollbar-track {
+        background: #E5E7EB !important;
+        border-radius: 6px !important;
+      }
+      .table-container::-webkit-scrollbar-thumb {
+        background: #1B4332 !important;
+        border-radius: 6px !important;
+      }
+      .table-container table {
+        width: max-content !important;
+        min-width: 850px !important;
+      }
+
       /* Refresh btn text on small screens */
       .refresh-btn span.btn-text { display: none; }
     }
@@ -893,14 +969,20 @@
           </div>
 
           <section class="data-section">
-            <div class="data-section-header">
+            <div class="data-section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
               <h2>Donation Records</h2>
-              <button class="refresh-btn" id="refreshBtn">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Refresh Data
-              </button>
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="mobile-scroll-hint" style="display: none; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; color: var(--primary, #1B4332); background: rgba(27,67,50,0.08); padding: 0.35rem 0.75rem; border-radius: 20px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                  <span>Scroll right &rarr;</span>
+                </div>
+                <button class="refresh-btn" id="refreshBtn">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Refresh Data
+                </button>
+              </div>
             </div>
             <div class="table-container">
               <table>

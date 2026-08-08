@@ -226,6 +226,18 @@ const adminMessageSchema = new mongoose.Schema({
   subject: { type: String, default: '' },
   message: { type: String, required: true },
   attachments: [mongoose.Schema.Types.Mixed],
+
+  reply: {
+    replyText: { type: String, default: null },
+    senderId: { type: String, default: null },
+    senderName: { type: String, default: null },
+    senderEmail: { type: String, default: null },
+    senderRole: { type: String, default: null },
+    attachments: [mongoose.Schema.Types.Mixed],
+    createdAt: { type: Date, default: null }
+  },
+  isClosed: { type: Boolean, default: false },
+
   createdAt: { type: Date, default: Date.now }
 }, { collection: 'admin_messages' });
 
@@ -2044,6 +2056,59 @@ app.post(
     } catch (error) {
       console.error('Error sending admin message:', error);
       res.status(500).json({ error: 'Failed to send message' });
+    }
+  }
+);
+
+// Reply to an admin message (Allows 1 reply, then closes the message thread)
+app.post(
+  '/api/admin/messages/:id/reply',
+  authMiddleware,
+  uploadForwardAttachments.array('attachments', 10),
+  async (req, res) => {
+    try {
+      if (!AdminMessage || !AdminUser) return res.status(503).json({ error: 'Database not ready' });
+
+      const msg = await AdminMessage.findById(req.params.id);
+      if (!msg) return res.status(404).json({ error: 'Message not found' });
+
+      if (msg.isClosed || (msg.reply && msg.reply.replyText)) {
+        return res.status(400).json({ error: 'This message has already been replied to and is now closed.' });
+      }
+
+      const { replyText } = req.body;
+      if (!replyText || !replyText.trim()) {
+        return res.status(400).json({ error: 'Reply text is required' });
+      }
+
+      const sender = await AdminUser.findById(req.user.id).select('fullName email role');
+      const senderName = sender ? sender.fullName : (req.user.fullName || 'Admin');
+      const senderEmail = sender ? sender.email : (req.user.email || '');
+      const senderRole = sender ? sender.role : (req.user.role || 'Admin');
+
+      const attachments = req.files ? req.files.map(f => ({
+        url: f.path,
+        name: f.originalname || 'Attachment',
+        type: f.mimetype || (f.path.includes('.pdf') ? 'application/pdf' : 'image/jpeg')
+      })) : [];
+
+      msg.reply = {
+        replyText: replyText.trim(),
+        senderId: req.user.id,
+        senderName: senderName,
+        senderEmail: senderEmail,
+        senderRole: senderRole,
+        attachments: attachments,
+        createdAt: new Date()
+      };
+      msg.isClosed = true;
+
+      await msg.save();
+
+      res.json({ success: true, message: 'Reply sent successfully. Message thread is now closed.', data: msg });
+    } catch (error) {
+      console.error('Error replying to admin message:', error);
+      res.status(500).json({ error: 'Failed to send reply' });
     }
   }
 );
