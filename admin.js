@@ -324,9 +324,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (filter === 'verified') {
       if (!isSecOrPres) return false;
-      // If forwarded to a specific President/Secretary, only show to that specific admin
+      // If forwarded to a specific President/Secretary, only show to that specific admin.
+      // Use string comparison to avoid ObjectId vs string type mismatch.
       if (r.assignedToAdminId) {
-        return r.assignedToAdminId === user._id || r.assignedToAdminEmail === user.email;
+        const idMatch = String(r.assignedToAdminId) === String(user._id);
+        const emailMatch = r.assignedToAdminEmail && user.email &&
+          r.assignedToAdminEmail.toLowerCase() === user.email.toLowerCase();
+        return idMatch || emailMatch;
       }
       if (r.assignedToRole) {
         return r.assignedToRole === user.role;
@@ -534,7 +538,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const token = getAuthToken(); // Use the global function from admin-auth.js
-      const response = await fetch(`${API_BASE}/api/admin/registrations/${type}/${id}/forward`, {
+
+      // When Secretary/President forwards to another Secretary/President, the backend
+      // automatically sets status='verified' (peer-verified forward) so the recipient
+      // sees it in their Verified section. Mirror this logic for local state updates.
+      const isSenderPeer = user.role === 'Secretary' || user.role === 'President';
+      const isTargetPeer = newRole === 'Secretary' || newRole === 'President';
+      const isPeerVerifiedForward = isSenderPeer && isTargetPeer;
+
+      // Always use the regular /forward endpoint — the server now handles peer-forward
+      // status resolution internally. Only non-Secretary/President members use verify_and_forward.
+      const forwardEndpoint = `${API_BASE}/api/admin/registrations/${type}/${id}/forward`;
+
+      const response = await fetch(forwardEndpoint, {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -548,7 +564,9 @@ document.addEventListener('DOMContentLoaded', () => {
           allRegistrations[index].assignedToAdminId = selectedUserObj ? selectedUserObj._id : null;
           allRegistrations[index].assignedToAdminName = selectedUserObj ? selectedUserObj.fullName : null;
           allRegistrations[index].assignedToAdminEmail = selectedUserObj ? selectedUserObj.email : null;
-          allRegistrations[index].status = 'forwarded';
+          // Peer Sec↔Pres forwards from Verified keep status as 'verified' so the
+          // target sees it in their Verified section; all other forwards become 'forwarded'.
+          allRegistrations[index].status = isPeerVerifiedForward ? 'verified' : 'forwarded';
           if (res.data && res.data.forwardAttachments) {
             allRegistrations[index].forwardAttachments = res.data.forwardAttachments;
           }

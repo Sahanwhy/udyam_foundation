@@ -1464,13 +1464,21 @@ app.patch(
       // Collect Cloudinary URLs for any uploaded attachments
       const attachmentUrls = req.files ? req.files.map(f => ({ url: f.path, uploadedBy: req.user.fullName || 'Admin' })) : [];
 
+      // When a Secretary/President forwards to another Secretary/President,
+      // treat it as a peer-verified forward so the recipient sees it in their
+      // Verified section (status = 'verified') rather than Track/Forwarded.
+      const senderRole = req.user.role || '';
+      const isSenderPeer = senderRole === 'Secretary' || senderRole === 'President';
+      const isTargetPeer = newRole === 'Secretary' || newRole === 'President';
+      const resolvedStatus = (isSenderPeer && isTargetPeer) ? 'verified' : 'forwarded';
+
       // Separate $set and $push to avoid conflict
       const setFields = {
         assignedToRole: newRole,
         assignedToAdminId: assignedToAdminId || null,
         assignedToAdminName: assignedToAdminName || null,
         assignedToAdminEmail: assignedToAdminEmail || null,
-        status: 'forwarded'
+        status: resolvedStatus
       };
 
       const pushFields = {};
