@@ -227,16 +227,15 @@ const adminMessageSchema = new mongoose.Schema({
   message: { type: String, required: true },
   attachments: [mongoose.Schema.Types.Mixed],
 
-  reply: {
-    replyText: { type: String, default: null },
-    senderId: { type: String, default: null },
-    senderName: { type: String, default: null },
-    senderEmail: { type: String, default: null },
-    senderRole: { type: String, default: null },
+  replies: [{
+    replyText: { type: String, required: true },
+    senderId: { type: String, required: true },
+    senderName: { type: String, required: true },
+    senderEmail: { type: String, required: true },
+    senderRole: { type: String, required: true },
     attachments: [mongoose.Schema.Types.Mixed],
-    createdAt: { type: Date, default: null }
-  },
-  isClosed: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now }
+  }],
 
   createdAt: { type: Date, default: Date.now }
 }, { collection: 'admin_messages' });
@@ -2068,7 +2067,7 @@ app.post(
   }
 );
 
-// Reply to an admin message (Allows 1 reply, then closes the message thread)
+// Reply to an admin message (Each admin can reply once per message)
 app.post(
   '/api/admin/messages/:id/reply',
   authMiddleware,
@@ -2080,8 +2079,13 @@ app.post(
       const msg = await AdminMessage.findById(req.params.id);
       if (!msg) return res.status(404).json({ error: 'Message not found' });
 
-      if (msg.isClosed || (msg.reply && msg.reply.replyText)) {
-        return res.status(400).json({ error: 'This message has already been replied to and is now closed.' });
+      // Check if this specific admin has already replied
+      const currentAdminId = req.user.id;
+      const alreadyReplied = msg.replies && msg.replies.some(
+        r => r.senderId && r.senderId.toString() === currentAdminId.toString()
+      );
+      if (alreadyReplied) {
+        return res.status(400).json({ error: 'You have already replied to this message. Each admin can only reply once.' });
       }
 
       const { replyText } = req.body;
@@ -2100,20 +2104,20 @@ app.post(
         type: f.mimetype || (f.path.includes('.pdf') ? 'application/pdf' : 'image/jpeg')
       })) : [];
 
-      msg.reply = {
+      if (!msg.replies) msg.replies = [];
+      msg.replies.push({
         replyText: replyText.trim(),
-        senderId: req.user.id,
+        senderId: currentAdminId,
         senderName: senderName,
         senderEmail: senderEmail,
         senderRole: senderRole,
         attachments: attachments,
         createdAt: new Date()
-      };
-      msg.isClosed = true;
+      });
 
       await msg.save();
 
-      res.json({ success: true, message: 'Reply sent successfully. Message thread is now closed.', data: msg });
+      res.json({ success: true, message: 'Reply sent successfully.', data: msg });
     } catch (error) {
       console.error('Error replying to admin message:', error);
       res.status(500).json({ error: 'Failed to send reply' });

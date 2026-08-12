@@ -67,12 +67,12 @@
         </div>
 
         <div class="form-group">
-          <label for="phone">Phone Number</label>
+          <label for="phone">Phone Number <span style="color: var(--danger)">*</span></label>
           <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required autocomplete="tel">
         </div>
 
         <div class="form-group">
-          <label for="email">Email</label>
+          <label for="email">Email <span style="color: var(--danger)">*</span></label>
           <input type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email">
         </div>
 
@@ -144,6 +144,20 @@
       const role = form.querySelector('input[name="role"]:checked');
       if (!role) {
         showAlert(alertBox, 'Please select your role');
+        return;
+      }
+
+      const phoneVal = document.getElementById('phone').value.trim();
+      if (!phoneVal) {
+        showAlert(alertBox, 'Phone number is required');
+        document.getElementById('phone').focus();
+        return;
+      }
+
+      const emailVal = document.getElementById('email').value.trim();
+      if (!emailVal) {
+        showAlert(alertBox, 'Email address is required');
+        document.getElementById('email').focus();
         return;
       }
 

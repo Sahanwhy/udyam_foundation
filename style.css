@@ -3351,11 +3351,11 @@ select {
 }
 
 .category-description-text {
-  color: #1F2937;
+  color: #111827;
   font-size: 1.05rem;
   line-height: 1.7;
   margin: 0;
-  font-weight: 450;
+  font-weight: 500;
   position: relative;
   z-index: 1;
 }

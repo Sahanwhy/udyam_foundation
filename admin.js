@@ -245,6 +245,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Hide Pending nav for President — Presidents only work from Verified / Track
+  if (user && user.role === 'President') {
+    if (pendingBtn) {
+      pendingBtn.style.display = 'none';
+      pendingBtn.classList.remove('active');
+    }
+    // Default President to Verified section on load
+    const verifiedNavBtn = document.getElementById('nav-verified');
+    if (verifiedNavBtn) {
+      regFilterBtns.forEach(b => b.classList.remove('active'));
+      verifiedNavBtn.classList.add('active');
+      currentRegFilter = 'verified';
+    }
+  }
+
   if (user && user.role !== 'Secretary' && user.role !== 'President') {
     if (pendingBtn) {
       pendingBtn.style.display = 'none';
@@ -339,7 +354,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (filter === 'pending') {
-      return isSecOrPres;
+      // Only Secretary can see the Pending section; President has it removed
+      return user && user.role === 'Secretary';
     }
 
     if (filter === 'accepted' || filter === 'rejected' || filter === 'issue_reported') {
@@ -356,16 +372,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const isSecretaryOrPresident = user && (user.role === 'Secretary' || user.role === 'President');
     
     if (isSecretaryOrPresident) {
-      // Pending badge
-      const pendingCount = allRegistrations.filter(r => (r.status || 'pending') === 'pending').length;
-      if (pendingCount > 0) {
-        const pendingNav = document.getElementById('nav-pending');
-        if (pendingNav) {
-          const badge = document.createElement('span');
-          badge.className = 'sidebar-badge';
-          badge.style.cssText = 'background: #EF4444; color: white; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-left: auto; display: flex; align-items: center; justify-content: center; height: 18px; min-width: 18px;';
-          badge.textContent = pendingCount;
-          pendingNav.appendChild(badge);
+      // Pending badge — only for Secretary (President has no Pending section)
+      if (user && user.role === 'Secretary') {
+        const pendingCount = allRegistrations.filter(r => (r.status || 'pending') === 'pending').length;
+        if (pendingCount > 0) {
+          const pendingNav = document.getElementById('nav-pending');
+          if (pendingNav) {
+            const badge = document.createElement('span');
+            badge.className = 'sidebar-badge';
+            badge.style.cssText = 'background: #EF4444; color: white; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-left: auto; display: flex; align-items: center; justify-content: center; height: 18px; min-width: 18px;';
+            badge.textContent = pendingCount;
+            pendingNav.appendChild(badge);
+          }
         }
       }
 
@@ -871,7 +889,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div style="background:white; padding:0.65rem 0.85rem; border-radius:6px; border:1px solid rgba(239,68,68,0.1); color:#7F1D1D; font-size:0.83rem; line-height:1.45;">${reg.issueText}</div>
             </div>` : ''}
 
-          ${(user.role === 'Secretary' || user.role === 'President') && ['pending', 'verified', 'issue_reported'].includes(currentRegFilter) ? `
+          ${((user.role === 'Secretary' && ['pending', 'verified', 'issue_reported'].includes(currentRegFilter)) || (user.role === 'President' && ['verified', 'issue_reported'].includes(currentRegFilter))) ? `
             <div style="display:flex; flex-wrap:wrap; gap:0.6rem; justify-content:flex-end; border-top:1px solid #F1F5F9; padding-top:0.85rem; margin-top:0.25rem;">
               <button onclick="window.updateRegStatus('${reg.type}', '${reg._id}', 'accepted')" style="flex:1; min-width:110px; padding:0.6rem 1rem; background:var(--success); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">✓ Final Accept</button>
               <button onclick="window.updateRegStatus('${reg.type}', '${reg._id}', 'rejected')" style="flex:1; min-width:110px; padding:0.6rem 1rem; background:white; color:var(--danger); border:1px solid var(--danger); border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.background='var(--danger)'; this.style.color='white'" onmouseout="this.style.background='white'; this.style.color='var(--danger)'">✕ Final Reject</button>
@@ -2163,6 +2181,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const isSecretaryOrPresident = user && (user.role === 'Secretary' || user.role === 'President');
       const canDelete = isSentByMe || isSecretaryOrPresident;
 
+      // Check if the current admin has already replied to this message
+      const hasCurrentUserReplied = user && m.replies && m.replies.some(
+        r => r.senderId && (r.senderId === user._id || r.senderEmail === user.email)
+      );
+
+
       const formattedDate = m.createdAt
         ? new Date(m.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
         : '';
@@ -2243,44 +2267,46 @@ document.addEventListener('DOMContentLoaded', () => {
           ${attachmentsHtml}
 
           <!-- Reply Section -->
-          ${m.reply && m.reply.replyText ? `
-            <div style="margin-top: 0.85rem; padding: 1rem; background: #F0FDF4; border: 1px solid #BBF7D0; border-left: 4px solid #16A34A; border-radius: 8px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.4rem;">
-                <span style="font-size: 0.85rem; font-weight: 700; color: #15803D; display: flex; align-items: center; gap: 6px;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-                  Reply from ${m.reply.senderName} (${m.reply.senderRole})
-                </span>
-                <span style="font-size: 0.75rem; color: #166534; font-weight: 500;">
-                  ${m.reply.createdAt ? new Date(m.reply.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
-                </span>
+          <div style="margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px solid #F1F5F9; display: flex; flex-direction: column; gap: 0.75rem;">
+
+            ${(m.replies && m.replies.length > 0) ? m.replies.map((reply, rIdx) => `
+              <div style="padding: 1rem; background: #F0FDF4; border: 1px solid #BBF7D0; border-left: 4px solid #16A34A; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.4rem;">
+                  <span style="font-size: 0.85rem; font-weight: 700; color: #15803D; display: flex; align-items: center; gap: 6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                    Reply from ${reply.senderName} (${reply.senderRole})
+                  </span>
+                  <span style="font-size: 0.75rem; color: #166534; font-weight: 500;">
+                    ${reply.createdAt ? new Date(reply.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                  </span>
+                </div>
+                <div style="font-size: 0.9rem; color: #1E293B; white-space: pre-wrap; line-height: 1.5;">
+                  ${reply.replyText}
+                </div>
+                ${reply.attachments && reply.attachments.length > 0 ? `
+                  <div style="margin-top: 0.5rem; font-size: 0.8rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    ${reply.attachments.map((att, idx) => {
+                      const url = typeof att === 'object' ? att.url : att;
+                      const name = typeof att === 'object' && att.name ? att.name : `Attachment ${idx + 1}`;
+                      return `<a href="${url}" target="_blank" style="color: #15803D; text-decoration: underline; font-weight: 600; font-size: 0.8rem;">📎 ${name}</a>`;
+                    }).join(' ')}
+                  </div>` : ''}
               </div>
-              <div style="font-size: 0.9rem; color: #1E293B; white-space: pre-wrap; line-height: 1.5;">
-                ${m.reply.replyText}
+            `).join('') : ''}
+
+            ${hasCurrentUserReplied ? `
+              <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 700; color: #15803D; background: rgba(22,163,74,0.12); padding: 4px 12px; border-radius: 12px; align-self: flex-start;">
+                ✅ You have already replied to this message
               </div>
-              ${m.reply.attachments && m.reply.attachments.length > 0 ? `
-                <div style="margin-top: 0.5rem; font-size: 0.8rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                  ${m.reply.attachments.map((att, idx) => {
-                    const url = typeof att === 'object' ? att.url : att;
-                    const name = typeof att === 'object' && att.name ? att.name : `Attachment ${idx + 1}`;
-                    return `<a href="${url}" target="_blank" style="color: #15803D; text-decoration: underline; font-weight: 600; font-size: 0.8rem;">📎 ${name}</a>`;
-                  }).join(' ')}
-                </div>` : ''}
-              <div style="margin-top: 0.65rem; display: flex; align-items: center; justify-content: space-between;">
-                <span style="font-size: 0.72rem; font-weight: 700; color: #15803D; background: rgba(22,163,74,0.15); padding: 3px 10px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px;">
-                  🔒 Thread Closed (1/1 Reply Used)
-                </span>
-              </div>
-            </div>
-          ` : `
-            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #F1F5F9; display: flex; flex-direction: column; gap: 0.75rem;">
+            ` : `
               <button onclick="window.toggleAdminReplyForm('${m._id}')" style="align-self: flex-start; background: #F3F4F6; color: #374151; border: 1px solid #D1D5DB; padding: 0.4rem 0.9rem; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;" onmouseover="this.style.background='var(--primary)'; this.style.color='white';" onmouseout="this.style.background='#F3F4F6'; this.style.color='#374151';">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-                Reply (1 Option Available)
+                Reply
               </button>
 
               <form id="replyForm_${m._id}" onsubmit="window.submitAdminReply(event, '${m._id}')" style="display: none; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1rem; border-radius: 8px; flex-direction: column; gap: 0.75rem;">
                 <div style="font-size: 0.82rem; font-weight: 700; color: var(--primary);">
-                  Send Final Reply to ${m.senderName} (Thread will be closed after this reply)
+                  Reply to this message (you can only reply once)
                 </div>
                 <textarea id="replyText_${m._id}" required rows="3" placeholder="Write your response..." style="width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #CBD5E1; border-radius: 6px; font-family: inherit; font-size: 0.88rem; outline: none; resize: vertical;"></textarea>
                 
@@ -2289,13 +2315,13 @@ document.addEventListener('DOMContentLoaded', () => {
                   <div style="display: flex; gap: 0.5rem;">
                     <button type="button" onclick="window.toggleAdminReplyForm('${m._id}')" style="padding: 0.4rem 0.85rem; background: #E2E8F0; color: #475569; border: none; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer;">Cancel</button>
                     <button type="submit" id="replySubmitBtn_${m._id}" style="padding: 0.4rem 1rem; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
-                      Send Reply & Close Thread
+                      Send Reply
                     </button>
                   </div>
                 </div>
               </form>
-            </div>
-          `}
+            `}
+          </div>
         </div>
       `;
     }).join('');
@@ -2347,14 +2373,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        alert(data.message || 'Reply sent successfully! Message thread is now closed.');
+        alert(data.message || 'Reply sent successfully!');
         fetchAdminMessages();
       } else {
         alert(data.error || 'Failed to send reply');
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.style.opacity = '1';
-          submitBtn.textContent = 'Send Reply & Close Thread';
+          submitBtn.textContent = 'Send Reply';
         }
       }
     } catch (err) {
@@ -2363,7 +2389,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.style.opacity = '1';
-        submitBtn.textContent = 'Send Reply & Close Thread';
+        submitBtn.textContent = 'Send Reply';
       }
     }
   };
