@@ -3315,25 +3315,28 @@ select {
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light, #2D6A4F) 100%);
-  color: var(--white);
+  background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px rgba(27, 67, 50, 0.25);
   flex-shrink: 0;
+  opacity: 1;
 }
 
 .category-badge-pill {
-  background: var(--primary);
-  color: var(--white);
+  background: #1B4332;
+  color: #ffffff;
   font-size: 0.82rem;
   font-weight: 700;
   padding: 0.45rem 1.1rem;
   border-radius: 50px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  box-shadow: 0 3px 10px rgba(27, 67, 50, 0.2);
+  box-shadow: 0 3px 10px rgba(27, 67, 50, 0.35);
+  opacity: 1;
+  display: inline-block;
 }
 
 .category-count-badge {

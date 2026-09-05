@@ -360,7 +360,13 @@ app.post('/api/register/employee', upload.fields([
   try {
     if (!Employee) return res.status(503).json({ error: 'Database not ready' });
 
-    const { fullName, phone, whatsapp, email, bloodGroup } = req.body;
+    const { fullName, phone, whatsapp, email, bloodGroup, masterKey } = req.body;
+
+    const EMPLOYEE_MASTER_KEY = process.env.EMPLOYEE_MASTER_KEY || process.env.ADMIN_SECRET_KEY || 'Udyam@2026';
+    if (!masterKey || masterKey.trim() !== EMPLOYEE_MASTER_KEY) {
+      return res.status(403).json({ error: 'Invalid Employee Master Key. Please contact the Udyam Foundation office.' });
+    }
+
     const panCard = req.files['panCard'] ? req.files['panCard'][0].path : '';
     const aadharCard = req.files['aadharCard'] ? req.files['aadharCard'][0].path : '';
     const dobProof = req.files['dobProof'] ? req.files['dobProof'][0].path : '';
