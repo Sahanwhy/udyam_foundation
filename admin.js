@@ -647,10 +647,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  window.toggleMobileRegDetail = (id) => {
+    const drawer = document.getElementById(`m-detail-${id}`);
+    const btn = document.getElementById(`m-toggle-btn-${id}`);
+    const card = document.getElementById(`m-reg-card-${id}`);
+    if (!drawer) return;
+    const isHidden = drawer.style.display === 'none' || !drawer.style.display;
+    if (isHidden) {
+      drawer.style.display = 'block';
+      if (btn) btn.innerHTML = '👁 Details <span class="m-chevron">▲</span>';
+      if (card) card.classList.add('m-card-open');
+    } else {
+      drawer.style.display = 'none';
+      if (btn) btn.innerHTML = '👁 Details <span class="m-chevron">▼</span>';
+      if (card) card.classList.remove('m-card-open');
+    }
+  };
+
   window.toggleAllRegDetails = () => {
     const detailRows = document.querySelectorAll('.excel-detail-row');
-    if (detailRows.length === 0) return;
-    const anyClosed = Array.from(detailRows).some(r => r.style.display === 'none');
+    const mobileDrawers = document.querySelectorAll('.m-card-drawer');
+    const anyClosed = Array.from(detailRows).some(r => r.style.display === 'none') ||
+                      Array.from(mobileDrawers).some(r => r.style.display === 'none');
+
     detailRows.forEach(r => {
       r.style.display = anyClosed ? 'table-row' : 'none';
     });
@@ -661,6 +680,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.excel-expand-btn').forEach(b => {
       b.innerHTML = anyClosed ? '▲' : '▼';
     });
+
+    mobileDrawers.forEach(d => {
+      d.style.display = anyClosed ? 'block' : 'none';
+    });
+    document.querySelectorAll('.mobile-reg-card').forEach(c => {
+      if (anyClosed) c.classList.add('m-card-open');
+      else c.classList.remove('m-card-open');
+    });
+    document.querySelectorAll('.m-act-details').forEach(btn => {
+      btn.innerHTML = anyClosed ? '👁 Details <span class="m-chevron">▲</span>' : '👁 Details <span class="m-chevron">▼</span>';
+    });
+
     const toggleBtn = document.getElementById('regToggleAllBtn');
     if (toggleBtn) {
       toggleBtn.textContent = anyClosed ? 'Collapse All' : 'Expand All';
@@ -794,7 +825,10 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const rowsHtml = filtered.map((reg, index) => {
+    const rowsArr = [];
+    const mobileCardsArr = [];
+
+    filtered.forEach((reg, index) => {
       const isVol = reg.type === 'volunteer';
       const isEmp = reg.type === 'employee';
       const isMem = reg.type === 'member';
@@ -1158,7 +1192,8 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
       }
 
-      return `
+      // Desktop table row
+      rowsArr.push(`
         <!-- Main Spreadsheet Row -->
         <tr class="excel-row" id="reg-row-${reg._id}" onclick="window.toggleRegDetail('${reg._id}')" style="cursor: pointer;">
           <td style="text-align: center; white-space: nowrap;">
@@ -1189,29 +1224,20 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             ${reg.email ? `<div style="font-size:0.7rem; color:#64748B; max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${reg.email}">${reg.email}</div>` : ''}
           </td>
-          <td>
-            ${keyInfoHtml}
-          </td>
-          <td>
-            ${trackingHtml}
-          </td>
+          <td>${keyInfoHtml}</td>
+          <td>${trackingHtml}</td>
           <td>
             <div style="display: flex; flex-wrap: wrap; gap: 3px; align-items: center;">
               ${docChips.length > 0 ? docChips.join('') : '<span style="color:#94A3B8; font-size:0.75rem;">None</span>'}
             </div>
           </td>
           <td style="text-align: center; white-space: nowrap;">
-            <div style="display: inline-flex; align-items: center; gap: 4px; justify-content: center;">
-              ${rowActionsHtml}
-            </div>
+            <div style="display: inline-flex; align-items: center; gap: 4px; justify-content: center;">${rowActionsHtml}</div>
           </td>
         </tr>
-
-        <!-- Expandable Detail Drawer Row -->
         <tr class="excel-detail-row" id="reg-detail-${reg._id}" style="display: none;">
           <td colspan="9" class="excel-detail-cell">
             <div style="display: flex; flex-direction: column; gap: 0.85rem;">
-              <!-- Header Bar of the Detail Drawer -->
               <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; border-bottom: 1px solid #CBD5E1; padding-bottom: 0.5rem;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <span style="font-weight: 700; font-size: 1rem; color: #0F172A;">${applicantName}</span>
@@ -1220,37 +1246,93 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <button type="button" class="excel-act-btn" style="background: white; border: 1px solid #CBD5E1; color: #475569;" onclick="window.toggleRegDetail('${reg._id}')">▲ Close Details</button>
               </div>
-
-              <!-- Information Grid -->
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.65rem;">
-                ${detailFieldsHtml}
-              </div>
-
-              <!-- Tracking / Progress Section -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.65rem;">${detailFieldsHtml}</div>
               ${detailTrackingHtml}
-
-              <!-- Attachments & Notes -->
               ${detailAttachmentsHtml}
               ${detailNotesHtml}
               ${detailVerificationHtml}
               ${detailIssueHtml}
-
-              <!-- Bottom Action Bar -->
               <div style="border-top: 1px solid #E2E8F0; padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-                <span style="font-size: 0.75rem; color: #64748B;">
-                  Applied on: <strong>${new Date(reg.date).toLocaleString('en-IN')}</strong>
-                </span>
+                <span style="font-size: 0.75rem; color: #64748B;">Applied on: <strong>${new Date(reg.date).toLocaleString('en-IN')}</strong></span>
                 ${detailActionButtonsHtml}
               </div>
             </div>
           </td>
         </tr>
-      `;
-    }).join('');
+      `);
+
+      // Mobile Full-Width Card
+      mobileCardsArr.push(`
+        <div class="mobile-reg-card" id="m-reg-card-${reg._id}">
+          <div class="m-card-header">
+            ${photoSrc ? `<img src="${photoSrc}" alt="Photo" onclick="window.openPhotoLightbox('${photoSrc.replace(/'/g, "&apos;")}', '${safeName}')" class="m-card-avatar" title="Click to view full photo" />` : `<div class="m-card-avatar-empty">N/A</div>`}
+            <div style="min-width:0; flex:1;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                <span class="m-card-name" title="${applicantName}">${applicantName}</span>
+                <span class="m-card-index">#${index + 1}</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px; margin-top:3px; flex-wrap:wrap;">
+                <span class="excel-badge-type excel-type-${reg.type}">${typeLabel}</span>
+                <span class="m-card-date">🕒 ${new Date(reg.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} · ${new Date(reg.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+            </div>
+          </div>
+          <div class="m-card-meta-grid">
+            <div class="m-card-meta-item">
+              <span class="m-meta-label">Contact</span>
+              <div class="m-meta-val" style="display:flex; align-items:center; gap:6px;">
+                <a href="tel:${phone}" class="m-call-btn">📞 ${phone}</a>
+                ${whatsapp ? `<a href="https://wa.me/91${whatsapp}" target="_blank" class="m-wa-btn" title="Open WhatsApp: ${whatsapp}"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.98-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.24-.74-.66-1.25-1.48-1.39-1.73-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.34-.76-1.84-.2-.49-.4-.42-.56-.43h-.47c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.71 4.3 3.8 2.53 1.09 2.53.73 2.98.69.46-.04 1.47-.6 1.68-1.18.21-.59.21-1.09.15-1.19-.06-.11-.23-.17-.48-.29z"/></svg></a>` : ''}
+              </div>
+              ${reg.email ? `<div class="m-card-email" title="${reg.email}">${reg.email}</div>` : ''}
+            </div>
+            <div class="m-card-meta-item">
+              <span class="m-meta-label">Key Info</span>
+              <div class="m-meta-val">${keyInfoHtml}</div>
+            </div>
+          </div>
+          <div class="m-card-status-bar">
+            <span class="m-meta-label">Status</span>
+            <div>${trackingHtml}</div>
+          </div>
+          ${docChips.length > 0 ? `
+            <div class="m-card-docs-row">
+              <span class="m-meta-label" style="margin-right:2px;">Files:</span>
+              <div style="display:flex; flex-wrap:wrap; gap:3px; align-items:center;">${docChips.join('')}</div>
+            </div>` : ''}
+          <div class="m-card-actions">
+            <button type="button" class="m-act-details" id="m-toggle-btn-${reg._id}" onclick="window.toggleMobileRegDetail('${reg._id}')">
+              👁 Details <span class="m-chevron">▼</span>
+            </button>
+            <div class="m-act-group">${rowActionsHtml}</div>
+          </div>
+          <div class="m-card-drawer" id="m-detail-${reg._id}" style="display: none;">
+            <div style="display:flex; flex-direction:column; gap:0.75rem; padding-top:0.75rem; border-top:1px dashed #CBD5E1;">
+              <div style="display: grid; grid-template-columns: 1fr; gap: 0.5rem;">${detailFieldsHtml}</div>
+              ${detailTrackingHtml}
+              ${detailAttachmentsHtml}
+              ${detailNotesHtml}
+              ${detailVerificationHtml}
+              ${detailIssueHtml}
+              <div style="border-top: 1px solid #E2E8F0; padding-top: 0.75rem; display: flex; flex-direction: column; gap: 0.6rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-size: 0.72rem; color: #64748B;">Applied: <strong>${new Date(reg.date).toLocaleString('en-IN')}</strong></span>
+                  <button type="button" class="excel-act-btn" style="background:white; border:1px solid #CBD5E1; color:#475569; padding:4px 8px;" onclick="window.toggleMobileRegDetail('${reg._id}')">▲ Close</button>
+                </div>
+                ${detailActionButtonsHtml}
+              </div>
+            </div>
+          </div>
+        </div>
+      `);
+    });
+
+    const rowsHtml = rowsArr.join('');
+    const mobileCardsHtml = mobileCardsArr.join('');
 
     registrationsContainer.innerHTML = `
       <div class="excel-container-wrapper">
-        <div class="excel-table-scroll">
+        <div class="excel-table-scroll desktop-only-view">
           <table class="excel-table">
             <thead>
               <tr>
@@ -1269,6 +1351,9 @@ document.addEventListener('DOMContentLoaded', () => {
               ${rowsHtml}
             </tbody>
           </table>
+        </div>
+        <div class="mobile-cards-view">
+          ${mobileCardsHtml}
         </div>
       </div>
     `;

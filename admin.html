@@ -817,6 +817,15 @@
       }
 
       /* Quick actions: stacked buttons on narrow screen */
+      .quick-actions {
+        flex-direction: column;
+      }
+      .btn-glass {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
     /* ===================================================
        EXCEL-STYLE SPREADSHEET FOR REGISTRATIONS
        =================================================== */
@@ -972,6 +981,13 @@
       background: inherit;
     }
 
+    table.excel-table thead th:last-child,
+    table.excel-table tbody td:last-child {
+      min-width: 165px;
+      white-space: nowrap;
+      text-align: center;
+    }
+
     table.excel-table tbody tr.excel-row:nth-child(4n+1) {
       background: #FFFFFF;
     }
@@ -1027,6 +1043,268 @@
       border: none;
       transition: all 0.15s;
       white-space: nowrap;
+    }
+
+    /* ===================================================
+       RESPONSIVE DESKTOP VS MOBILE VIEW
+       =================================================== */
+    .desktop-only-view {
+      display: block !important;
+    }
+    .mobile-cards-view {
+      display: none !important;
+    }
+
+    /* Global safeguard for mobile avatar to ensure it can never overflow */
+    .m-card-avatar {
+      width: 44px !important;
+      height: 44px !important;
+      max-width: 44px !important;
+      max-height: 44px !important;
+      border-radius: 50% !important;
+      object-fit: cover !important;
+      border: 2px solid var(--primary) !important;
+      flex-shrink: 0 !important;
+    }
+
+    @media (max-width: 768px) {
+      .desktop-only-view {
+        display: none !important;
+      }
+      .mobile-cards-view {
+        display: flex !important;
+        flex-direction: column;
+        gap: 0.85rem;
+        padding: 0.65rem;
+        background: #F8FAFC;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      /* Mobile Card Design - Looks Full, Clean, Modern */
+      .mobile-reg-card {
+        background: white;
+        border: 1px solid #CBD5E1;
+        border-radius: 10px;
+        padding: 0.85rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+        width: 100%;
+        box-sizing: border-box;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+
+      .mobile-reg-card.m-card-open {
+        border-color: #3B82F6;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+      }
+
+      .m-card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        width: 100%;
+      }
+
+      .m-card-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--primary);
+        flex-shrink: 0;
+        cursor: pointer;
+      }
+
+      .m-card-avatar-empty {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #F1F5F9;
+        color: #94A3B8;
+        font-size: 0.7rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #CBD5E1;
+        flex-shrink: 0;
+      }
+
+      .m-card-name {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0F172A;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .m-card-index {
+        font-size: 0.72rem;
+        font-weight: 800;
+        color: #475569;
+        background: #F1F5F9;
+        padding: 2px 7px;
+        border-radius: 4px;
+        border: 1px solid #E2E8F0;
+        flex-shrink: 0;
+      }
+
+      .m-card-date {
+        font-size: 0.72rem;
+        color: #64748B;
+      }
+
+      .m-card-meta-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        background: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        border-radius: 6px;
+        padding: 0.55rem 0.75rem;
+      }
+
+      .m-card-meta-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .m-meta-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748B;
+      }
+
+      .m-meta-val {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #1E293B;
+      }
+
+      .m-card-email {
+        font-size: 0.7rem;
+        color: #64748B;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 2px;
+      }
+
+      .m-call-btn {
+        color: #1E293B;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 0.8rem;
+      }
+
+      .m-wa-btn {
+        color: #16A34A;
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+      }
+
+      .m-card-status-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        padding: 0.45rem 0.75rem;
+        background: #F1F5F9;
+        border-radius: 6px;
+        border: 1px solid #E2E8F0;
+      }
+
+      .m-card-docs-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        padding: 0.2rem 0;
+      }
+
+      .m-card-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        border-top: 1px solid #F1F5F9;
+        padding-top: 0.6rem;
+      }
+
+      .m-act-details {
+        background: #F1F5F9;
+        color: #1E293B;
+        border: 1px solid #CBD5E1;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .m-act-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .m-act-btn {
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        cursor: pointer;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        white-space: nowrap;
+      }
+
+      .m-card-drawer {
+        margin-top: 0.25rem;
+      }
+
+      .excel-container-wrapper {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        margin-top: 0.25rem !important;
+      }
+      .mobile-cards-view {
+        padding: 0 !important;
+      }
+
+      /* Clean toolbar wrapping on mobile */
+      #registrationsSection .data-section-header {
+        gap: 0.6rem !important;
+      }
+      #regTypeFilterSelect, #regSortSelect {
+        flex: 1 1 45% !important;
+        min-width: 120px !important;
+      }
+      #regExportCsvBtn, #regToggleAllBtn, #refreshRegBtn {
+        flex: 1 1 auto !important;
+        justify-content: center !important;
+        text-align: center !important;
+      }
+      .excel-search-box {
+        max-width: 100% !important;
+        width: 100% !important;
+      }
     }
   </style>
 </head>
