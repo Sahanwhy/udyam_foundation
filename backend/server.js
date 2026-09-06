@@ -198,6 +198,70 @@ const memberSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now }
 }, { collection: 'member' });
 
+const bloodDonorSchema = new mongoose.Schema({
+  fullName: { type: String, required: true },
+  guardianName: { type: String, required: true },
+  dob: { type: String, required: true },
+  aadharNo: { type: String, required: true },
+  address: { type: String, required: true },
+  villageTownWard: { type: String, required: true },
+  bloodGroup: { type: String, required: true },
+  postOffice: { type: String, required: true },
+  pinCode: { type: String, required: true },
+  district: { type: String, required: true },
+  policeStation: { type: String, required: true },
+  mobileNo: { type: String, required: true },
+  whatsappNo: { type: String, required: true },
+  email: { type: String, required: true },
+  totalTimesDonated: { type: Number, default: 0 },
+  lastDonationDate: { type: String, default: '' },
+  photo: String,
+  aadharCard: String,
+  signature: String,
+  status: { type: String, enum: ['pending', 'accepted', 'rejected', 'forwarded', 'verified', 'issue_reported'], default: 'pending' },
+  assignedToRole: { type: String, default: 'Secretary' },
+  assignedToAdminId: { type: String, default: null },
+  assignedToAdminName: { type: String, default: null },
+  assignedToAdminEmail: { type: String, default: null },
+  forwardAttachments: [mongoose.Schema.Types.Mixed],
+  forwardNotes: [{ note: String, authorName: String, authorRole: String, date: { type: Date, default: Date.now } }],
+  verifiedBy: [{ name: String, role: String, date: { type: Date, default: Date.now } }],
+  issueText: String,
+  registrationNo: { type: String, default: null },
+  date: { type: Date, default: Date.now }
+}, { collection: 'blood_donor' });
+
+const bloodRequestSchema = new mongoose.Schema({
+  patientName: { type: String, required: true },
+  patientBloodGroup: { type: String, required: true },
+  guardianName: { type: String, required: true },
+  patientAge: { type: Number, required: true },
+  contactNo: { type: String, required: true },
+  whatsappNo: { type: String, required: true },
+  address: { type: String, required: true },
+  villageTownWard: { type: String, required: true },
+  postOffice: { type: String, required: true },
+  pinCode: { type: String, required: true },
+  policeStation: { type: String, required: true },
+  district: { type: String, required: true },
+  admittedHospital: { type: String, required: true },
+  bloodHospitalDetails: { type: String, required: true },
+  bloodQuantity: { type: String, required: true },
+  requiredDate: { type: String, required: true },
+  patientPhoto: { type: String, default: '' },
+  status: { type: String, enum: ['pending', 'accepted', 'rejected', 'forwarded', 'verified', 'issue_reported', 'fulfilled', 'contacted'], default: 'pending' },
+  assignedToRole: { type: String, default: 'Secretary' },
+  assignedToAdminId: { type: String, default: null },
+  assignedToAdminName: { type: String, default: null },
+  assignedToAdminEmail: { type: String, default: null },
+  forwardAttachments: [mongoose.Schema.Types.Mixed],
+  forwardNotes: [{ note: String, authorName: String, authorRole: String, date: { type: Date, default: Date.now } }],
+  verifiedBy: [{ name: String, role: String, date: { type: Date, default: Date.now } }],
+  issueText: String,
+  requestNo: { type: String, default: null },
+  date: { type: Date, default: Date.now }
+}, { collection: 'blood_requests' });
+
 const galleryPhotoSchema = new mongoose.Schema({
   title: String,
   category: String,
@@ -240,7 +304,7 @@ const adminMessageSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }, { collection: 'admin_messages' });
 
-let AdminUser, Volunteer, Employee, Member, GalleryPhoto, AdminMessage, GalleryCategory;
+let AdminUser, Volunteer, Employee, Member, BloodDonor, BloodRequest, GalleryPhoto, AdminMessage, GalleryCategory;
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
@@ -253,6 +317,8 @@ mongoose.connect(process.env.MONGO_URI)
     Volunteer = registrationDb.model('Volunteer', volunteerSchema);
     Employee = registrationDb.model('Employee', employeeSchema);
     Member = registrationDb.model('Member', memberSchema);
+    BloodDonor = registrationDb.model('BloodDonor', bloodDonorSchema);
+    BloodRequest = registrationDb.model('BloodRequest', bloodRequestSchema);
 
     const galleryDb = mongoose.connection.useDb('Gallery');
     GalleryPhoto = galleryDb.model('GalleryPhoto', galleryPhotoSchema);
@@ -380,6 +446,126 @@ app.post('/api/register/employee', upload.fields([
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to register employee' });
+  }
+});
+
+app.post('/api/register/blood-donor', upload.fields([
+  { name: 'photo', maxCount: 1 },
+  { name: 'aadharCard', maxCount: 1 },
+  { name: 'signature', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    if (!BloodDonor) return res.status(503).json({ error: 'Database not ready' });
+
+    const {
+      fullName, guardianName, dob, aadharNo, address, villageTownWard,
+      bloodGroup, postOffice, pinCode, district, policeStation,
+      mobileNo, whatsappNo, email, totalTimesDonated, lastDonationDate
+    } = req.body;
+
+    const photo = req.files && req.files['photo'] ? req.files['photo'][0].path : '';
+    const aadharCard = req.files && req.files['aadharCard'] ? req.files['aadharCard'][0].path : '';
+    const signature = req.files && req.files['signature'] ? req.files['signature'][0].path : '';
+
+    const newBloodDonor = new BloodDonor({
+      fullName,
+      guardianName,
+      dob,
+      aadharNo,
+      address,
+      villageTownWard,
+      bloodGroup,
+      postOffice,
+      pinCode,
+      district,
+      policeStation,
+      mobileNo,
+      whatsappNo,
+      email,
+      totalTimesDonated: Number(totalTimesDonated) || 0,
+      lastDonationDate: lastDonationDate || '',
+      photo,
+      aadharCard,
+      signature
+    });
+
+    await newBloodDonor.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Blood donor registered successfully',
+      id: newBloodDonor._id
+    });
+  } catch (error) {
+    console.error('Error registering blood donor:', error);
+    res.status(500).json({ error: 'Failed to register blood donor' });
+  }
+});
+
+app.post('/api/register/blood-request', upload.fields([
+  { name: 'patientPhoto', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    if (!BloodRequest) return res.status(503).json({ error: 'Database not ready' });
+
+    const {
+      patientName,
+      patientBloodGroup,
+      guardianName,
+      patientAge,
+      contactNo,
+      whatsappNo,
+      address,
+      villageTownWard,
+      postOffice,
+      pinCode,
+      policeStation,
+      district,
+      admittedHospital,
+      bloodHospitalDetails,
+      bloodQuantity,
+      requiredDate
+    } = req.body;
+
+    if (!patientName || !patientBloodGroup || !guardianName || !patientAge || !contactNo || !whatsappNo || !address || !villageTownWard || !postOffice || !pinCode || !policeStation || !district || !admittedHospital || !bloodHospitalDetails || !bloodQuantity || !requiredDate) {
+      return res.status(400).json({ error: 'All required fields must be provided' });
+    }
+
+    const patientPhoto = req.files && req.files['patientPhoto'] ? req.files['patientPhoto'][0].path : '';
+    const requestNo = `REQ-BLD/${new Date().getFullYear()}/${Math.floor(10000 + Math.random() * 90000)}`;
+
+    const newBloodRequest = new BloodRequest({
+      patientName: patientName.trim(),
+      patientBloodGroup: patientBloodGroup.trim(),
+      guardianName: guardianName.trim(),
+      patientAge: Number(patientAge),
+      contactNo: contactNo.trim(),
+      whatsappNo: whatsappNo.trim(),
+      address: address.trim(),
+      villageTownWard: villageTownWard.trim(),
+      postOffice: postOffice.trim(),
+      pinCode: pinCode.trim(),
+      policeStation: policeStation.trim(),
+      district: district.trim(),
+      admittedHospital: admittedHospital.trim(),
+      bloodHospitalDetails: bloodHospitalDetails.trim(),
+      bloodQuantity: bloodQuantity.trim(),
+      requiredDate: requiredDate.trim(),
+      patientPhoto,
+      requestNo
+    });
+
+    await newBloodRequest.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Blood request registered successfully',
+      requestNo,
+      id: newBloodRequest._id
+    });
+  } catch (error) {
+    console.error('Error submitting blood request:', error);
+    res.status(500).json({ error: 'Failed to submit blood request' });
   }
 });
 
@@ -645,7 +831,8 @@ function generateRegistrationNo(type) {
   const prefixMap = {
     volunteer: 'VOL',
     employee: 'EMP',
-    member: 'MEM'
+    member: 'MEM',
+    blood_donor: 'BDN'
   };
   const prefix = prefixMap[type] || 'REG';
   const year = new Date().getFullYear();
@@ -680,7 +867,8 @@ async function sendApprovalEmail(doc, type, registrationNo) {
   const typeLabelMap = {
     volunteer: 'Volunteer',
     employee: 'Employee',
-    member: 'Member'
+    member: 'Member',
+    blood_donor: 'Blood Donor'
   };
   const typeLabel = typeLabelMap[type] || 'Registration';
   const applicantName = doc.fullName || 'Applicant';
@@ -1340,12 +1528,16 @@ app.get('/api/admin/registrations', authMiddleware, async (req, res) => {
     const volunteers = await Volunteer.find().lean();
     const employees = await Employee.find().lean();
     const members = await Member.find().lean();
+    const bloodDonors = BloodDonor ? await BloodDonor.find().lean() : [];
+    const bloodRequests = BloodRequest ? await BloodRequest.find().lean() : [];
 
     const formattedVolunteers = volunteers.map(v => ({ ...v, type: 'volunteer' }));
     const formattedEmployees = employees.map(e => ({ ...e, type: 'employee' }));
     const formattedMembers = members.map(m => ({ ...m, type: 'member' }));
+    const formattedBloodDonors = bloodDonors.map(b => ({ ...b, type: 'blood_donor' }));
+    const formattedBloodRequests = bloodRequests.map(r => ({ ...r, fullName: r.patientName, type: 'blood_request' }));
 
-    const allRegistrations = [...formattedVolunteers, ...formattedEmployees, ...formattedMembers].sort((a, b) => b.date - a.date);
+    const allRegistrations = [...formattedVolunteers, ...formattedEmployees, ...formattedMembers, ...formattedBloodDonors, ...formattedBloodRequests].sort((a, b) => b.date - a.date);
     res.json(allRegistrations);
   } catch (error) {
     console.error('Error fetching registrations:', error);
@@ -1377,6 +1569,8 @@ app.patch('/api/admin/registrations/:type/:id/status', authMiddleware, async (re
     if (type === 'volunteer') Model = Volunteer;
     else if (type === 'employee') Model = Employee;
     else if (type === 'member') Model = Member;
+    else if (type === 'blood_donor') Model = BloodDonor;
+    else if (type === 'blood_request') Model = BloodRequest;
     else return res.status(400).json({ error: 'Invalid type' });
 
     const existingDoc = await Model.findById(id);
@@ -1434,6 +1628,10 @@ app.delete('/api/admin/registrations/:type/:id', authMiddleware, async (req, res
       deletedDoc = await Employee.findByIdAndDelete(id);
     } else if (type === 'member') {
       deletedDoc = await Member.findByIdAndDelete(id);
+    } else if (type === 'blood_donor') {
+      deletedDoc = await BloodDonor.findByIdAndDelete(id);
+    } else if (type === 'blood_request') {
+      deletedDoc = await BloodRequest.findByIdAndDelete(id);
     } else {
       return res.status(400).json({ error: 'Invalid registration type.' });
     }
@@ -1513,6 +1711,10 @@ app.patch(
         updatedDoc = await Employee.findByIdAndUpdate(id, updatePayload, { new: true });
       } else if (type === 'member') {
         updatedDoc = await Member.findByIdAndUpdate(id, updatePayload, { new: true });
+      } else if (type === 'blood_donor') {
+        updatedDoc = await BloodDonor.findByIdAndUpdate(id, updatePayload, { new: true });
+      } else if (type === 'blood_request') {
+        updatedDoc = await BloodRequest.findByIdAndUpdate(id, updatePayload, { new: true });
       } else {
         return res.status(400).json({ error: 'Invalid type' });
       }
@@ -1547,6 +1749,10 @@ app.patch('/api/admin/registrations/:type/:id/verify', authMiddleware, async (re
       updatedDoc = await Employee.findByIdAndUpdate(id, updateData, { new: true });
     } else if (type === 'member') {
       updatedDoc = await Member.findByIdAndUpdate(id, updateData, { new: true });
+    } else if (type === 'blood_donor') {
+      updatedDoc = await BloodDonor.findByIdAndUpdate(id, updateData, { new: true });
+    } else if (type === 'blood_request') {
+      updatedDoc = await BloodRequest.findByIdAndUpdate(id, updateData, { new: true });
     } else {
       return res.status(400).json({ error: 'Invalid type' });
     }
@@ -1627,6 +1833,10 @@ app.patch(
         updatedDoc = await Employee.findByIdAndUpdate(id, updateData, { new: true });
       } else if (type === 'member') {
         updatedDoc = await Member.findByIdAndUpdate(id, updateData, { new: true });
+      } else if (type === 'blood_donor') {
+        updatedDoc = await BloodDonor.findByIdAndUpdate(id, updateData, { new: true });
+      } else if (type === 'blood_request') {
+        updatedDoc = await BloodRequest.findByIdAndUpdate(id, updateData, { new: true });
       } else {
         return res.status(400).json({ error: 'Invalid type' });
       }
@@ -1661,6 +1871,10 @@ app.patch('/api/admin/registrations/:type/:id/report-issue', authMiddleware, asy
       updatedDoc = await Employee.findByIdAndUpdate(id, updateData, { new: true });
     } else if (type === 'member') {
       updatedDoc = await Member.findByIdAndUpdate(id, updateData, { new: true });
+    } else if (type === 'blood_donor') {
+      updatedDoc = await BloodDonor.findByIdAndUpdate(id, updateData, { new: true });
+    } else if (type === 'blood_request') {
+      updatedDoc = await BloodRequest.findByIdAndUpdate(id, updateData, { new: true });
     } else {
       return res.status(400).json({ error: 'Invalid type' });
     }

@@ -232,6 +232,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  let currentTypeFilter = 'all';
+  const regTypeFilterSelect = document.getElementById('regTypeFilterSelect');
+  if (regTypeFilterSelect) {
+    regTypeFilterSelect.addEventListener('change', (e) => {
+      currentTypeFilter = e.target.value;
+      renderRegistrations();
+    });
+  }
+
+  const regSearchInput = document.getElementById('regSearchInput');
+  if (regSearchInput) {
+    regSearchInput.addEventListener('input', () => {
+      renderRegistrations();
+    });
+  }
+
   const pendingBtn = document.getElementById('nav-pending');
   const forwardedBtn = document.getElementById('nav-forwarded');
   const forwardedText = document.getElementById('nav-forwarded-text');
@@ -614,8 +630,150 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  window.toggleRegDetail = (id) => {
+    const detailRow = document.getElementById(`reg-detail-${id}`);
+    const mainRow = document.getElementById(`reg-row-${id}`);
+    const expandBtn = document.getElementById(`reg-expand-btn-${id}`);
+    if (!detailRow) return;
+    const isHidden = detailRow.style.display === 'none' || !detailRow.style.display;
+    if (isHidden) {
+      detailRow.style.display = 'table-row';
+      if (mainRow) mainRow.classList.add('row-expanded');
+      if (expandBtn) expandBtn.innerHTML = '▲';
+    } else {
+      detailRow.style.display = 'none';
+      if (mainRow) mainRow.classList.remove('row-expanded');
+      if (expandBtn) expandBtn.innerHTML = '▼';
+    }
+  };
+
+  window.toggleAllRegDetails = () => {
+    const detailRows = document.querySelectorAll('.excel-detail-row');
+    if (detailRows.length === 0) return;
+    const anyClosed = Array.from(detailRows).some(r => r.style.display === 'none');
+    detailRows.forEach(r => {
+      r.style.display = anyClosed ? 'table-row' : 'none';
+    });
+    document.querySelectorAll('.excel-row').forEach(r => {
+      if (anyClosed) r.classList.add('row-expanded');
+      else r.classList.remove('row-expanded');
+    });
+    document.querySelectorAll('.excel-expand-btn').forEach(b => {
+      b.innerHTML = anyClosed ? '▲' : '▼';
+    });
+    const toggleBtn = document.getElementById('regToggleAllBtn');
+    if (toggleBtn) {
+      toggleBtn.textContent = anyClosed ? 'Collapse All' : 'Expand All';
+    }
+  };
+
+  window.exportRegToCsv = () => {
+    let filtered = allRegistrations.filter(r => isRegistrationVisibleToUser(r, currentRegFilter));
+    if (currentTypeFilter && currentTypeFilter !== 'all') {
+      filtered = filtered.filter(r => r.type === currentTypeFilter);
+    }
+    const searchInput = document.getElementById('regSearchInput');
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    if (query) {
+      filtered = filtered.filter(r => {
+        const name = (r.fullName || r.patientName || '').toLowerCase();
+        const email = (r.email || '').toLowerCase();
+        const phone = (r.contactNo || r.phone || r.mobileNo || '').toLowerCase();
+        const blood = (r.bloodGroup || r.patientBloodGroup || '').toLowerCase();
+        const type = (r.type || '').toLowerCase();
+        const assignedRole = (r.assignedToRole || '').toLowerCase();
+        const assignedAdmin = (r.assignedToAdminName || '').toLowerCase();
+        const dist = (r.district || '').toLowerCase();
+        const village = (r.villageTownWard || '').toLowerCase();
+        const hosp = (r.admittedHospital || r.bloodHospitalDetails || '').toLowerCase();
+        return name.includes(query) || email.includes(query) || phone.includes(query) || blood.includes(query) ||
+               type.includes(query) || assignedRole.includes(query) || assignedAdmin.includes(query) ||
+               dist.includes(query) || village.includes(query) || hosp.includes(query);
+      });
+    }
+
+    if (filtered.length === 0) {
+      alert('No application records to export.');
+      return;
+    }
+
+    const headers = ['#', 'Type', 'Name', 'Date Applied', 'Contact Phone', 'Email', 'WhatsApp', 'Blood Group', 'Status', 'Assigned Role', 'Assigned Admin', 'District', 'Address', 'Extra Info'];
+    const csvRows = filtered.map((r, idx) => {
+      const isReq = r.type === 'blood_request';
+      const isBdn = r.type === 'blood_donor';
+      const isMem = r.type === 'member';
+      const name = r.fullName || r.patientName || '';
+      const date = r.date ? new Date(r.date).toLocaleString('en-IN') : '';
+      const phone = r.contactNo || r.phone || r.mobileNo || '';
+      const email = r.email || '';
+      const whatsapp = r.whatsappNo || r.whatsapp || '';
+      const blood = r.bloodGroup || r.patientBloodGroup || '';
+      const status = r.status || 'pending';
+      const assignedRole = r.assignedToRole || '';
+      const assignedName = r.assignedToAdminName || '';
+      const district = r.district || '';
+      const address = (r.address || `${r.address1 || ''} ${r.address2 || ''} ${r.villageTownWard || ''}`).trim();
+      let extra = '';
+      if (isReq) extra = `Hospital: ${r.admittedHospital || ''} | Qty: ${r.bloodQuantity || ''} | Date: ${r.requiredDate || ''}`;
+      else if (isBdn) extra = `Donations: ${r.totalTimesDonated || 0} | Last: ${r.lastDonationDate || ''}`;
+      else if (isMem) extra = `Validity: ${r.validity || ''} | Amount: Rs.${r.amount || 0}`;
+
+      return [
+        idx + 1,
+        `"${r.type}"`,
+        `"${name.replace(/"/g, '""')}"`,
+        `"${date.replace(/"/g, '""')}"`,
+        `"${phone}"`,
+        `"${email.replace(/"/g, '""')}"`,
+        `"${whatsapp}"`,
+        `"${blood}"`,
+        `"${status}"`,
+        `"${assignedRole}"`,
+        `"${assignedName.replace(/"/g, '""')}"`,
+        `"${district.replace(/"/g, '""')}"`,
+        `"${address.replace(/"/g, '""')}"`,
+        `"${extra.replace(/"/g, '""')}"`
+      ].join(',');
+    });
+
+    const csvString = '\uFEFF' + [headers.join(','), ...csvRows].join('\r\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = `udyam_applicants_${currentRegFilter}_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
+  };
+
   const renderRegistrations = () => {
     let filtered = allRegistrations.filter(r => isRegistrationVisibleToUser(r, currentRegFilter));
+
+    if (currentTypeFilter && currentTypeFilter !== 'all') {
+      filtered = filtered.filter(r => r.type === currentTypeFilter);
+    }
+
+    const searchInput = document.getElementById('regSearchInput');
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    if (query) {
+      filtered = filtered.filter(r => {
+        const name = (r.fullName || r.patientName || '').toLowerCase();
+        const email = (r.email || '').toLowerCase();
+        const phone = (r.contactNo || r.phone || r.mobileNo || '').toLowerCase();
+        const blood = (r.bloodGroup || r.patientBloodGroup || '').toLowerCase();
+        const type = (r.type || '').toLowerCase();
+        const assignedRole = (r.assignedToRole || '').toLowerCase();
+        const assignedAdmin = (r.assignedToAdminName || '').toLowerCase();
+        const dist = (r.district || '').toLowerCase();
+        const village = (r.villageTownWard || '').toLowerCase();
+        const hosp = (r.admittedHospital || r.bloodHospitalDetails || '').toLowerCase();
+        return name.includes(query) || email.includes(query) || phone.includes(query) || blood.includes(query) ||
+               type.includes(query) || assignedRole.includes(query) || assignedAdmin.includes(query) ||
+               dist.includes(query) || village.includes(query) || hosp.includes(query);
+      });
+    }
 
     // Apply sort
     filtered.sort((a, b) => {
@@ -624,292 +782,496 @@ document.addEventListener('DOMContentLoaded', () => {
       return currentSort === 'oldest' ? dateA - dateB : dateB - dateA;
     });
 
+    const countBadge = document.getElementById('regCountBadge');
+    if (countBadge) {
+      countBadge.textContent = `${filtered.length} applicant${filtered.length !== 1 ? 's' : ''}`;
+    }
+
     if (filtered.length === 0) {
       const isSecOrPres = user && (user.role === 'Secretary' || user.role === 'President');
-      const emptyText = (currentRegFilter === 'forwarded' && isSecOrPres) ? 'No applications are currently being tracked or forwarded.' : `No ${currentRegFilter} registrations found.`;
+      const emptyText = query ? `No applicants matching "${query}".` : (currentRegFilter === 'forwarded' && isSecOrPres) ? 'No applications are currently being tracked or forwarded.' : `No ${currentRegFilter} registrations found.`;
       registrationsContainer.innerHTML = `<div style="padding: 3rem; text-align: center; color: var(--text-muted); background: white; border-radius: 8px; border: 1px solid var(--border);">${emptyText}</div>`;
       return;
     }
 
-    registrationsContainer.innerHTML = filtered.map((reg, index) => {
+    const rowsHtml = filtered.map((reg, index) => {
       const isVol = reg.type === 'volunteer';
       const isEmp = reg.type === 'employee';
       const isMem = reg.type === 'member';
+      const isBdn = reg.type === 'blood_donor';
+      const isReq = reg.type === 'blood_request';
 
-      let docsHtml = '';
-      const linkStyle = "display:inline-flex; align-items:center; color:var(--primary); text-decoration:none; font-weight:600; font-size:0.8rem; background:rgba(27,67,50,0.08); padding:4px 10px; border-radius:6px; margin-right:6px; transition:all 0.2s;";
-      const linkHover = "onmouseover=\"this.style.background='var(--primary)'; this.style.color='white'\" onmouseout=\"this.style.background='rgba(27,67,50,0.08)'; this.style.color='var(--primary)'\"";
+      const applicantName = reg.fullName || reg.patientName || 'Unnamed';
+      const safeName = applicantName.replace(/'/g, "&apos;");
+      const photoSrc = reg.photo || reg.patientPhoto;
+      const phone = reg.contactNo || reg.phone || reg.mobileNo || 'N/A';
+      const whatsapp = reg.whatsappNo || reg.whatsapp || '';
 
-      const formatDetail = (label, value) => `
-        <div style="display: flex; flex-direction: column; gap: 4px; background: white; padding: 12px 16px; border-radius: 8px; border: 1px solid #E2E8F0; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
-          <span style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #64748B;">
-            ${label}
-          </span>
-          <div style="font-size: 0.9rem; font-weight: 500; color: #1E293B; display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
-            ${value}
+      const typeLabelMap = {
+        volunteer: 'Volunteer',
+        employee: 'Employee',
+        member: 'Member',
+        blood_donor: 'Blood Donor',
+        blood_request: 'Blood Request'
+      };
+      const typeLabel = typeLabelMap[reg.type] || reg.type;
+
+      const formatPdfUrl = url => url;
+      const docLinkStyle = "display:inline-flex; align-items:center; color:var(--primary); text-decoration:none; font-weight:600; font-size:0.72rem; background:rgba(27,67,50,0.08); padding:2px 7px; border-radius:4px; margin-right:4px; border:1px solid rgba(27,67,50,0.12); transition:all 0.15s;";
+
+      // Document links summary
+      const docChips = [];
+      if (isVol) {
+        if (reg.addressProofs && reg.addressProofs.length) {
+          reg.addressProofs.forEach((p, i) => {
+            docChips.push(`<a href="${formatPdfUrl(p)}" target="_blank" onclick="event.stopPropagation();" style="${docLinkStyle}">Proof ${i+1}</a>`);
+          });
+        }
+      } else if (isEmp) {
+        if (reg.panCard) docChips.push(`<a href="${formatPdfUrl(reg.panCard)}" target="_blank" onclick="event.stopPropagation();" style="${docLinkStyle}">PAN</a>`);
+        if (reg.aadharCard) docChips.push(`<a href="${formatPdfUrl(reg.aadharCard)}" target="_blank" onclick="event.stopPropagation();" style="${docLinkStyle}">Aadhar</a>`);
+        if (reg.dobProof) docChips.push(`<a href="${formatPdfUrl(reg.dobProof)}" target="_blank" onclick="event.stopPropagation();" style="${docLinkStyle}">DOB</a>`);
+        if (reg.educationDocs && reg.educationDocs.length) docChips.push(`<a href="${formatPdfUrl(reg.educationDocs[0])}" target="_blank" onclick="event.stopPropagation();" style="${docLinkStyle}">Edu (${reg.educationDocs.length})</a>`);
+      } else if (isBdn) {
+        if (reg.aadharCard) docChips.push(`<a href="${formatPdfUrl(reg.aadharCard)}" target="_blank" onclick="event.stopPropagation();" style="${docLinkStyle}">Aadhar</a>`);
+        if (reg.signature) docChips.push(`<a href="${formatPdfUrl(reg.signature)}" target="_blank" onclick="event.stopPropagation();" style="${docLinkStyle}">Sign</a>`);
+      } else if (isReq) {
+        if (reg.patientPhoto) docChips.push(`<a href="${formatPdfUrl(reg.patientPhoto)}" target="_blank" onclick="event.stopPropagation();" style="${docLinkStyle}">Patient Pic</a>`);
+      }
+
+      if (reg.forwardAttachments && reg.forwardAttachments.length > 0) {
+        docChips.push(`<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(59,130,246,0.1);color:#2563EB;border:1px solid rgba(59,130,246,0.2);padding:2px 7px;border-radius:4px;font-size:0.7rem;font-weight:700;">📎 ${reg.forwardAttachments.length} Files</span>`);
+      }
+      if (reg.forwardNotes && reg.forwardNotes.length > 0) {
+        docChips.push(`<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(245,158,11,0.12);color:#D97706;border:1px solid rgba(245,158,11,0.3);padding:2px 7px;border-radius:4px;font-size:0.7rem;font-weight:700;">💬 ${reg.forwardNotes.length} Notes</span>`);
+      }
+
+      // Key info snippet
+      let keyInfoHtml = '';
+      if (isReq) {
+        const bg = reg.patientBloodGroup || reg.bloodGroup || 'N/A';
+        keyInfoHtml = `
+          <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+            <span style="color:#DC2626; font-weight:800; font-size:0.8rem; background:#FEF2F2; padding:1px 6px; border-radius:4px; border:1px solid #FECDD3;">🩸 ${bg}</span>
+            <span style="font-weight:600; font-size:0.75rem; color:#334155;">${reg.bloodQuantity || 'N/A'}</span>
           </div>
+          ${reg.admittedHospital ? `<div style="font-size:0.7rem; color:#64748B; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${reg.admittedHospital}">🏥 ${reg.admittedHospital}</div>` : ''}
+        `;
+      } else if (isBdn) {
+        keyInfoHtml = `
+          <span style="color:#DC2626; font-weight:800; font-size:0.8rem; background:#FEF2F2; padding:1px 6px; border-radius:4px; border:1px solid #FECDD3;">🩸 ${reg.bloodGroup || 'N/A'}</span>
+          <div style="font-size:0.7rem; color:#64748B;">Donations: <strong>${reg.totalTimesDonated || 0}x</strong></div>
+        `;
+      } else if (isMem) {
+        keyInfoHtml = `
+          <div style="font-weight:700; color:#059669; font-size:0.82rem;">₹${reg.amount || 0}</div>
+          <div style="font-size:0.7rem; color:#64748B;">${reg.validity || 'N/A'}</div>
+        `;
+      } else {
+        keyInfoHtml = `
+          <span style="color:#1D4ED8; font-weight:700; font-size:0.8rem; background:#EFF6FF; padding:1px 6px; border-radius:4px; border:1px solid #BFDBFE;">🩸 ${reg.bloodGroup || 'N/A'}</span>
+          ${reg.district ? `<div style="font-size:0.7rem; color:#64748B; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📍 ${reg.district}</div>` : ''}
+        `;
+      }
+
+      // Tracking / Status snippet
+      let trackingHtml = '';
+      const isSecOrPres = user && (user.role === 'Secretary' || user.role === 'President');
+      if (currentRegFilter === 'forwarded' && isSecOrPres) {
+        const assignedRole = reg.assignedToRole || 'Unassigned';
+        const assignedName = reg.assignedToAdminName || '';
+        const vCount = (Array.isArray(reg.verifiedBy) ? reg.verifiedBy.length : (reg.verifiedBy ? 1 : 0));
+        trackingHtml = `
+          <div style="display:flex; flex-direction:column; gap:2px;">
+            <span style="display:inline-flex; align-items:center; gap:4px; background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; padding:2px 7px; border-radius:4px; font-weight:700; font-size:0.72rem; white-space:nowrap;">
+              <span style="width:6px; height:6px; border-radius:50%; background:#2563EB;"></span>
+              → ${assignedRole}
+            </span>
+            ${assignedName ? `<span style="font-size:0.7rem; color:#475569; font-weight:600; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">👤 ${assignedName}</span>` : ''}
+            ${vCount > 0 ? `<span style="font-size:0.68rem; color:#059669; font-weight:700;">✓ ${vCount} Verified</span>` : ''}
+          </div>
+        `;
+      } else {
+        const st = reg.status || 'pending';
+        const statusMap = {
+          pending: { bg: '#FEF3C7', color: '#D97706', border: '#FDE68A', label: 'Pending Review' },
+          forwarded: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', label: `Forwarded (${reg.assignedToRole || 'Admin'})` },
+          verified: { bg: '#ECFDF5', color: '#059669', border: '#A7F3D0', label: 'Verified' },
+          accepted: { bg: '#D1FAE5', color: '#047857', border: '#6EE7B7', label: 'Accepted' },
+          rejected: { bg: '#FEE2E2', color: '#DC2626', border: '#FECDD3', label: 'Rejected' },
+          issue_reported: { bg: '#FEF2F2', color: '#B91C1C', border: '#FCA5A5', label: 'Issue Reported' }
+        };
+        const sInfo = statusMap[st] || { bg: '#F1F5F9', color: '#475569', border: '#CBD5E1', label: st };
+        trackingHtml = `
+          <span style="display:inline-block; padding:2px 8px; border-radius:4px; background:${sInfo.bg}; color:${sInfo.color}; border:1px solid ${sInfo.border}; font-size:0.72rem; font-weight:700; white-space:nowrap;">
+            ${sInfo.label}
+          </span>
+        `;
+      }
+
+      // Action buttons in the row
+      let rowActionsHtml = `
+        <button type="button" class="excel-act-btn" style="background:#F1F5F9; color:#334155; border:1px solid #CBD5E1;" onclick="event.stopPropagation(); window.toggleRegDetail('${reg._id}')" title="View Full Details">👁 Details</button>
+      `;
+
+      if ((user.role === 'Secretary' && ['pending', 'verified', 'issue_reported'].includes(currentRegFilter)) || (user.role === 'President' && ['verified', 'issue_reported'].includes(currentRegFilter))) {
+        rowActionsHtml += `
+          <button type="button" class="excel-act-btn" style="background:var(--success); color:white;" onclick="event.stopPropagation(); window.updateRegStatus('${reg.type}', '${reg._id}', 'accepted')" title="Final Accept">✓</button>
+          <button type="button" class="excel-act-btn" style="background:white; color:var(--danger); border:1px solid var(--danger);" onclick="event.stopPropagation(); window.updateRegStatus('${reg.type}', '${reg._id}', 'rejected')" title="Final Reject">✕</button>
+          <button type="button" class="excel-act-btn" style="background:#3B82F6; color:white;" onclick="event.stopPropagation(); window.openForwardModal('${reg.type}', '${reg._id}')" title="Forward Application">➔</button>
+          <button type="button" class="excel-act-btn" style="background:white; color:#DC2626; border:1px solid #FCA5A5;" onclick="event.stopPropagation(); window.deleteRegistration('${reg.type}', '${reg._id}', '${safeName}')" title="Delete">🗑</button>
+        `;
+      } else if ((user.role === 'Secretary' || user.role === 'President') && ['accepted', 'rejected'].includes(currentRegFilter)) {
+        rowActionsHtml += `
+          <button type="button" class="excel-act-btn" style="background:white; color:#DC2626; border:1px solid #FCA5A5;" onclick="event.stopPropagation(); window.deleteRegistration('${reg.type}', '${reg._id}', '${safeName}')" title="Delete Application">🗑 Delete</button>
+        `;
+      } else if (user.role !== 'Secretary' && user.role !== 'President' && currentRegFilter === 'forwarded' && user.role === reg.assignedToRole) {
+        rowActionsHtml += `
+          <button type="button" class="excel-act-btn" style="background:white; color:#EF4444; border:1px solid #EF4444;" onclick="event.stopPropagation(); window.openReportIssueModal('${reg.type}', '${reg._id}')" title="Report Issue">⚠ Issue</button>
+          <button type="button" class="excel-act-btn" style="background:var(--success); color:white;" onclick="event.stopPropagation(); window.openVerifyForwardModal('${reg.type}', '${reg._id}')" title="Verify & Forward">✓ Verify</button>
+        `;
+      } else if (isSecOrPres && currentRegFilter === 'forwarded') {
+        rowActionsHtml += `
+          <button type="button" class="excel-act-btn" style="background:#3B82F6; color:white;" onclick="event.stopPropagation(); window.openForwardModal('${reg.type}', '${reg._id}')" title="Re-forward Application">➔</button>
+          <button type="button" class="excel-act-btn" style="background:white; color:#DC2626; border:1px solid #FCA5A5;" onclick="event.stopPropagation(); window.deleteRegistration('${reg.type}', '${reg._id}', '${safeName}')" title="Delete">🗑</button>
+        `;
+      }
+
+      // ==========================================
+      // BUILD THE DETAIL DRAWER
+      // ==========================================
+      const formatDetail = (label, val) => `
+        <div style="background: white; padding: 10px 14px; border-radius: 6px; border: 1px solid #E2E8F0; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+          <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #64748B; display: block; margin-bottom: 2px;">${label}</span>
+          <div style="font-size: 0.85rem; font-weight: 600; color: #1E293B; word-break: break-word;">${val || 'N/A'}</div>
         </div>
       `;
 
-      const formatPdfUrl = (url) => {
-        return url;
-      };
-
+      let detailFieldsHtml = '';
       if (isVol) {
-        docsHtml += formatDetail('Blood Group', reg.bloodGroup || 'N/A');
-        docsHtml += formatDetail('WhatsApp', reg.whatsapp || 'N/A');
-        docsHtml += formatDetail('Address Proofs', reg.addressProofs && reg.addressProofs.length ? reg.addressProofs.map(p => `<a href="${formatPdfUrl(p)}" target="_blank" style="${linkStyle}" ${linkHover}>View</a>`).join('') : '<span style="color:#9CA3AF; font-size:0.85rem;">None</span>');
+        detailFieldsHtml += formatDetail('Blood Group', reg.bloodGroup || 'N/A');
+        detailFieldsHtml += formatDetail('WhatsApp', reg.whatsapp ? `<a href="https://wa.me/91${reg.whatsapp}" target="_blank" style="color:#16A34A; text-decoration:none;">${reg.whatsapp}</a>` : 'N/A');
+        detailFieldsHtml += formatDetail('Address Proofs', reg.addressProofs && reg.addressProofs.length ? reg.addressProofs.map(p => `<a href="${formatPdfUrl(p)}" target="_blank" style="${docLinkStyle}">View Proof</a>`).join(' ') : '<span style="color:#94A3B8;">None</span>');
       } else if (isEmp) {
-        docsHtml += formatDetail('Blood Group', reg.bloodGroup || 'N/A');
-        docsHtml += formatDetail('WhatsApp', reg.whatsapp || 'N/A');
-        docsHtml += formatDetail('PAN Card', reg.panCard ? `<a href="${formatPdfUrl(reg.panCard)}" target="_blank" style="${linkStyle}" ${linkHover}>View</a>` : '<span style="color:#9CA3AF; font-size:0.85rem;">None</span>');
-        docsHtml += formatDetail('Aadhar Card', reg.aadharCard ? `<a href="${formatPdfUrl(reg.aadharCard)}" target="_blank" style="${linkStyle}" ${linkHover}>View</a>` : '<span style="color:#9CA3AF; font-size:0.85rem;">None</span>');
-        docsHtml += formatDetail('DOB Proof', reg.dobProof ? `<a href="${formatPdfUrl(reg.dobProof)}" target="_blank" style="${linkStyle}" ${linkHover}>View</a>` : '<span style="color:#9CA3AF; font-size:0.85rem;">None</span>');
-        docsHtml += formatDetail('Education Docs', reg.educationDocs && reg.educationDocs.length ? reg.educationDocs.map(p => `<a href="${formatPdfUrl(p)}" target="_blank" style="${linkStyle}" ${linkHover}>View</a>`).join('') : '<span style="color:#9CA3AF; font-size:0.85rem;">None</span>');
+        detailFieldsHtml += formatDetail('Blood Group', reg.bloodGroup || 'N/A');
+        detailFieldsHtml += formatDetail('WhatsApp', reg.whatsapp ? `<a href="https://wa.me/91${reg.whatsapp}" target="_blank" style="color:#16A34A; text-decoration:none;">${reg.whatsapp}</a>` : 'N/A');
+        detailFieldsHtml += formatDetail('PAN Card', reg.panCard ? `<a href="${formatPdfUrl(reg.panCard)}" target="_blank" style="${docLinkStyle}">View PAN</a>` : '<span style="color:#94A3B8;">None</span>');
+        detailFieldsHtml += formatDetail('Aadhar Card', reg.aadharCard ? `<a href="${formatPdfUrl(reg.aadharCard)}" target="_blank" style="${docLinkStyle}">View Aadhar</a>` : '<span style="color:#94A3B8;">None</span>');
+        detailFieldsHtml += formatDetail('DOB Proof', reg.dobProof ? `<a href="${formatPdfUrl(reg.dobProof)}" target="_blank" style="${docLinkStyle}">View DOB Proof</a>` : '<span style="color:#94A3B8;">None</span>');
+        detailFieldsHtml += formatDetail('Education Docs', reg.educationDocs && reg.educationDocs.length ? reg.educationDocs.map(p => `<a href="${formatPdfUrl(p)}" target="_blank" style="${docLinkStyle}">View Doc</a>`).join(' ') : '<span style="color:#94A3B8;">None</span>');
       } else if (isMem) {
-        docsHtml += formatDetail('Blood Group', reg.bloodGroup || 'N/A');
-        docsHtml += formatDetail('WhatsApp', reg.whatsapp || 'N/A');
-        docsHtml += formatDetail('Address', `${reg.address1 || ''} ${reg.address2 || ''}, ${reg.district || ''} - ${reg.pin || ''}`);
-        docsHtml += formatDetail('Validity & Fees', `${reg.validity || 'N/A'} (Paid: ₹${reg.amount || 0})`);
-        docsHtml += formatDetail('Payment ID', reg.paymentId || 'N/A');
+        detailFieldsHtml += formatDetail('Blood Group', reg.bloodGroup || 'N/A');
+        detailFieldsHtml += formatDetail('WhatsApp', reg.whatsapp ? `<a href="https://wa.me/91${reg.whatsapp}" target="_blank" style="color:#16A34A; text-decoration:none;">${reg.whatsapp}</a>` : 'N/A');
+        detailFieldsHtml += formatDetail('Address', `${reg.address1 || ''} ${reg.address2 || ''}, ${reg.district || ''} - ${reg.pin || ''}`);
+        detailFieldsHtml += formatDetail('Validity & Fees', `${reg.validity || 'N/A'} (Paid: ₹${reg.amount || 0})`);
+        detailFieldsHtml += formatDetail('Payment ID', reg.paymentId || 'N/A');
+      } else if (isBdn) {
+        detailFieldsHtml += formatDetail('Blood Group', `<span style="color:#DC2626; font-weight:800; font-size:1rem; background:#FEF2F2; padding:1px 8px; border-radius:4px; border:1px solid #FECDD3;">${reg.bloodGroup || 'N/A'}</span>`);
+        detailFieldsHtml += formatDetail('Guardian Name', reg.guardianName || 'N/A');
+        detailFieldsHtml += formatDetail('Date of Birth', reg.dob || 'N/A');
+        detailFieldsHtml += formatDetail('Aadhar Number', reg.aadharNo ? `${reg.aadharNo.slice(0,4)} ${reg.aadharNo.slice(4,8)} ${reg.aadharNo.slice(8)}` : 'N/A');
+        detailFieldsHtml += formatDetail('WhatsApp', reg.whatsappNo || reg.whatsapp ? `<a href="https://wa.me/91${reg.whatsappNo || reg.whatsapp}" target="_blank" style="color:#16A34A; text-decoration:none;">${reg.whatsappNo || reg.whatsapp}</a>` : 'N/A');
+        detailFieldsHtml += formatDetail('Full Address', `${reg.address || ''}, ${reg.villageTownWard || ''}, PO: ${reg.postOffice || ''}, PS: ${reg.policeStation || ''}, ${reg.district || ''} - ${reg.pinCode || reg.pin || ''}`);
+        detailFieldsHtml += formatDetail('Donation History', `Donated ${reg.totalTimesDonated || 0} times · Last: ${reg.lastDonationDate || 'None'}`);
+        detailFieldsHtml += formatDetail('Aadhar Card', reg.aadharCard ? `<a href="${formatPdfUrl(reg.aadharCard)}" target="_blank" style="${docLinkStyle}">View Aadhar</a>` : '<span style="color:#94A3B8;">None</span>');
+        detailFieldsHtml += formatDetail('Signature', reg.signature ? `<a href="${formatPdfUrl(reg.signature)}" target="_blank" style="${docLinkStyle}">View Signature</a>` : '<span style="color:#94A3B8;">None</span>');
+      } else if (isReq) {
+        detailFieldsHtml += formatDetail('Blood Group Needed', `<span style="color:#DC2626; font-weight:800; font-size:1rem; background:#FEF2F2; padding:1px 8px; border-radius:4px; border:1px solid #FECDD3;">${reg.patientBloodGroup || reg.bloodGroup || 'N/A'}</span>`);
+        detailFieldsHtml += formatDetail('Required Quantity', reg.bloodQuantity || 'N/A');
+        detailFieldsHtml += formatDetail('Date Required', reg.requiredDate || 'N/A');
+        detailFieldsHtml += formatDetail('Guardian Name', reg.guardianName || 'N/A');
+        detailFieldsHtml += formatDetail('Patient Age', `${reg.patientAge || 'N/A'} Years`);
+        detailFieldsHtml += formatDetail('Contact Phone', `<a href="tel:${reg.contactNo}" style="${docLinkStyle}">${reg.contactNo || 'N/A'}</a>`);
+        detailFieldsHtml += formatDetail('WhatsApp', `<a href="https://wa.me/91${reg.whatsappNo}" target="_blank" style="${docLinkStyle}">${reg.whatsappNo || 'N/A'}</a>`);
+        detailFieldsHtml += formatDetail('Hospital Admitted', reg.admittedHospital || 'N/A');
+        detailFieldsHtml += formatDetail('Blood Needed At', reg.bloodHospitalDetails || 'N/A');
+        detailFieldsHtml += formatDetail('Patient Address', `${reg.address || ''}, ${reg.villageTownWard || ''}, PO: ${reg.postOffice || ''}, PS: ${reg.policeStation || ''}, ${reg.district || ''} - ${reg.pinCode || ''}`);
+        detailFieldsHtml += formatDetail('Patient Photo', reg.patientPhoto ? `<a href="${formatPdfUrl(reg.patientPhoto)}" target="_blank" style="${docLinkStyle}">View Patient Photo</a>` : '<span style="color:#94A3B8;">None</span>');
+      }
+
+      // Tracking box in detail drawer
+      let detailTrackingHtml = '';
+      const isSecretaryForwardedView = (user.role === 'Secretary' || user.role === 'President') && currentRegFilter === 'forwarded';
+      if (isSecretaryForwardedView) {
+        const verifiedList = Array.isArray(reg.verifiedBy) ? reg.verifiedBy : (reg.verifiedBy ? [reg.verifiedBy] : []);
+        const currentRole = reg.assignedToRole || 'Unassigned';
+        const currentName = reg.assignedToAdminName || '';
+        const currentEmail = reg.assignedToAdminEmail || '';
+        const checkSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>`;
+        const clockSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+        const arrowSpan = `<span style="color:#94A3B8; font-size:0.85rem; font-weight:bold;">→</span>`;
+
+        const chainParts = [];
+        if (verifiedList.length === 0) {
+          chainParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;background:#10B981;color:white;font-size:0.68rem;font-weight:700;white-space:nowrap;">${checkSvg}Forwarded</span>`);
+        }
+        verifiedList.forEach(v => {
+          chainParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;background:#10B981;color:white;font-size:0.68rem;font-weight:700;white-space:nowrap;">${checkSvg}${v.role}${v.name ? ` (${v.name})` : ''}</span>`);
+        });
+        if (currentRole) {
+          const roleLabel = currentRole + (currentName ? ` (${currentName})` : '');
+          chainParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;background:#F59E0B;color:white;font-size:0.68rem;font-weight:700;white-space:nowrap;">${clockSvg}Pending: ${roleLabel}</span>`);
+        }
+        const chainHtml = chainParts.join(` ${arrowSpan} `);
+
+        detailTrackingHtml = `
+          <div style="background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); border: 1.5px solid #93C5FD; border-radius: 8px; padding: 0.85rem 1rem; display: flex; flex-direction: column; gap: 0.65rem; width: 100%; box-sizing: border-box;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; border-bottom: 1px solid rgba(59, 130, 246, 0.2); padding-bottom: 0.5rem;">
+              <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #1E40AF; display: flex; align-items: center; gap: 5px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#1D4ED8" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Application Tracking Status
+              </span>
+              <span style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; background: #2563EB; color: white; font-size: 0.72rem; font-weight: 700;">
+                <span style="width:6px; height:6px; border-radius:50%; background:#60A5FA; display:inline-block;"></span>
+                Currently Forwarded
+              </span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.65rem;">
+              <div style="background: white; padding: 0.6rem 0.85rem; border-radius: 6px; border: 1px solid #BFDBFE;">
+                <span style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: #64748B; display: block; margin-bottom: 2px;">Forwarded To (Where)</span>
+                <div style="font-size: 0.88rem; font-weight: 700; color: #1E3A8A;">${currentRole}</div>
+              </div>
+
+              <div style="background: white; padding: 0.6rem 0.85rem; border-radius: 6px; border: 1px solid #BFDBFE;">
+                <span style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: #64748B; display: block; margin-bottom: 2px;">Assigned Person (Who)</span>
+                <div style="font-size: 0.88rem; font-weight: 700; color: #1E3A8A;">${currentName ? currentName : 'All Admins in Role'}</div>
+                ${currentEmail ? `<div style="font-size:0.72rem; color:#3B82F6;">${currentEmail}</div>` : ''}
+              </div>
+            </div>
+
+            <div style="background: white; padding: 0.6rem 0.85rem; border-radius: 6px; border: 1px solid #BFDBFE;">
+              <span style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: #64748B; display: block; margin-bottom: 4px;">Review Chain Progress</span>
+              <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 5px;">${chainHtml}</div>
+            </div>
+          </div>
+        `;
+      } else {
+        detailTrackingHtml = `
+          <div style="background:#F8FAFC; padding:0.65rem 0.85rem; border-radius:6px; border:1px solid #E2E8F0; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <span style="font-size:0.65rem; font-weight:700; text-transform:uppercase; color:#64748B; display:block;">Current Access</span>
+              <div style="font-size:0.85rem; font-weight:700; color:#1E293B;">${reg.assignedToRole || 'Admin'}${reg.assignedToAdminName ? ' (' + reg.assignedToAdminName + ')' : ''}</div>
+            </div>
+            <div style="font-size:0.75rem; color:#64748B;">
+              Status: <strong style="text-transform:uppercase; color:var(--primary);">${reg.status || 'pending'}</strong>
+            </div>
+          </div>
+        `;
       }
 
       // Forward Attachments section
-      let forwardAttachmentsHtml = '';
+      let detailAttachmentsHtml = '';
       if (reg.forwardAttachments && reg.forwardAttachments.length > 0) {
-        const pdfLinkStyle = "display:inline-flex; align-items:center; gap:4px; color:#EF4444; text-decoration:none; font-weight:600; font-size:0.8rem; background:rgba(239,68,68,0.08); padding:4px 10px; border-radius:6px; margin-right:6px; transition:all 0.2s;";
-        const pdfLinkHover = "onmouseover=\"this.style.background='#EF4444'; this.style.color='white'\" onmouseout=\"this.style.background='rgba(239,68,68,0.08)'; this.style.color='#EF4444'\"";
-        const imgLinkStyle = "display:inline-flex; align-items:center; gap:4px; color:#3B82F6; text-decoration:none; font-weight:600; font-size:0.8rem; background:rgba(59,130,246,0.08); padding:4px 10px; border-radius:6px; margin-right:6px; transition:all 0.2s;";
-        const imgLinkHover = "onmouseover=\"this.style.background='#3B82F6'; this.style.color='white'\" onmouseout=\"this.style.background='rgba(59,130,246,0.08)'; this.style.color='#3B82F6'\"";
-
         const attachLinks = reg.forwardAttachments.map((attachment, idx) => {
           const isObject = typeof attachment === 'object' && attachment !== null;
           const url = isObject ? attachment.url : attachment;
           const uploaderName = isObject && attachment.uploadedBy ? attachment.uploadedBy : 'Admin';
-
           const isPdf = url.toLowerCase().includes('.pdf') || url.includes('/raw/');
-          const style = isPdf ? pdfLinkStyle : imgLinkStyle;
-          const hover = isPdf ? pdfLinkHover : imgLinkHover;
-          const pdfIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`;
-          const imgIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
-          return `<a href="${formatPdfUrl(url)}" target="_blank" style="${style}" ${hover} title="Attached by ${uploaderName}">${isPdf ? pdfIcon : imgIcon} Attachment ${idx + 1} (${uploaderName})</a>`;
+          return `<a href="${formatPdfUrl(url)}" target="_blank" style="${docLinkStyle}" title="Attached by ${uploaderName}">📎 Attachment ${idx + 1} (${uploaderName})</a>`;
         }).join('');
 
-        forwardAttachmentsHtml = `
-          <div style="background: rgba(59,130,246,0.04); border: 1px solid rgba(59,130,246,0.15); border-radius: 8px; padding: 1rem 1.25rem; margin-top: 0.25rem;">
-            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.6rem;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#3B82F6" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
-              <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#3B82F6;">Admin Attachments (${reg.forwardAttachments.length})</span>
-            </div>
+        detailAttachmentsHtml = `
+          <div style="background: rgba(59,130,246,0.04); border: 1px solid rgba(59,130,246,0.15); border-radius: 6px; padding: 0.75rem 1rem;">
+            <span style="font-size:0.72rem; font-weight:700; text-transform:uppercase; color:#3B82F6; display:block; margin-bottom:0.4rem;">Admin Attached Files (${reg.forwardAttachments.length})</span>
             <div style="display:flex; flex-wrap:wrap; gap:0.25rem;">${attachLinks}</div>
           </div>`;
       }
 
-      // Forward Notes / Written Messages section
-      let forwardNotesHtml = '';
+      // Forward Notes section
+      let detailNotesHtml = '';
       if (reg.forwardNotes && reg.forwardNotes.length > 0) {
         const notesContent = reg.forwardNotes.map(n => {
           const author = `${n.authorName || 'Admin'}${n.authorRole ? ` (${n.authorRole})` : ''}`;
           const formattedDate = n.date ? new Date(n.date).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
           return `
-            <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 0.75rem 1rem; margin-top: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; font-size: 0.78rem;">
+            <div style="background: white; border: 1px solid #E2E8F0; border-radius: 6px; padding: 0.6rem 0.85rem; margin-top: 0.4rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; font-size: 0.75rem;">
                 <span style="font-weight: 700; color: var(--primary);">${author}</span>
                 <span style="color: #9CA3AF;">${formattedDate}</span>
               </div>
-              <div style="font-size: 0.875rem; color: #334155; white-space: pre-wrap; line-height: 1.45;">${n.note}</div>
+              <div style="font-size: 0.82rem; color: #334155; white-space: pre-wrap; line-height: 1.4;">${n.note}</div>
             </div>
           `;
         }).join('');
 
-        forwardNotesHtml = `
-          <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 8px; padding: 1rem 1.25rem; margin-top: 0.25rem;">
-            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#D97706" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
-              <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#D97706;">Admin Written Messages (${reg.forwardNotes.length})</span>
-            </div>
+        detailNotesHtml = `
+          <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 6px; padding: 0.75rem 1rem;">
+            <span style="font-size:0.72rem; font-weight:700; text-transform:uppercase; color:#D97706; display:block;">Admin Written Messages (${reg.forwardNotes.length})</span>
             ${notesContent}
           </div>`;
       }
 
+      // Verification history
+      let detailVerificationHtml = '';
+      const verifiedByList = Array.isArray(reg.verifiedBy) ? reg.verifiedBy : (reg.verifiedBy ? [reg.verifiedBy] : []);
+      if (verifiedByList.length > 0) {
+        detailVerificationHtml = `
+          <div style="background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.15); padding: 0.65rem 0.85rem; border-radius: 6px;">
+            <span style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #059669; display: block; margin-bottom: 0.35rem;">Verification History (${verifiedByList.length})</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
+              ${verifiedByList.map(v => `<span style="display:inline-flex; align-items:center; background:#10B981; color:white; padding:2px 8px; border-radius:50px; font-size:0.7rem; font-weight:600;">✓ ${v.name} (${v.role})</span>`).join('')}
+            </div>
+          </div>`;
+      }
+
+      // Issue text
+      let detailIssueHtml = '';
+      if (reg.status === 'issue_reported') {
+        detailIssueHtml = `
+          <div style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); padding: 0.75rem 1rem; border-radius: 6px;">
+            <div style="font-weight: 700; color: #B91C1C; font-size: 0.82rem; margin-bottom: 0.25rem;">⚠ Reported Issue:</div>
+            <div style="background: white; padding: 0.5rem 0.75rem; border-radius: 4px; border: 1px solid rgba(239,68,68,0.1); color: #7F1D1D; font-size: 0.8rem; line-height: 1.4;">${reg.issueText}</div>
+          </div>`;
+      }
+
+      // Full action buttons inside the expanded drawer
+      let detailActionButtonsHtml = '';
+      if ((user.role === 'Secretary' && ['pending', 'verified', 'issue_reported'].includes(currentRegFilter)) || (user.role === 'President' && ['verified', 'issue_reported'].includes(currentRegFilter))) {
+        detailActionButtonsHtml = `
+          <div style="display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: flex-end; width: 100%;">
+            <button onclick="window.updateRegStatus('${reg.type}', '${reg._id}', 'accepted')" style="padding: 0.55rem 1.25rem; background: var(--success); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">✓ Final Accept</button>
+            <button onclick="window.updateRegStatus('${reg.type}', '${reg._id}', 'rejected')" style="padding: 0.55rem 1.25rem; background: white; color: var(--danger); border: 1px solid var(--danger); border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">✕ Final Reject</button>
+            <button onclick="window.openForwardModal('${reg.type}', '${reg._id}')" style="padding: 0.55rem 1.25rem; background: #3B82F6; color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">➔ Forward</button>
+            <button onclick="window.deleteRegistration('${reg.type}', '${reg._id}', '${safeName}')" style="padding: 0.55rem 1.25rem; background: white; color: #DC2626; border: 1.5px solid #DC2626; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">🗑 Delete</button>
+          </div>
+        `;
+      } else if ((user.role === 'Secretary' || user.role === 'President') && ['accepted', 'rejected'].includes(currentRegFilter)) {
+        detailActionButtonsHtml = `
+          <div style="display: flex; justify-content: flex-end; width: 100%;">
+            <button onclick="window.deleteRegistration('${reg.type}', '${reg._id}', '${safeName}')" style="padding: 0.55rem 1.25rem; background: white; color: #DC2626; border: 1.5px solid #DC2626; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">🗑 Permanently Delete Application</button>
+          </div>
+        `;
+      } else if (user.role !== 'Secretary' && user.role !== 'President' && currentRegFilter === 'forwarded' && user.role === reg.assignedToRole) {
+        detailActionButtonsHtml = `
+          <div style="display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: flex-end; width: 100%;">
+            <button onclick="window.openReportIssueModal('${reg.type}', '${reg._id}')" style="padding: 0.55rem 1.25rem; background: white; color: #EF4444; border: 1px solid #EF4444; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">⚠ Report Issue</button>
+            <button onclick="window.openVerifyForwardModal('${reg.type}', '${reg._id}')" style="padding: 0.55rem 1.25rem; background: var(--success); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">✓ Verify & Forward</button>
+          </div>
+        `;
+      } else if (isSecOrPres && currentRegFilter === 'forwarded') {
+        detailActionButtonsHtml = `
+          <div style="display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: flex-end; width: 100%;">
+            <button onclick="window.openForwardModal('${reg.type}', '${reg._id}')" style="padding: 0.55rem 1.25rem; background: #3B82F6; color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">➔ Re-Forward</button>
+            <button onclick="window.deleteRegistration('${reg.type}', '${reg._id}', '${safeName}')" style="padding: 0.55rem 1.25rem; background: white; color: #DC2626; border: 1.5px solid #DC2626; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">🗑 Delete Application</button>
+          </div>
+        `;
+      }
+
       return `
-        <div style="background: white; border: 1px solid #E5E7EB; border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.08); transition: box-shadow 0.3s ease, transform 0.3s ease; overflow: hidden;"
-             onmouseover="this.style.boxShadow='0 8px 20px rgba(0,0,0,0.1)'; this.style.transform='translateY(-2px)'"
-             onmouseout="this.style.boxShadow='0 1px 3px 0 rgba(0,0,0,0.08)'; this.style.transform='translateY(0)'">
+        <!-- Main Spreadsheet Row -->
+        <tr class="excel-row" id="reg-row-${reg._id}" onclick="window.toggleRegDetail('${reg._id}')" style="cursor: pointer;">
+          <td style="text-align: center; white-space: nowrap;">
+            <div style="display: inline-flex; align-items: center; gap: 4px;">
+              <span style="font-weight: 700; color: #64748B; font-size: 0.75rem;">${index + 1}</span>
+              <button type="button" class="excel-expand-btn" id="reg-expand-btn-${reg._id}" onclick="event.stopPropagation(); window.toggleRegDetail('${reg._id}')" title="Toggle full applicant details">▼</button>
+            </div>
+          </td>
+          <td style="text-align: center;">
+            <div style="display: flex; justify-content: center; align-items: center;">
+              ${photoSrc ? `<img src="${photoSrc}" alt="Photo" onclick="event.stopPropagation(); window.openPhotoLightbox('${photoSrc.replace(/'/g, "&apos;")}', '${safeName}')" style="width:34px; height:34px; border-radius:50%; object-fit:cover; border:1.5px solid ${isReq ? '#DC2626' : 'var(--primary)'}; cursor:pointer;" title="Click to view full photo" />` : `<div style="width:34px; height:34px; border-radius:50%; background:#F1F5F9; color:#94A3B8; font-size:0.65rem; font-weight:700; display:flex; align-items:center; justify-content:center; border:1px solid #CBD5E1;">N/A</div>`}
+            </div>
+          </td>
+          <td>
+            <div style="font-weight: 700; color: #0F172A; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;" title="${applicantName}">${applicantName}</div>
+            <div style="margin-top: 2px;">
+              <span class="excel-badge-type excel-type-${reg.type}">${typeLabel}</span>
+            </div>
+          </td>
+          <td style="white-space: nowrap;">
+            <div style="font-weight: 600; color: #1E293B; font-size: 0.78rem;">${new Date(reg.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+            <div style="font-size: 0.7rem; color: #64748B;">${new Date(reg.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</div>
+          </td>
+          <td style="white-space: nowrap;">
+            <div style="display: flex; align-items: center; gap: 5px;">
+              <a href="tel:${phone}" onclick="event.stopPropagation();" style="color: #1E293B; text-decoration: none; font-weight: 600; font-size: 0.78rem;" title="Call">${phone}</a>
+              ${whatsapp ? `<a href="https://wa.me/91${whatsapp}" target="_blank" onclick="event.stopPropagation();" style="display:inline-flex; align-items:center; color:#16A34A; text-decoration:none;" title="Open WhatsApp: ${whatsapp}"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.98-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.24-.74-.66-1.25-1.48-1.39-1.73-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.34-.76-1.84-.2-.49-.4-.42-.56-.43h-.47c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.71 4.3 3.8 2.53 1.09 2.53.73 2.98.69.46-.04 1.47-.6 1.68-1.18.21-.59.21-1.09.15-1.19-.06-.11-.23-.17-.48-.29z"/></svg></a>` : ''}
+            </div>
+            ${reg.email ? `<div style="font-size:0.7rem; color:#64748B; max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${reg.email}">${reg.email}</div>` : ''}
+          </td>
+          <td>
+            ${keyInfoHtml}
+          </td>
+          <td>
+            ${trackingHtml}
+          </td>
+          <td>
+            <div style="display: flex; flex-wrap: wrap; gap: 3px; align-items: center;">
+              ${docChips.length > 0 ? docChips.join('') : '<span style="color:#94A3B8; font-size:0.75rem;">None</span>'}
+            </div>
+          </td>
+          <td style="text-align: center; white-space: nowrap;">
+            <div style="display: inline-flex; align-items: center; gap: 4px; justify-content: center;">
+              ${rowActionsHtml}
+            </div>
+          </td>
+        </tr>
 
-          <!-- Identity Row: photo + name/contact -->
-          <div style="display: flex; gap: 0.85rem; align-items: center; min-width: 0;">
-            ${reg.photo
-              ? `<div style="position:relative; width:56px; height:56px; flex-shrink:0; cursor:pointer;" onclick="window.openPhotoLightbox('${reg.photo.replace(/'/g, "&apos;")}', '${reg.fullName.replace(/'/g, "&apos;")}')" title="Click to view full photo">
-                  <img src="${reg.photo}" alt="Photo" style="width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid white; box-shadow:0 0 0 2px var(--primary); display:block;" />
-                </div>`
-              : `<div style="width:56px; height:56px; border-radius:50%; background:#F3F4F6; color:#9CA3AF; font-size:0.75rem; font-weight:600; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px #D1D5DB; flex-shrink:0;">No<br>Photo</div>`}
-            <div style="min-width:0; flex:1;">
-              <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
-                <span style="font-size:1.05rem; font-weight:700; color:#111827;">${index + 1}. ${reg.fullName}</span>
-                <span style="font-size:0.65rem; font-weight:700; padding:3px 9px; border-radius:20px; background:rgba(59,130,246,0.1); color:#2563EB; text-transform:uppercase; letter-spacing:0.5px; flex-shrink:0;">${reg.type}</span>
+        <!-- Expandable Detail Drawer Row -->
+        <tr class="excel-detail-row" id="reg-detail-${reg._id}" style="display: none;">
+          <td colspan="9" class="excel-detail-cell">
+            <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+              <!-- Header Bar of the Detail Drawer -->
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; border-bottom: 1px solid #CBD5E1; padding-bottom: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-weight: 700; font-size: 1rem; color: #0F172A;">${applicantName}</span>
+                  <span class="excel-badge-type excel-type-${reg.type}">${typeLabel}</span>
+                  <span style="font-size: 0.75rem; color: #64748B;">ID: ${reg._id}</span>
+                </div>
+                <button type="button" class="excel-act-btn" style="background: white; border: 1px solid #CBD5E1; color: #475569;" onclick="window.toggleRegDetail('${reg._id}')">▲ Close Details</button>
               </div>
-              <div style="font-size:0.82rem; color:#4B5563; display:flex; flex-wrap:wrap; align-items:center; gap:0.35rem; min-width:0;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">${reg.email}</span>
-                <span style="color:#D1D5DB; flex-shrink:0;">|</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                <span style="flex-shrink:0;">${reg.phone}</span>
+
+              <!-- Information Grid -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.65rem;">
+                ${detailFieldsHtml}
+              </div>
+
+              <!-- Tracking / Progress Section -->
+              ${detailTrackingHtml}
+
+              <!-- Attachments & Notes -->
+              ${detailAttachmentsHtml}
+              ${detailNotesHtml}
+              ${detailVerificationHtml}
+              ${detailIssueHtml}
+
+              <!-- Bottom Action Bar -->
+              <div style="border-top: 1px solid #E2E8F0; padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <span style="font-size: 0.75rem; color: #64748B;">
+                  Applied on: <strong>${new Date(reg.date).toLocaleString('en-IN')}</strong>
+                </span>
+                ${detailActionButtonsHtml}
               </div>
             </div>
-          </div>
-
-          <!-- Meta Row: Applied On + Status Badge -->
-          <div style="display:flex; flex-wrap:wrap; gap:0.6rem; align-items:stretch;">
-            <div style="display:flex; flex-direction:column; justify-content:center; background:#F0FDF4; padding:0.6rem 0.9rem; border-radius:8px; border:1px solid #BBF7D0; flex:1; min-width:160px;">
-              <span style="font-size:0.65rem; font-weight:700; color:#166534; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:3px;">Applied On</span>
-              <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px; font-weight:600; color:#15803D; font-size:0.82rem;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                ${new Date(reg.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                <span style="color:#86EFAC;">|</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                ${new Date(reg.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-              </div>
-            </div>
-
-            ${(() => {
-              const isSecretaryForwardedView = (user.role === 'Secretary' || user.role === 'President') && currentRegFilter === 'forwarded';
-              if (isSecretaryForwardedView) {
-                const verifiedList = Array.isArray(reg.verifiedBy) ? reg.verifiedBy : (reg.verifiedBy ? [reg.verifiedBy] : []);
-                const currentRole = reg.assignedToRole || 'Unassigned';
-                const currentName = reg.assignedToAdminName || '';
-                const currentEmail = reg.assignedToAdminEmail || '';
-                const checkSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>`;
-                const clockSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
-                const arrowSpan = `<span style="color:#94A3B8; font-size:0.85rem; font-weight:bold;">→</span>`;
-
-                const chainParts = [];
-                if (verifiedList.length === 0) {
-                  chainParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;background:#10B981;color:white;font-size:0.68rem;font-weight:700;white-space:nowrap;">${checkSvg}Forwarded</span>`);
-                }
-                verifiedList.forEach(v => {
-                  chainParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;background:#10B981;color:white;font-size:0.68rem;font-weight:700;white-space:nowrap;">${checkSvg}${v.role}${v.name ? ` (${v.name})` : ''}</span>`);
-                });
-
-                if (currentRole) {
-                  const roleLabel = currentRole + (currentName ? ` (${currentName})` : '');
-                  chainParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;background:#F59E0B;color:white;font-size:0.68rem;font-weight:700;white-space:nowrap;">${clockSvg}Pending: ${roleLabel}</span>`);
-                }
-
-                const chainHtml = chainParts.join(` ${arrowSpan} `);
-
-                return `
-                  <div style="background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); border: 1.5px solid #93C5FD; border-radius: 10px; padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; width: 100%; box-sizing: border-box;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; border-bottom: 1px solid rgba(59, 130, 246, 0.2); padding-bottom: 0.6rem;">
-                      <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#1D4ED8" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                        <span style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #1E40AF;">
-                          Application Tracking Status
-                        </span>
-                      </div>
-                      <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; background: #2563EB; color: white; font-size: 0.75rem; font-weight: 700; box-shadow: 0 1px 2px rgba(37,99,235,0.3);">
-                        <span style="width:7px; height:7px; border-radius:50%; background:#60A5FA; display:inline-block;"></span>
-                        Currently Forwarded
-                      </span>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.85rem;">
-                      <div style="background: white; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #BFDBFE;">
-                        <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #64748B; display: block; margin-bottom: 3px;">
-                          Forwarded To (Where)
-                        </span>
-                        <div style="font-size: 0.92rem; font-weight: 700; color: #1E3A8A; display: flex; align-items: center; gap: 6px;">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-4 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                          ${currentRole}
-                        </div>
-                      </div>
-
-                      <div style="background: white; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #BFDBFE;">
-                        <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #64748B; display: block; margin-bottom: 3px;">
-                          Assigned Person (Who)
-                        </span>
-                        <div style="font-size: 0.92rem; font-weight: 700; color: #1E3A8A; display: flex; align-items: center; gap: 6px;">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                          ${currentName ? currentName : 'All Admins in Role'}
-                        </div>
-                        ${currentEmail ? `<div style="font-size:0.75rem; color:#3B82F6; margin-top:2px;">${currentEmail}</div>` : ''}
-                      </div>
-                    </div>
-
-                    <div style="background: white; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #BFDBFE;">
-                      <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #64748B; display: block; margin-bottom: 6px;">
-                        Review Chain Progress
-                      </span>
-                      <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px; row-gap: 6px;">
-                        ${chainHtml}
-                      </div>
-                    </div>
-                  </div>`;
-              } else {
-                return `
-                  <div style="background:#F8FAFC;padding:0.6rem 0.9rem;border-radius:8px;border:1px solid #E2E8F0;display:flex;flex-direction:column;justify-content:center;flex:1;min-width:160px;">
-                    <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#64748B;margin-bottom:6px;">Current Access</div>
-                    <div style="display:inline-flex;align-items:center;gap:5px;padding:0.3rem 0.8rem;border-radius:50px;font-size:0.8rem;background:${user.role === reg.assignedToRole ? 'var(--primary)' : '#E2E8F0'};color:${user.role === reg.assignedToRole ? 'white' : '#475569'};font-weight:600;width:fit-content;">
-                      ${user.role === reg.assignedToRole ? `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
-                      ${reg.assignedToRole || 'Admin'}${reg.assignedToAdminName ? ' (' + reg.assignedToAdminName + ')' : ''}
-                    </div>
-                  </div>`;
-              }
-            })()}
-          </div>
-
-          <!-- Details Grid -->
-          <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:1rem; border-radius:8px; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:0.75rem;">
-            ${docsHtml}
-          </div>
-
-          ${forwardAttachmentsHtml}
-          ${forwardNotesHtml}
-
-          ${(() => {
-            const verifiedByList = Array.isArray(reg.verifiedBy) ? reg.verifiedBy : (reg.verifiedBy ? [reg.verifiedBy] : []);
-            return verifiedByList.length > 0 ? `
-            <div style="background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.15); padding:0.85rem 1rem; border-radius:8px;">
-              <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.5rem;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#059669" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#059669;">Verification History (${verifiedByList.length})</span>
-              </div>
-              <div style="display:flex; flex-wrap:wrap; gap:0.35rem;">
-                ${verifiedByList.map(v => `<span style="display:inline-flex; align-items:center; background:#10B981; color:white; padding:3px 9px; border-radius:50px; font-size:0.72rem; font-weight:600;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg>${v.name} (${v.role})</span>`).join('')}
-              </div>
-            </div>` : '';
-          })()}
-
-          ${reg.status === 'issue_reported' ? `
-            <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); padding:0.85rem 1rem; border-radius:8px; display:flex; flex-direction:column; gap:0.4rem;">
-              <div style="display:flex; align-items:center; gap:0.4rem; font-weight:700; color:#B91C1C; font-size:0.88rem;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                Issue Reported
-              </div>
-              <div style="background:white; padding:0.65rem 0.85rem; border-radius:6px; border:1px solid rgba(239,68,68,0.1); color:#7F1D1D; font-size:0.83rem; line-height:1.45;">${reg.issueText}</div>
-            </div>` : ''}
-
-          ${((user.role === 'Secretary' && ['pending', 'verified', 'issue_reported'].includes(currentRegFilter)) || (user.role === 'President' && ['verified', 'issue_reported'].includes(currentRegFilter))) ? `
-            <div style="display:flex; flex-wrap:wrap; gap:0.6rem; justify-content:flex-end; border-top:1px solid #F1F5F9; padding-top:0.85rem; margin-top:0.25rem;">
-              <button onclick="window.updateRegStatus('${reg.type}', '${reg._id}', 'accepted')" style="flex:1; min-width:110px; padding:0.6rem 1rem; background:var(--success); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">✓ Final Accept</button>
-              <button onclick="window.updateRegStatus('${reg.type}', '${reg._id}', 'rejected')" style="flex:1; min-width:110px; padding:0.6rem 1rem; background:white; color:var(--danger); border:1px solid var(--danger); border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.background='var(--danger)'; this.style.color='white'" onmouseout="this.style.background='white'; this.style.color='var(--danger)'">✕ Final Reject</button>
-              <button onclick="window.openForwardModal('${reg.type}', '${reg._id}')" style="flex:1; min-width:110px; padding:0.6rem 1rem; background:#3B82F6; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">→ Forward</button>
-              <button onclick="window.deleteRegistration('${reg.type}', '${reg._id}', '${reg.fullName.replace(/'/g, "&apos;")}')" style="padding:0.6rem 1rem; background:white; color:#DC2626; border:1.5px solid #DC2626; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s; display:inline-flex; align-items:center; gap:5px;" onmouseover="this.style.background='#DC2626'; this.style.color='white'" onmouseout="this.style.background='white'; this.style.color='#DC2626'"><svg xmlns='http://www.w3.org/2000/svg' width='13' height='13' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14H6L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4h6v2'/></svg>Delete</button>
-            </div>` : ''}
-
-          ${(user.role === 'Secretary' || user.role === 'President') && ['accepted', 'rejected'].includes(currentRegFilter) ? `
-            <div style="display:flex; flex-wrap:wrap; gap:0.6rem; justify-content:flex-end; border-top:1px solid #F1F5F9; padding-top:0.85rem; margin-top:0.25rem;">
-              <button onclick="window.deleteRegistration('${reg.type}', '${reg._id}', '${reg.fullName.replace(/'/g, "&apos;")}')" style="padding:0.6rem 1.1rem; background:white; color:#DC2626; border:1.5px solid #DC2626; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s; display:inline-flex; align-items:center; gap:6px;" onmouseover="this.style.background='#DC2626'; this.style.color='white'" onmouseout="this.style.background='white'; this.style.color='#DC2626'"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14H6L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4h6v2'/></svg>Delete Application</button>
-            </div>` : ''}
-
-          ${user.role !== 'Secretary' && user.role !== 'President' && currentRegFilter === 'forwarded' && user.role === reg.assignedToRole ? `
-            <div style="display:flex; flex-wrap:wrap; gap:0.6rem; justify-content:flex-end; border-top:1px solid #F1F5F9; padding-top:0.85rem; margin-top:0.25rem;">
-              <button onclick="window.openReportIssueModal('${reg.type}', '${reg._id}')" style="flex:1; min-width:120px; padding:0.6rem 1rem; background:white; color:#EF4444; border:1px solid #EF4444; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.background='#EF4444'; this.style.color='white'" onmouseout="this.style.background='white'; this.style.color='#EF4444'">⚠ Report Issue</button>
-              <button onclick="window.openVerifyForwardModal('${reg.type}', '${reg._id}')" style="flex:1; min-width:120px; padding:0.6rem 1rem; background:var(--success); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">✓ Verify & Forward</button>
-            </div>` : ''}
-        </div>
+          </td>
+        </tr>
       `;
     }).join('');
+
+    registrationsContainer.innerHTML = `
+      <div class="excel-container-wrapper">
+        <div class="excel-table-scroll">
+          <table class="excel-table">
+            <thead>
+              <tr>
+                <th style="width: 50px; text-align: center;">#</th>
+                <th style="width: 50px; text-align: center;">Photo</th>
+                <th>Applicant Name & Type</th>
+                <th>Applied Date</th>
+                <th>Contact Info</th>
+                <th>Key Details</th>
+                <th>Tracking / Status</th>
+                <th>Documents & Files</th>
+                <th style="text-align: center; min-width: 140px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
   };
 
   // Expose to window for inline onclick handlers

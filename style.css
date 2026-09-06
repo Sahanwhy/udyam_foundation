@@ -192,10 +192,6 @@ select {
   text-align: center;
 }
 
-.btn-donate {
-  background: var(--saffron);
-}
-
 
 /* ─── NAVBAR ─────────────────────────── */
 .navbar {
@@ -216,13 +212,13 @@ select {
 }
 
 .nav-container {
-  max-width: 1200px;
+  max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
-  padding: 0 clamp(1rem, 4vw, 3rem);
+  padding: 0 clamp(1rem, 3vw, 2.5rem);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .nav-logo {
@@ -231,6 +227,7 @@ select {
   gap: 0.75rem;
   color: var(--white);
   flex-shrink: 0;
+  margin-right: auto; /* pushes everything else to the right */
 }
 
 .nav-logo-img {
@@ -265,64 +262,146 @@ select {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.1rem;
+  flex-shrink: 0;
+  white-space: nowrap; /* keep all links on one line */
+  flex-wrap: nowrap;
 }
 
 .nav-link {
   font-family: var(--font-label);
-  font-size: 0.875rem;
+  font-size: 0.82rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
-  padding: 0.5rem 0.85rem;
+  color: rgba(255, 255, 255, 0.78);
+  padding: 0.4rem 0.65rem;
   border-radius: 6px;
   transition: var(--transition);
+  position: relative;
+  white-space: nowrap;
 }
 
-.nav-link:hover,
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 70%;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--saffron);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-link:hover {
+  color: var(--white);
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
 .nav-link.active {
   color: var(--white);
-  background: rgba(255, 255, 255, 0.08);
+  font-weight: 600;
 }
 
-.btn-donate {
+/* ─── NAV ACTIONS (button group) ─── */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+
+/* Shared base for all nav action buttons */
+.btn-register,
+.btn-admin,
+.btn-donate,
+.btn-blood-donation {
   font-family: var(--font-label);
-  font-size: 0.875rem;
+  font-size: 0.78rem;
   font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 0.45rem 0.9rem;
+  border-radius: 50px;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  text-decoration: none;
+  line-height: 1;
+}
+
+/* Register — ghost outline */
+.btn-register {
+  color: rgba(255, 255, 255, 0.88);
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-register:hover,
+.btn-register.active {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.65);
+  transform: translateY(-1px);
+}
+
+/* Admin — subtle lock-icon ghost */
+.btn-admin {
+  color: rgba(255, 255, 255, 0.75);
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+}
+
+.btn-admin:hover,
+.btn-admin.active {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+/* Donate Now — saffron filled pill */
+.btn-donate {
   color: var(--white);
   background: var(--saffron);
-  padding: 0.55rem 1.4rem;
-  border-radius: 50px;
-  margin-left: 0.75rem;
-  transition: var(--transition);
-  box-shadow: 0 3px 14px rgba(249, 115, 22, 0.4);
+  border: 1.5px solid transparent;
+  box-shadow: 0 3px 12px rgba(249, 115, 22, 0.38);
 }
 
 .btn-donate:hover {
   background: var(--saffron-dark);
-  transform: translateY(-1px);
-}
-
-.btn-admin,
-.btn-register {
-  font-family: var(--font-label);
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  background: transparent;
-  padding: 0.55rem 1.2rem;
-  border-radius: 50px;
-  margin-left: 0.5rem;
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
-  transition: var(--transition);
-}
-
-.btn-admin:hover,
-.btn-admin.active,
-.btn-register:hover,
-.btn-register.active {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.5);
+  transform: translateY(-2px);
   color: var(--white);
+}
+
+/* Blood Donation — crimson filled pill */
+.btn-blood-donation {
+  color: var(--white);
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 3px 12px rgba(220, 38, 38, 0.38);
+}
+
+.btn-blood-donation:hover {
+  background: linear-gradient(135deg, #EF4444 0%, #C41E1E 100%);
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.55);
+  transform: translateY(-2px);
+  color: var(--white);
+}
+
+.btn-blood-donation.active {
+  background: #991B1B;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .hamburger {
@@ -1464,6 +1543,30 @@ select {
     grid-template-columns: 1fr;
     gap: 2.5rem;
   }
+
+  /* Tighten nav on medium screens */
+  .logo-sub {
+    display: none; /* hide "Social Development Foundation" text on medium screens */
+  }
+
+  .nav-link {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.78rem;
+  }
+
+  .nav-actions {
+    gap: 0.3rem;
+    margin-left: 0.5rem;
+    padding-left: 0.5rem;
+  }
+
+  .btn-register,
+  .btn-admin,
+  .btn-donate,
+  .btn-blood-donation {
+    font-size: 0.72rem;
+    padding: 0.4rem 0.65rem;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1496,18 +1599,25 @@ select {
     border-radius: var(--radius-sm);
   }
 
-  .btn-admin {
-    margin: 0.5rem 0 0;
-    padding: 0.85rem 1rem;
-    border-radius: var(--radius-sm);
-    text-align: center;
+  .nav-actions {
+    flex-direction: column;
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+    gap: 0.4rem;
   }
 
-  .btn-donate {
-    margin: 0.5rem 0 0;
+  .btn-register,
+  .btn-admin,
+  .btn-donate,
+  .btn-blood-donation {
+    justify-content: center;
     padding: 0.85rem 1rem;
     border-radius: var(--radius-sm);
-    text-align: center;
+    font-size: 0.95rem;
   }
 
   .hero {
@@ -3682,4 +3792,280 @@ select {
   .lightbox-next {
     right: 10px;
   }
+}
+
+/* ═══════════════════════════════════════════════════
+   BLOOD DONATION PAGE STYLES
+   ═══════════════════════════════════════════════════ */
+.blood-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(220, 38, 38, 0.12);
+  color: #DC2626;
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  margin-bottom: 1rem;
+}
+
+.blood-group-selector {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .blood-group-selector {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.blood-btn {
+  padding: 0.85rem 0.5rem;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 10px;
+  background: white;
+  color: #1E293B;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.blood-btn:hover {
+  border-color: #DC2626;
+  color: #DC2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+}
+
+.blood-btn.selected {
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+  color: white;
+  border-color: #DC2626;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
+}
+
+.blood-btn small {
+  font-size: 0.68rem;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.form-section-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  margin-bottom: 2rem;
+  transition: box-shadow 0.3s ease;
+}
+
+.form-section-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.07);
+}
+
+.form-section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1B4332;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #F1F5F9;
+}
+
+.form-section-title .section-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(220, 38, 38, 0.1);
+  color: #DC2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.upload-dropzone {
+  border: 2px dashed #CBD5E1;
+  border-radius: 12px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  background: #F8FAFC;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.upload-dropzone:hover {
+  border-color: #DC2626;
+  background: rgba(220, 38, 38, 0.02);
+}
+
+.upload-dropzone.has-file {
+  border-color: #10B981;
+  background: rgba(16, 185, 129, 0.03);
+}
+
+.preview-thumbnail {
+  max-width: 100%;
+  max-height: 140px;
+  object-fit: contain;
+  border-radius: 8px;
+  margin-top: 0.75rem;
+  display: none;
+  border: 1px solid #E2E8F0;
+}
+
+.preview-thumbnail.visible {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.emergency-strip {
+  background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%);
+  border: 1px solid #FECDD3;
+  border-left: 5px solid #E11D48;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.emergency-strip-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.emergency-strip-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #E11D48;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════ BLOOD DONATION & REQUEST TABS ═══════════════════ */
+.blood-tabs-container {
+  display: flex;
+  background: #E2E8F0;
+  padding: 6px;
+  border-radius: 50px;
+  max-width: 680px;
+  margin: 0 auto 2.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  gap: 6px;
+}
+
+.blood-tab-btn {
+  flex: 1;
+  padding: 0.85rem 1.25rem;
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border-radius: 40px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.25s ease;
+  font-family: inherit;
+}
+
+.blood-tab-btn:hover {
+  color: #1E293B;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.blood-tab-btn.active {
+  background: #DC2626;
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
+}
+
+.blood-tab-btn.donor-tab.active {
+  background: #1B4332;
+  box-shadow: 0 4px 14px rgba(27, 67, 50, 0.35);
+}
+
+@media (max-width: 640px) {
+  .blood-tabs-container {
+    flex-direction: column;
+    border-radius: 16px;
+    padding: 6px;
+  }
+  .blood-tab-btn {
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+  }
+}
+
+.blood-hero-ctas {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.blood-hero-cta {
+  padding: 0.85rem 1.75rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  border: none;
+}
+
+.blood-hero-cta.donor-cta {
+  background: #1B4332;
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(27, 67, 50, 0.25);
+}
+.blood-hero-cta.donor-cta:hover {
+  background: #2D6A4F;
+  transform: translateY(-2px);
+}
+
+.blood-hero-cta.request-cta {
+  background: #DC2626;
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3);
+}
+.blood-hero-cta.request-cta:hover {
+  background: #B91C1C;
+  transform: translateY(-2px);
 }

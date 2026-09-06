@@ -817,8 +817,216 @@
       }
 
       /* Quick actions: stacked buttons on narrow screen */
-      .quick-actions { flex-direction: column; }
-      .btn-glass { width: 100%; justify-content: center; }
+    /* ===================================================
+       EXCEL-STYLE SPREADSHEET FOR REGISTRATIONS
+       =================================================== */
+    .excel-container-wrapper {
+      background: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+
+    .excel-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      background: #F8FAFC;
+      border-bottom: 1px solid #CBD5E1;
+      padding: 0.65rem 1rem;
+    }
+
+    .excel-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .excel-search-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: white;
+      border: 1px solid #CBD5E1;
+      border-radius: 6px;
+      padding: 0.4rem 0.65rem;
+      min-width: 220px;
+      max-width: 380px;
+      flex: 1;
+    }
+
+    .excel-search-box input {
+      border: none;
+      outline: none;
+      font-size: 0.8rem;
+      width: 100%;
+      background: transparent;
+      color: #1E293B;
+      font-family: inherit;
+    }
+
+    .excel-count-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: #E2E8F0;
+      color: #334155;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .excel-action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0.38rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid #CBD5E1;
+      background: white;
+      color: #334155;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .excel-action-btn:hover {
+      background: #F1F5F9;
+      border-color: #94A3B8;
+    }
+
+    .excel-action-btn.export-green {
+      background: #10B981;
+      color: white;
+      border-color: #059669;
+    }
+
+    .excel-action-btn.export-green:hover {
+      background: #059669;
+    }
+
+    .excel-table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      max-height: 78vh;
+      scrollbar-width: thin;
+      scrollbar-color: #94A3B8 #F1F5F9;
+    }
+
+    .excel-table-scroll::-webkit-scrollbar {
+      width: 8px;
+      height: 9px;
+    }
+
+    .excel-table-scroll::-webkit-scrollbar-thumb {
+      background: #94A3B8;
+      border-radius: 4px;
+    }
+
+    .excel-table-scroll::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+
+    table.excel-table {
+      width: 100%;
+      min-width: 1100px;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      color: #1E293B;
+      table-layout: auto;
+    }
+
+    table.excel-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: #F1F5F9;
+      color: #334155;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 8px 10px;
+      border: 1px solid #CBD5E1;
+      text-align: left;
+      white-space: nowrap;
+      user-select: none;
+      box-shadow: inset 0 -1px 0 #CBD5E1;
+    }
+
+    table.excel-table tbody td {
+      padding: 6px 9px;
+      border: 1px solid #E2E8F0;
+      vertical-align: middle;
+      font-size: 0.8125rem;
+      background: inherit;
+    }
+
+    table.excel-table tbody tr.excel-row:nth-child(4n+1) {
+      background: #FFFFFF;
+    }
+
+    table.excel-table tbody tr.excel-row:nth-child(4n+3) {
+      background: #F8FAFC;
+    }
+
+    table.excel-table tbody tr.excel-row:hover {
+      background: #EFF6FF !important;
+    }
+
+    table.excel-table tbody tr.excel-row.row-expanded {
+      background: #EFF6FF !important;
+      border-left: 3px solid #2563EB;
+    }
+
+    .excel-badge-type {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .excel-type-volunteer { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+    .excel-type-employee { background: #F5F3FF; color: #6D28D9; border: 1px solid #DDD6FE; }
+    .excel-type-member { background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; }
+    .excel-type-blood_donor { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECDD3; }
+    .excel-type-blood_request { background: #FFF1F2; color: #BE123C; border: 1px solid #FDA4AF; }
+
+    .excel-detail-cell {
+      background: #F8FAFC !important;
+      padding: 1.25rem 1.5rem !important;
+      border: 1.5px solid #93C5FD !important;
+      border-top: none !important;
+      box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.03);
+    }
+
+    .excel-act-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 4px 7px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      white-space: nowrap;
     }
   </style>
 </head>
@@ -1155,16 +1363,34 @@
 
     <!-- Registrations Section -->
     <section id="registrationsSection" class="data-section" style="display: none;">
-      <div class="data-section-header" style="display: flex; flex-direction: column; align-items: stretch; gap: 1rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <h2>Registration Requests</h2>
-          <div style="display: flex; align-items: center; gap: 1rem;">
-            <select id="regSortSelect" style="padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-weight: 500; font-family: var(--font-family); outline: none; cursor: pointer;">
+      <div class="data-section-header" style="display: flex; flex-direction: column; align-items: stretch; gap: 0.75rem; margin-bottom: 0.75rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 0.75rem;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <h2 style="margin: 0; font-size: 1.25rem;">Registration Requests</h2>
+            <span id="regCountBadge" class="excel-count-pill">0 Applicants</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+            <select id="regTypeFilterSelect" style="padding: 0.45rem 0.85rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-weight: 500; font-size: 0.82rem; outline: none; cursor: pointer;">
+              <option value="all">All Application Types</option>
+              <option value="blood_donor">Blood Donors</option>
+              <option value="blood_request">Blood Requests</option>
+              <option value="member">Members</option>
+              <option value="volunteer">Volunteers</option>
+              <option value="employee">Employees</option>
+            </select>
+            <select id="regSortSelect" style="padding: 0.45rem 0.85rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-weight: 500; font-size: 0.82rem; outline: none; cursor: pointer;">
               <option value="latest">Latest First</option>
               <option value="oldest">Oldest First</option>
             </select>
-            <button class="refresh-btn" id="refreshRegBtn">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+            <button class="excel-action-btn export-green" id="regExportCsvBtn" onclick="window.exportRegToCsv()" title="Download as Excel CSV spreadsheet">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Export Excel (.csv)
+            </button>
+            <button class="excel-action-btn" id="regToggleAllBtn" onclick="window.toggleAllRegDetails()" title="Expand or collapse all applicant details">
+              Expand All
+            </button>
+            <button class="refresh-btn" id="refreshRegBtn" style="padding: 0.45rem 0.85rem; font-size: 0.82rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="15" height="15">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
               Refresh
@@ -1172,11 +1398,19 @@
           </div>
         </div>
 
-      </div>
-      <div class="table-container" style="padding: 1rem;">
-        <div id="registrationsContainer" style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
-          <!-- Registration cards will be injected here -->
+        <div class="excel-search-bar-row" style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+          <div class="excel-search-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#64748B" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="regSearchInput" placeholder="Quick search applicant (Name, Phone, Email, Blood Group, District...)" />
+          </div>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">
+            💡 Tip: Click any row or <strong>Details</strong> to view or perform actions.
+          </span>
         </div>
+      </div>
+
+      <div id="registrationsContainer" style="width: 100%;">
+        <!-- Excel spreadsheet table will be injected here -->
       </div>
     </section>
 
