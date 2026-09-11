@@ -117,6 +117,24 @@
       border-bottom: 1px solid var(--border);
     }
 
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
     .header h1 {
       font-size: 1.75rem;
       font-weight: 700;
@@ -592,6 +610,8 @@
         z-index: 100;
         width: 240px;
         box-shadow: 4px 0 20px rgba(0,0,0,0.25);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
       }
       .sidebar.open {
         transform: translateX(0);
@@ -600,27 +620,78 @@
       /* Main content takes full width */
       .main-content {
         margin-left: 0;
-        padding: 0.85rem 1rem;
+        padding: 0.75rem 0.85rem;
       }
 
-      /* Header: single clean row */
+      /* Header: 2-row clean, modern layout on mobile */
       .header {
-        flex-wrap: nowrap;
-        gap: 0.5rem;
-        padding-bottom: 0.85rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.6rem;
+        padding-bottom: 0.65rem;
         border-bottom: 1px solid var(--border);
         margin-bottom: 0.5rem;
       }
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        min-width: 0;
+        width: 100%;
+      }
+      .header-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        flex: 1;
+      }
       .header h1 {
-        font-size: 1.15rem;
+        font-size: 1.1rem;
         padding-left: 0;
         margin: 0;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        color: var(--primary);
+      }
+      /* Blood mode badge on mobile: compact pill */
+      #headerBloodBadge {
+        font-size: 0.68rem !important;
+        padding: 2px 8px !important;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      /* Header row 2: blood toggle button on left, user profile on right */
+      .header-right {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center;
+        gap: 8px;
+        justify-content: space-between;
+        width: 100%;
+      }
+      /* Blood donation mode switcher button */
+      .btn-blood-mode-switch {
+        padding: 0.35rem 0.75rem !important;
+        font-size: 0.75rem !important;
+        font-weight: 700 !important;
+        flex-shrink: 0;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        border-radius: 20px !important;
+      }
+      .blood-switch-text {
+        display: inline !important;
+        font-size: 0.74rem !important;
+        font-weight: 700 !important;
+        white-space: nowrap !important;
       }
       .user-profile {
-        gap: 8px;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
         flex-shrink: 0;
       }
       .user-info {
@@ -628,11 +699,11 @@
         flex-direction: column;
         align-items: flex-end;
         line-height: 1.2;
-        max-width: 110px;
+        max-width: 95px;
         overflow: hidden;
       }
       .user-name {
-        font-size: 0.78rem;
+        font-size: 0.75rem;
         font-weight: 700;
         color: var(--text-main);
         white-space: nowrap;
@@ -641,11 +712,11 @@
         max-width: 100%;
       }
       .user-role {
-        font-size: 0.68rem;
+        font-size: 0.62rem;
         font-weight: 700;
         color: #059669;
         background: rgba(16, 185, 129, 0.12);
-        padding: 2px 7px;
+        padding: 1px 6px;
         border-radius: 10px;
         white-space: nowrap;
         overflow: hidden;
@@ -654,55 +725,72 @@
         margin-top: 1px;
       }
       .avatar {
-        width: 36px;
-        height: 36px;
-        font-size: 0.85rem;
+        width: 32px;
+        height: 32px;
+        font-size: 0.8rem;
+        flex-shrink: 0;
       }
       .logout-btn {
-        font-size: 0.78rem;
-        padding: 0.4rem 0.75rem;
+        font-size: 0.72rem;
+        padding: 0.35rem 0.6rem;
         border-radius: 6px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        border: 1px solid rgba(220, 38, 38, 0.3);
+        background: #FEF2F2;
+        color: #DC2626;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .logout-btn:hover {
+        background: #DC2626;
+        color: white;
       }
 
       /* Welcome banner */
       .welcome-banner {
-        padding: 1.25rem;
+        padding: 1.1rem 1.2rem;
         border-radius: 14px;
       }
       .welcome-content h2 { font-size: 1.15rem; }
-      .welcome-content p { font-size: 0.85rem; }
+      .welcome-content p { font-size: 0.82rem; }
       .quick-actions {
         display: flex;
         gap: 0.5rem;
-        margin-top: 1rem;
+        margin-top: 0.85rem;
       }
       .btn-glass {
         flex: 1;
-        padding: 0.6rem 0.75rem;
-        font-size: 0.82rem;
+        padding: 0.55rem 0.75rem;
+        font-size: 0.8rem;
         justify-content: center;
         white-space: nowrap;
       }
 
-      /* Stats grid: 2 columns on mobile */
+      /* Stats grid: 2 columns on mobile, last odd card spans full 2 columns */
       .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
-        gap: 0.75rem;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.65rem !important;
+      }
+      .stats-grid > .stat-card:last-child:nth-child(odd) {
+        grid-column: span 2 !important;
       }
       .stat-card {
-        padding: 0.85rem 1rem;
+        padding: 0.75rem 0.85rem;
         border-radius: 12px;
-        gap: 0.6rem;
+        gap: 0.55rem;
       }
       .stat-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
+        width: 38px;
+        height: 38px;
+        border-radius: 9px;
         flex-shrink: 0;
       }
-      .stat-icon svg { width: 20px; height: 20px; }
-      .stat-info h3 { font-size: 0.75rem; }
-      .stat-info p { font-size: 1.25rem; }
+      .stat-icon svg { width: 18px; height: 18px; }
+      .stat-info h3 { font-size: 0.72rem; }
+      .stat-info p { font-size: 1.15rem; }
 
       /* Dashboard layout: single column */
       .dashboard-layout {
@@ -799,17 +887,23 @@
 
     @media (max-width: 480px) {
       .main-content {
-        padding: 0.75rem;
-      }
-      
-      .header h1 {
-        font-size: 1.05rem;
+        padding: 0.6rem 0.65rem;
       }
 
-      /* Stats: 1 column on very small phones */
+      /* Stats: 2 columns on small phones, last odd card spans full 2 columns */
       .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.5rem !important;
       }
+      .stats-grid > .stat-card:last-child:nth-child(odd) {
+        grid-column: span 2 !important;
+      }
+      .stat-card {
+        padding: 0.65rem 0.75rem;
+        gap: 0.45rem;
+      }
+      .stat-info p { font-size: 1rem; }
+      .stat-info h3 { font-size: 0.68rem; }
 
       /* Gallery grid: 1 column on very small */
       #adminGalleryGrid {
@@ -819,10 +913,19 @@
       /* Quick actions: stacked buttons on narrow screen */
       .quick-actions {
         flex-direction: column;
+        gap: 0.4rem;
       }
       .btn-glass {
         width: 100%;
         justify-content: center;
+        padding: 0.55rem 1rem;
+      }
+
+      /* Compact header on tiny phones */
+      .header h1 { font-size: 0.98rem; }
+      .logout-btn {
+        font-size: 0.68rem;
+        padding: 0.28rem 0.45rem;
       }
     }
 
@@ -982,7 +1085,7 @@
     }
 
     table.excel-table thead th:last-child,
-    table.excel-table tbody td:last-child {
+    table.excel-table tbody tr.excel-row td:last-child {
       min-width: 165px;
       white-space: nowrap;
       text-align: center;
@@ -1028,6 +1131,18 @@
       border: 1.5px solid #93C5FD !important;
       border-top: none !important;
       box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.03);
+      white-space: normal !important;
+      text-align: left !important;
+    }
+
+    .excel-detail-span-2 {
+      grid-column: span 2;
+    }
+
+    @media (max-width: 900px) {
+      .excel-detail-span-2 {
+        grid-column: span 1 !important;
+      }
     }
 
     .excel-act-btn {
@@ -1306,6 +1421,116 @@
         width: 100% !important;
       }
     }
+
+    /* ══════════════════════════════════════════════════════════
+       BLOOD DONATION MODE STYLES & CONTROLS
+    ══════════════════════════════════════════════════════════ */
+    .btn-blood-mode-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0.52rem 1.15rem;
+      border-radius: 50px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      border: 1.5px solid #DC2626;
+      background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+      color: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      user-select: none;
+    }
+    .btn-blood-mode-switch:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(220, 38, 38, 0.5);
+      background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    }
+    .btn-blood-mode-switch.normal-mode-active {
+      border-color: #10B981;
+      background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%);
+      box-shadow: 0 2px 8px rgba(27, 67, 50, 0.3);
+    }
+    .btn-blood-mode-switch.normal-mode-active:hover {
+      background: linear-gradient(135deg, #2D6A4F 0%, #40916C 100%);
+      box-shadow: 0 4px 14px rgba(27, 67, 50, 0.45);
+    }
+
+    .blood-mode-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0.3rem 0.85rem;
+      border-radius: 50px;
+      background: #FEF2F2;
+      color: #DC2626;
+      border: 1.5px solid #FECDD3;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .blood-mode-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #DC2626;
+      display: inline-block;
+      box-shadow: 0 0 8px rgba(220, 38, 38, 0.7);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    .sidebar-mode-toggle {
+      margin: 8px 10px;
+      padding: 0.55rem 0.85rem !important;
+      border-radius: 8px !important;
+      background: rgba(220, 38, 38, 0.16) !important;
+      color: #FCA5A5 !important;
+      border: 1px solid rgba(239, 68, 68, 0.35) !important;
+      font-weight: 600 !important;
+      font-size: 0.82rem !important;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .sidebar-mode-toggle:hover {
+      background: rgba(220, 38, 38, 0.28) !important;
+      color: #FFFFFF !important;
+      border-color: rgba(239, 68, 68, 0.6) !important;
+      transform: translateY(-1px);
+    }
+
+    /* Blood Mode Theme Overrides */
+    body.blood-mode-active {
+      --primary: #991B1B;
+      --primary-light: #B91C1C;
+      --accent: #DC2626;
+      --accent-light: #EF4444;
+    }
+    body.blood-mode-active .sidebar {
+      background-color: #1A1313;
+      border-right: 1px solid rgba(220, 38, 38, 0.25);
+    }
+    body.blood-mode-active .nav-item.active {
+      border-left: 4px solid #DC2626 !important;
+      background-color: rgba(220, 38, 38, 0.18) !important;
+      color: #FFFFFF !important;
+    }
+    body.blood-mode-active .sidebar-mode-toggle {
+      background: rgba(16, 185, 129, 0.16) !important;
+      color: #A7F3D0 !important;
+      border-color: rgba(16, 185, 129, 0.4) !important;
+    }
+    body.blood-mode-active .sidebar-mode-toggle:hover {
+      background: rgba(16, 185, 129, 0.28) !important;
+      color: #FFFFFF !important;
+    }
+    body.blood-mode-active .welcome-banner {
+      background: linear-gradient(135deg, rgba(153, 27, 27, 0.95), rgba(185, 28, 28, 0.85));
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
   </style>
 </head>
 <body>
@@ -1346,7 +1571,14 @@
         </svg>
         Admin Messages
       </a>
-      <div class="nav-section-title" style="padding: 1.5rem 1.5rem 0.5rem; font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 700; letter-spacing: 0.05em;">Registrations</div>
+
+      <!-- Quick Mode Switcher in Sidebar -->
+      <a href="#" class="nav-item sidebar-mode-toggle" id="navBloodModeBtn" title="Switch to Blood Donation Mode">
+        <span style="font-size: 1.1rem; line-height: 1;" id="navBloodModeIcon">🩸</span>
+        <span id="navBloodModeText">Blood Donation</span>
+      </a>
+
+      <div class="nav-section-title" id="regNavSectionTitle" style="padding: 1.5rem 1.5rem 0.5rem; font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 700; letter-spacing: 0.05em;">Registrations</div>
       <a href="#" class="nav-item reg-filter-btn active" data-filter="pending" id="nav-pending">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         Pending
@@ -1371,6 +1603,23 @@
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
         Issues
       </a>
+
+      <!-- Blood Donation Requests Section (Active in Blood Donation Mode, visible to ALL admins) -->
+      <div class="nav-section-title" id="bloodReqNavSectionTitle" style="padding: 1.5rem 1.5rem 0.5rem; font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.6); font-weight: 700; letter-spacing: 0.05em; display: none;">🩸 Blood Requests</div>
+      <a href="#" class="nav-item reg-filter-btn" data-filter="blood_requests" id="nav-blood-requests" style="display: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+        <span>Blood Requests</span>
+      </a>
+      <div class="sidebar-footer" style="margin-top: auto; padding: 1rem 0.85rem 0.5rem;">
+        <a href="#" class="nav-item sidebar-logout-btn" id="sidebarLogoutBtn" style="color: #F87171 !important; border: 1px dashed rgba(239, 68, 68, 0.4); border-radius: 8px; justify-content: flex-start; gap: 8px; padding: 0.6rem 0.85rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          <span>Logout</span>
+        </a>
+      </div>
     </nav>
   </aside>
 
@@ -1384,15 +1633,27 @@
             <line x1="3" y1="18" x2="21" y2="18"/>
           </svg>
         </button>
-        <h1>Admin Dashboard</h1>
-      </div>
-      <div class="user-profile">
-        <div class="user-info">
-          <div class="user-name" id="userName">Admin</div>
-          <div class="user-role" id="userRole"></div>
+        <div class="header-title-wrap">
+          <h1 id="headerDashboardTitle" style="margin: 0;">Admin Dashboard</h1>
+          <span id="headerBloodBadge" class="blood-mode-header-badge" style="display: none;">
+            <span class="blood-mode-dot"></span>
+            Blood Donation Mode
+          </span>
         </div>
-        <div class="avatar" id="userAvatar">A</div>
-        <button type="button" class="logout-btn" id="logoutBtn">Logout</button>
+      </div>
+      <div class="header-right">
+        <button type="button" id="btnToggleBloodMode" class="btn-blood-mode-switch" title="Toggle between Normal Admin and Blood Donation Mode">
+          <span class="blood-switch-icon" id="bloodSwitchIcon">🩸</span>
+          <span class="blood-switch-text" id="bloodSwitchText">Blood Donation</span>
+        </button>
+        <div class="user-profile">
+          <div class="user-info">
+            <div class="user-name" id="userName">Admin</div>
+            <div class="user-role" id="userRole"></div>
+          </div>
+          <div class="avatar" id="userAvatar">A</div>
+          <button type="button" class="logout-btn" id="logoutBtn" title="Logout">Logout</button>
+        </div>
       </div>
     </header>
 
@@ -1400,7 +1661,7 @@
       <div class="welcome-banner">
         <div class="welcome-content">
           <h2 id="dynamicGreeting">Welcome back, Admin!</h2>
-          <p>Here's what's happening with Udyam Foundation today.</p>
+          <p id="dynamicBannerSubtitle">Here's what's happening with Udyam Foundation today.</p>
           <div class="quick-actions">
             <button class="btn-glass" id="openExportReportBtn">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -1416,7 +1677,8 @@
 
       <div class="dashboard-layout">
         <div class="main-column" style="display:flex; flex-direction:column; gap:2rem;">
-          <div class="stats-grid">
+          <!-- Standard Normal Mode Stats -->
+          <div class="stats-grid" id="normalStatsGrid">
             <div class="stat-card">
               <div class="stat-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
@@ -1454,6 +1716,59 @@
             </div>
           </div>
 
+          <!-- Blood Mode Stats (Active in Blood Donation Mode) -->
+          <div class="stats-grid" id="bloodStatsGrid" style="display: none;">
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(220, 38, 38, 0.1); color: #DC2626;">
+                <span style="font-size: 1.5rem;">🩸</span>
+              </div>
+              <div class="stat-info">
+                <h3>Total Blood Donors</h3>
+                <p id="totalBloodDonorsCount">0</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #D97706;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="stat-info">
+                <h3>Pending Review</h3>
+                <p id="pendingBloodDonorsCount">0</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #059669;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="stat-info">
+                <h3>Approved Donors</h3>
+                <p id="approvedBloodDonorsCount">0</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: #2563EB;">
+                <span style="font-size: 1.4rem;">❤️</span>
+              </div>
+              <div class="stat-info">
+                <h3>Active Donors (>0x)</h3>
+                <p id="activeBloodDonorsCount">0</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(239, 68, 68, 0.15); color: #DC2626;">
+                <span style="font-size: 1.4rem;">🆘</span>
+              </div>
+              <div class="stat-info">
+                <h3>Blood Requests</h3>
+                <p id="totalBloodRequestsCount">0</p>
+              </div>
+            </div>
+          </div>
+
           <section class="data-section">
             <div class="data-section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
               <h2>Donation Records</h2>
@@ -1462,11 +1777,11 @@
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                   <span>Scroll right &rarr;</span>
                 </div>
-                <button class="refresh-btn" id="refreshBtn">
+                <button class="refresh-btn" id="refreshBtn" title="Refresh donation records">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  Refresh Data
+                  <span class="btn-text">Refresh Data</span>
                 </button>
               </div>
             </div>
@@ -1644,14 +1959,12 @@
       <div class="data-section-header" style="display: flex; flex-direction: column; align-items: stretch; gap: 0.75rem; margin-bottom: 0.75rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 0.75rem;">
           <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <h2 style="margin: 0; font-size: 1.25rem;">Registration Requests</h2>
+            <h2 id="regSectionMainHeading" style="margin: 0; font-size: 1.25rem;">Registration Requests</h2>
             <span id="regCountBadge" class="excel-count-pill">0 Applicants</span>
           </div>
           <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
             <select id="regTypeFilterSelect" style="padding: 0.45rem 0.85rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-weight: 500; font-size: 0.82rem; outline: none; cursor: pointer;">
               <option value="all">All Application Types</option>
-              <option value="blood_donor">Blood Donors</option>
-              <option value="blood_request">Blood Requests</option>
               <option value="member">Members</option>
               <option value="volunteer">Volunteers</option>
               <option value="employee">Employees</option>

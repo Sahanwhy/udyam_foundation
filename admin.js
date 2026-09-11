@@ -41,10 +41,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  logoutBtn.addEventListener('click', () => {
+  const handleLogout = (e) => {
+    if (e) e.preventDefault();
     clearAuthSession();
     window.location.href = 'admin-login.html';
-  });
+  };
+  if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+  const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
+  if (sidebarLogoutBtn) sidebarLogoutBtn.addEventListener('click', handleLogout);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -189,7 +193,200 @@ document.addEventListener('DOMContentLoaded', () => {
   let allAdminUsers = [];
   let currentRegFilter = 'pending';
   let currentSort = 'latest';
+  let currentTypeFilter = 'all'; // moved up so the early IIFE can reference it safely
   let currentForwardTarget = null; // { type, id }
+
+  // ═══════════════════════════════════════════════════════════════
+  // BLOOD DONATION MODE STATE
+  // ═══════════════════════════════════════════════════════════════
+  let currentAppMode = localStorage.getItem('udyam_admin_mode') || 'normal'; // 'normal' | 'blood'
+
+  const setAppMode = (mode) => {
+    currentAppMode = mode;
+    localStorage.setItem('udyam_admin_mode', mode);
+
+    const isBlood = mode === 'blood';
+
+    // ── Body class ──
+    document.body.classList.toggle('blood-mode-active', isBlood);
+
+    // ── Header toggle button (top bar) ──
+    const headerBtn = document.getElementById('btnToggleBloodMode');
+    const headerIcon = document.getElementById('bloodSwitchIcon');
+    const headerText = document.getElementById('bloodSwitchText');
+    const headerBadge = document.getElementById('headerBloodBadge');
+    if (headerBtn) {
+      if (isBlood) {
+        headerBtn.classList.add('normal-mode-active');
+        if (headerIcon) headerIcon.textContent = '🌱';
+        if (headerText) headerText.textContent = 'Normal Mode';
+      } else {
+        headerBtn.classList.remove('normal-mode-active');
+        if (headerIcon) headerIcon.textContent = '🩸';
+        if (headerText) headerText.textContent = 'Blood Donation';
+      }
+    }
+    if (headerBadge) headerBadge.style.display = isBlood ? 'inline-flex' : 'none';
+
+    // ── Sidebar mode button ──
+    const sidebarModeIcon = document.getElementById('navBloodModeIcon');
+    const sidebarModeText = document.getElementById('navBloodModeText');
+    const regNavSectionTitle = document.getElementById('regNavSectionTitle');
+    const bloodReqSectionTitle = document.getElementById('bloodReqNavSectionTitle');
+    const navBloodRequests = document.getElementById('nav-blood-requests');
+    if (isBlood) {
+      if (sidebarModeIcon) sidebarModeIcon.textContent = '🌱';
+      if (sidebarModeText) sidebarModeText.textContent = 'Normal Mode';
+      if (regNavSectionTitle) regNavSectionTitle.textContent = '🩸 Blood Donors';
+      if (bloodReqSectionTitle) bloodReqSectionTitle.style.display = 'block';
+      if (navBloodRequests) navBloodRequests.style.display = 'flex';
+    } else {
+      if (sidebarModeIcon) sidebarModeIcon.textContent = '🩸';
+      if (sidebarModeText) sidebarModeText.textContent = 'Blood Donation';
+      if (regNavSectionTitle) regNavSectionTitle.textContent = 'Registrations';
+      if (bloodReqSectionTitle) bloodReqSectionTitle.style.display = 'none';
+      if (navBloodRequests) navBloodRequests.style.display = 'none';
+      if (currentRegFilter === 'blood_requests') {
+        currentRegFilter = user && user.role === 'President' ? 'verified' : (user && user.role === 'Secretary' ? 'pending' : 'forwarded');
+      }
+    }
+
+    // ── Type filter select: show only relevant options ──
+    const typeSelect = document.getElementById('regTypeFilterSelect');
+    if (typeSelect) {
+      if (isBlood) {
+        typeSelect.innerHTML = currentRegFilter === 'blood_requests' 
+          ? '<option value="blood_request">Blood Requests</option>'
+          : '<option value="blood_donor">Blood Donors</option>';
+        typeSelect.value = currentRegFilter === 'blood_requests' ? 'blood_request' : 'blood_donor';
+        currentTypeFilter = typeSelect.value;
+      } else {
+        typeSelect.innerHTML = `
+          <option value="all">All Application Types</option>
+          <option value="member">Members</option>
+          <option value="volunteer">Volunteers</option>
+          <option value="employee">Employees</option>
+        `;
+        typeSelect.value = 'all';
+        currentTypeFilter = 'all';
+      }
+    }
+
+    // ── Dashboard stats grids ──
+    const normalGrid = document.getElementById('normalStatsGrid');
+    const bloodGrid = document.getElementById('bloodStatsGrid');
+    if (normalGrid) normalGrid.style.display = isBlood ? 'none' : '';
+    if (bloodGrid) bloodGrid.style.display = isBlood ? '' : 'none';
+
+    // ── Update dashboard banner subtitle ──
+    const bannerSubtitle = document.getElementById('dynamicBannerSubtitle');
+    if (bannerSubtitle) {
+      bannerSubtitle.textContent = isBlood
+        ? '🩸 Managing Blood Donor & Emergency Request Records — review, coordinate, and fulfill.'
+        : "Here's what's happening with Udyam Foundation today.";
+    }
+
+    // ── Update blood stats when switching to blood mode ──
+    if (isBlood) {
+      updateBloodStats();
+    }
+
+    // ── Refresh registrations + badges ──
+    renderRegistrations();
+    updateSidebarBadges();
+  };
+
+  const updateBloodStats = () => {
+    const donors = allRegistrations.filter(r => r.type === 'blood_donor');
+    const requests = allRegistrations.filter(r => r.type === 'blood_request');
+    const totalEl = document.getElementById('totalBloodDonorsCount');
+    const pendingEl = document.getElementById('pendingBloodDonorsCount');
+    const approvedEl = document.getElementById('approvedBloodDonorsCount');
+    const activeEl = document.getElementById('activeBloodDonorsCount');
+    const totalReqEl = document.getElementById('totalBloodRequestsCount');
+    if (totalEl) totalEl.textContent = donors.length;
+    if (pendingEl) pendingEl.textContent = donors.filter(d => (d.status || 'pending') === 'pending').length;
+    if (approvedEl) approvedEl.textContent = donors.filter(d => d.status === 'accepted').length;
+    if (activeEl) activeEl.textContent = donors.filter(d => (d.totalTimesDonated || 0) > 0).length;
+    if (totalReqEl) totalReqEl.textContent = requests.length;
+  };
+
+  // Wire up both mode toggle buttons (header + sidebar)
+  const wireBloodModeBtn = (btnId) => {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const newMode = currentAppMode === 'blood' ? 'normal' : 'blood';
+      setAppMode(newMode);
+      // Switch back to Dashboard view when toggling modes
+      navDashboard.classList.add('active');
+      regFilterBtns.forEach(b => b.classList.remove('active'));
+      if (dashboardSection) dashboardSection.style.display = 'block';
+      if (registrationsSection) registrationsSection.style.display = 'none';
+    });
+  };
+  wireBloodModeBtn('btnToggleBloodMode');
+  wireBloodModeBtn('navBloodModeBtn');
+
+  // Apply persisted mode to UI immediately (before data loads) to avoid flash
+  (() => {
+    const isBlood = currentAppMode === 'blood';
+    document.body.classList.toggle('blood-mode-active', isBlood);
+    const headerBtn = document.getElementById('btnToggleBloodMode');
+    const headerIcon = document.getElementById('bloodSwitchIcon');
+    const headerText = document.getElementById('bloodSwitchText');
+    const headerBadge = document.getElementById('headerBloodBadge');
+    if (headerBtn) {
+      if (isBlood) {
+        headerBtn.classList.add('normal-mode-active');
+        if (headerIcon) headerIcon.textContent = '🌱';
+        if (headerText) headerText.textContent = 'Normal Mode';
+      } else {
+        headerBtn.classList.remove('normal-mode-active');
+        if (headerIcon) headerIcon.textContent = '🩸';
+        if (headerText) headerText.textContent = 'Blood Donation';
+      }
+    }
+    if (headerBadge) headerBadge.style.display = isBlood ? 'inline-flex' : 'none';
+
+    const sidebarModeIcon = document.getElementById('navBloodModeIcon');
+    const sidebarModeText = document.getElementById('navBloodModeText');
+    const regNavSectionTitle = document.getElementById('regNavSectionTitle');
+    const bloodReqSectionTitle = document.getElementById('bloodReqNavSectionTitle');
+    const navBloodRequests = document.getElementById('nav-blood-requests');
+    if (isBlood) {
+      if (sidebarModeIcon) sidebarModeIcon.textContent = '🌱';
+      if (sidebarModeText) sidebarModeText.textContent = 'Normal Mode';
+      if (regNavSectionTitle) regNavSectionTitle.textContent = '🩸 Blood Donors';
+      if (bloodReqSectionTitle) bloodReqSectionTitle.style.display = 'block';
+      if (navBloodRequests) navBloodRequests.style.display = 'flex';
+    } else {
+      if (sidebarModeIcon) sidebarModeIcon.textContent = '🩸';
+      if (sidebarModeText) sidebarModeText.textContent = 'Blood Donation';
+      if (regNavSectionTitle) regNavSectionTitle.textContent = 'Registrations';
+      if (bloodReqSectionTitle) bloodReqSectionTitle.style.display = 'none';
+      if (navBloodRequests) navBloodRequests.style.display = 'none';
+    }
+
+    const typeSelect = document.getElementById('regTypeFilterSelect');
+    if (typeSelect && isBlood) {
+      typeSelect.innerHTML = '<option value="blood_donor">Blood Donors</option>';
+      currentTypeFilter = 'blood_donor';
+    }
+
+    const normalGrid = document.getElementById('normalStatsGrid');
+    const bloodGrid = document.getElementById('bloodStatsGrid');
+    if (normalGrid) normalGrid.style.display = isBlood ? 'none' : '';
+    if (bloodGrid) bloodGrid.style.display = isBlood ? '' : 'none';
+
+    const bannerSubtitle = document.getElementById('dynamicBannerSubtitle');
+    if (bannerSubtitle) {
+      bannerSubtitle.textContent = isBlood
+        ? '🩸 Managing Blood Donor & Emergency Request Records — review, coordinate, and fulfill.'
+        : "Here's what's happening with Udyam Foundation today.";
+    }
+  })();
 
   const fetchAdminUsers = async () => {
     try {
@@ -232,7 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  let currentTypeFilter = 'all';
+  // currentTypeFilter is declared at the top of the registrations block (see above)
   const regTypeFilterSelect = document.getElementById('regTypeFilterSelect');
   if (regTypeFilterSelect) {
     regTypeFilterSelect.addEventListener('change', (e) => {
@@ -320,11 +517,39 @@ document.addEventListener('DOMContentLoaded', () => {
       // Update section header
       const headerTitle = registrationsSection.querySelector('h2');
       if (headerTitle) {
-        if (currentRegFilter === 'forwarded' && user && (user.role === 'Secretary' || user.role === 'President')) {
-          headerTitle.textContent = 'Track Forwarded Applications';
+        if (currentRegFilter === 'blood_requests') {
+          headerTitle.textContent = '🩸 Blood Donation Requests';
         } else {
-          const filterName = currentRegFilter.replace('_', ' ');
-          headerTitle.textContent = filterName.charAt(0).toUpperCase() + filterName.slice(1) + ' Registrations';
+          const suffix = currentAppMode === 'blood' ? 'Blood Donors' : 'Registrations';
+          if (currentRegFilter === 'forwarded' && user && (user.role === 'Secretary' || user.role === 'President')) {
+            headerTitle.textContent = currentAppMode === 'blood' ? 'Track Forwarded Blood Donors' : 'Track Forwarded Applications';
+          } else {
+            const filterName = currentRegFilter.replace('_', ' ');
+            headerTitle.textContent = filterName.charAt(0).toUpperCase() + filterName.slice(1) + ' ' + suffix;
+          }
+        }
+      }
+
+      // Sync type select dropdown
+      const typeSelect = document.getElementById('regTypeFilterSelect');
+      if (typeSelect) {
+        if (currentRegFilter === 'blood_requests') {
+          typeSelect.innerHTML = '<option value="blood_request">Blood Requests</option>';
+          typeSelect.value = 'blood_request';
+          currentTypeFilter = 'blood_request';
+        } else if (currentAppMode === 'blood') {
+          typeSelect.innerHTML = '<option value="blood_donor">Blood Donors</option>';
+          typeSelect.value = 'blood_donor';
+          currentTypeFilter = 'blood_donor';
+        } else {
+          typeSelect.innerHTML = `
+            <option value="all">All Application Types</option>
+            <option value="member">Members</option>
+            <option value="volunteer">Volunteers</option>
+            <option value="employee">Employees</option>
+          `;
+          typeSelect.value = 'all';
+          currentTypeFilter = 'all';
         }
       }
       
@@ -334,6 +559,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const isRegistrationVisibleToUser = (r, filter) => {
+    // ── Mode-based type gate ──
+    if (currentAppMode === 'blood') {
+      if (filter === 'blood_requests') {
+        return r.type === 'blood_request';
+      }
+      if (r.type !== 'blood_donor') return false;
+    } else {
+      if (r.type === 'blood_donor' || r.type === 'blood_request') return false;
+    }
+
     const status = r.status || 'pending';
     const isSecOrPres = user && (user.role === 'Secretary' || user.role === 'President');
 
@@ -385,12 +620,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Remove existing badges
     document.querySelectorAll('.sidebar-badge').forEach(el => el.remove());
 
+    // Scope badge counts to current mode's record types
+    const scopedRegs = allRegistrations.filter(r =>
+      currentAppMode === 'blood' ? r.type === 'blood_donor' : (r.type !== 'blood_donor' && r.type !== 'blood_request')
+    );
+
     const isSecretaryOrPresident = user && (user.role === 'Secretary' || user.role === 'President');
     
     if (isSecretaryOrPresident) {
       // Pending badge — only for Secretary (President has no Pending section)
       if (user && user.role === 'Secretary') {
-        const pendingCount = allRegistrations.filter(r => (r.status || 'pending') === 'pending').length;
+        const pendingCount = scopedRegs.filter(r => (r.status || 'pending') === 'pending').length;
         if (pendingCount > 0) {
           const pendingNav = document.getElementById('nav-pending');
           if (pendingNav) {
@@ -404,7 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Forwarded badge for Secretary & President to track items currently in review chain
-      const forwardedCount = allRegistrations.filter(r => isRegistrationVisibleToUser(r, 'forwarded')).length;
+      const forwardedCount = scopedRegs.filter(r => isRegistrationVisibleToUser(r, 'forwarded')).length;
       if (forwardedCount > 0) {
         const forwardedNav = document.getElementById('nav-forwarded');
         if (forwardedNav) {
@@ -417,7 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Verified badge — applications that completed the review chain, awaiting Secretary's final decision
-      const verifiedCount = allRegistrations.filter(r => isRegistrationVisibleToUser(r, 'verified')).length;
+      const verifiedCount = scopedRegs.filter(r => isRegistrationVisibleToUser(r, 'verified')).length;
       if (verifiedCount > 0) {
         const verifiedNav = document.getElementById('nav-verified');
         if (verifiedNav) {
@@ -429,7 +669,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     } else {
-      const forwardedCount = allRegistrations.filter(r => {
+      const forwardedCount = scopedRegs.filter(r => {
         if (r.status !== 'forwarded') return false;
         if (r.assignedToAdminId) return r.assignedToAdminId === user._id;
         if (r.assignedToAdminEmail) return r.assignedToAdminEmail === user.email;
@@ -446,6 +686,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     }
+
+    // Blood Requests badge (shown in Blood Donation Mode for all admins)
+    if (currentAppMode === 'blood') {
+      const bloodReqCount = allRegistrations.filter(r => r.type === 'blood_request').length;
+      if (bloodReqCount > 0) {
+        const bloodReqNav = document.getElementById('nav-blood-requests');
+        if (bloodReqNav) {
+          const badge = document.createElement('span');
+          badge.className = 'sidebar-badge';
+          badge.style.cssText = 'background: #DC2626; color: white; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-left: auto; display: flex; align-items: center; justify-content: center; height: 18px; min-width: 18px;';
+          badge.textContent = bloodReqCount;
+          bloodReqNav.appendChild(badge);
+        }
+      }
+    }
   };
 
   const fetchRegistrations = async () => {
@@ -454,8 +709,8 @@ document.addEventListener('DOMContentLoaded', () => {
       await fetchAdminUsers();
       const data = await apiRequest('/api/admin/registrations');
       allRegistrations = data;
-      renderRegistrations();
-      updateSidebarBadges();
+      // Apply persisted mode on initial load
+      setAppMode(currentAppMode);
     } catch (error) {
       console.error(error);
       registrationsContainer.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--danger);">Failed to load registrations.</div>';
@@ -772,7 +1027,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const blobUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = blobUrl;
-    link.download = `udyam_applicants_${currentRegFilter}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = currentRegFilter === 'blood_requests'
+      ? `udyam_blood_requests_${new Date().toISOString().slice(0, 10)}.csv`
+      : `udyam_applicants_${currentRegFilter}_${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -815,20 +1072,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const countBadge = document.getElementById('regCountBadge');
     if (countBadge) {
-      countBadge.textContent = `${filtered.length} applicant${filtered.length !== 1 ? 's' : ''}`;
+      countBadge.textContent = currentRegFilter === 'blood_requests'
+        ? `${filtered.length} blood request${filtered.length !== 1 ? 's' : ''}`
+        : `${filtered.length} applicant${filtered.length !== 1 ? 's' : ''}`;
     }
 
     if (filtered.length === 0) {
       const isSecOrPres = user && (user.role === 'Secretary' || user.role === 'President');
-      const emptyText = query ? `No applicants matching "${query}".` : (currentRegFilter === 'forwarded' && isSecOrPres) ? 'No applications are currently being tracked or forwarded.' : `No ${currentRegFilter} registrations found.`;
+      const emptyText = query
+        ? `No applicants matching "${query}".`
+        : (currentRegFilter === 'blood_requests')
+          ? 'No blood donation requests received yet.'
+          : (currentRegFilter === 'forwarded' && isSecOrPres)
+            ? 'No applications are currently being tracked or forwarded.'
+            : `No ${currentRegFilter.replace('_', ' ')} registrations found.`;
       registrationsContainer.innerHTML = `<div style="padding: 3rem; text-align: center; color: var(--text-muted); background: white; border-radius: 8px; border: 1px solid var(--border);">${emptyText}</div>`;
       return;
     }
 
+    // ── Normal-mode grouped rendering (Employee → Volunteer → Member) ──
+    const shouldGroup = currentAppMode === 'normal' && (!currentTypeFilter || currentTypeFilter === 'all');
+
     const rowsArr = [];
     const mobileCardsArr = [];
 
-    filtered.forEach((reg, index) => {
+    // Build the per-record HTML and optionally inject group headers
+    const buildRecordHtml = (reg, index, showGroupHeader) => {
       const isVol = reg.type === 'volunteer';
       const isEmp = reg.type === 'employee';
       const isMem = reg.type === 'member';
@@ -948,7 +1217,21 @@ document.addEventListener('DOMContentLoaded', () => {
         <button type="button" class="excel-act-btn" style="background:#F1F5F9; color:#334155; border:1px solid #CBD5E1;" onclick="event.stopPropagation(); window.toggleRegDetail('${reg._id}')" title="View Full Details">👁 Details</button>
       `;
 
-      if ((user.role === 'Secretary' && ['pending', 'verified', 'issue_reported'].includes(currentRegFilter)) || (user.role === 'President' && ['verified', 'issue_reported'].includes(currentRegFilter))) {
+      if (currentRegFilter === 'blood_requests') {
+        if (user && (user.role === 'Secretary' || user.role === 'President')) {
+          rowActionsHtml += `
+            <button type="button" class="excel-act-btn" style="background:var(--success); color:white;" onclick="event.stopPropagation(); window.updateRegStatus('${reg.type}', '${reg._id}', 'accepted')" title="Fulfil / Accept Request">✓ Fulfil</button>
+            <button type="button" class="excel-act-btn" style="background:white; color:var(--danger); border:1px solid var(--danger);" onclick="event.stopPropagation(); window.updateRegStatus('${reg.type}', '${reg._id}', 'rejected')" title="Reject">✕</button>
+            <button type="button" class="excel-act-btn" style="background:#3B82F6; color:white;" onclick="event.stopPropagation(); window.openForwardModal('${reg.type}', '${reg._id}')" title="Forward Request">➔</button>
+            <button type="button" class="excel-act-btn" style="background:white; color:#DC2626; border:1px solid #FCA5A5;" onclick="event.stopPropagation(); window.deleteRegistration('${reg.type}', '${reg._id}', '${safeName}')" title="Delete">🗑</button>
+          `;
+        } else if (user && reg.assignedToRole && user.role === reg.assignedToRole) {
+          rowActionsHtml += `
+            <button type="button" class="excel-act-btn" style="background:white; color:#EF4444; border:1px solid #EF4444;" onclick="event.stopPropagation(); window.openReportIssueModal('${reg.type}', '${reg._id}')" title="Report Issue">⚠ Issue</button>
+            <button type="button" class="excel-act-btn" style="background:var(--success); color:white;" onclick="event.stopPropagation(); window.openVerifyForwardModal('${reg.type}', '${reg._id}')" title="Verify & Forward">✓ Verify</button>
+          `;
+        }
+      } else if ((user.role === 'Secretary' && ['pending', 'verified', 'issue_reported'].includes(currentRegFilter)) || (user.role === 'President' && ['verified', 'issue_reported'].includes(currentRegFilter))) {
         rowActionsHtml += `
           <button type="button" class="excel-act-btn" style="background:var(--success); color:white;" onclick="event.stopPropagation(); window.updateRegStatus('${reg.type}', '${reg._id}', 'accepted')" title="Final Accept">✓</button>
           <button type="button" class="excel-act-btn" style="background:white; color:var(--danger); border:1px solid var(--danger);" onclick="event.stopPropagation(); window.updateRegStatus('${reg.type}', '${reg._id}', 'rejected')" title="Final Reject">✕</button>
@@ -974,10 +1257,10 @@ document.addEventListener('DOMContentLoaded', () => {
       // ==========================================
       // BUILD THE DETAIL DRAWER
       // ==========================================
-      const formatDetail = (label, val) => `
-        <div style="background: white; padding: 10px 14px; border-radius: 6px; border: 1px solid #E2E8F0; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
-          <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #64748B; display: block; margin-bottom: 2px;">${label}</span>
-          <div style="font-size: 0.85rem; font-weight: 600; color: #1E293B; word-break: break-word;">${val || 'N/A'}</div>
+      const formatDetail = (label, val, spanClass = '') => `
+        <div class="${spanClass}" style="background: white; padding: 10px 14px; border-radius: 6px; border: 1px solid #E2E8F0; box-shadow: 0 1px 2px rgba(0,0,0,0.02); text-align: left; white-space: normal;">
+          <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #64748B; display: block; margin-bottom: 3px; text-align: left;">${label}</span>
+          <div style="font-size: 0.85rem; font-weight: 600; color: #1E293B; word-break: break-word; line-height: 1.45; white-space: normal; text-align: left;">${val || 'N/A'}</div>
         </div>
       `;
 
@@ -996,7 +1279,9 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (isMem) {
         detailFieldsHtml += formatDetail('Blood Group', reg.bloodGroup || 'N/A');
         detailFieldsHtml += formatDetail('WhatsApp', reg.whatsapp ? `<a href="https://wa.me/91${reg.whatsapp}" target="_blank" style="color:#16A34A; text-decoration:none;">${reg.whatsapp}</a>` : 'N/A');
-        detailFieldsHtml += formatDetail('Address', `${reg.address1 || ''} ${reg.address2 || ''}, ${reg.district || ''} - ${reg.pin || ''}`);
+        const memParts = [reg.address1, reg.address2, reg.district].filter(Boolean);
+        const memAddr = memParts.length > 0 ? memParts.join(', ') + (reg.pin ? ` - ${reg.pin}` : '') : 'N/A';
+        detailFieldsHtml += formatDetail('Address', memAddr, 'excel-detail-span-2');
         detailFieldsHtml += formatDetail('Validity & Fees', `${reg.validity || 'N/A'} (Paid: ₹${reg.amount || 0})`);
         detailFieldsHtml += formatDetail('Payment ID', reg.paymentId || 'N/A');
       } else if (isBdn) {
@@ -1005,8 +1290,25 @@ document.addEventListener('DOMContentLoaded', () => {
         detailFieldsHtml += formatDetail('Date of Birth', reg.dob || 'N/A');
         detailFieldsHtml += formatDetail('Aadhar Number', reg.aadharNo ? `${reg.aadharNo.slice(0,4)} ${reg.aadharNo.slice(4,8)} ${reg.aadharNo.slice(8)}` : 'N/A');
         detailFieldsHtml += formatDetail('WhatsApp', reg.whatsappNo || reg.whatsapp ? `<a href="https://wa.me/91${reg.whatsappNo || reg.whatsapp}" target="_blank" style="color:#16A34A; text-decoration:none;">${reg.whatsappNo || reg.whatsapp}</a>` : 'N/A');
-        detailFieldsHtml += formatDetail('Full Address', `${reg.address || ''}, ${reg.villageTownWard || ''}, PO: ${reg.postOffice || ''}, PS: ${reg.policeStation || ''}, ${reg.district || ''} - ${reg.pinCode || reg.pin || ''}`);
-        detailFieldsHtml += formatDetail('Donation History', `Donated ${reg.totalTimesDonated || 0} times · Last: ${reg.lastDonationDate || 'None'}`);
+        
+        const bdnParts = [];
+        if (reg.address) bdnParts.push(reg.address.trim());
+        if (reg.villageTownWard) bdnParts.push(reg.villageTownWard.trim());
+        if (reg.postOffice) bdnParts.push(`PO: ${reg.postOffice.trim()}`);
+        if (reg.policeStation) bdnParts.push(`PS: ${reg.policeStation.trim()}`);
+        if (reg.district) bdnParts.push(reg.district.trim());
+        const bdnPin = reg.pinCode || reg.pin;
+        const bdnFullAddr = bdnParts.length > 0
+          ? bdnParts.join(', ') + (bdnPin ? ` - ${bdnPin.trim()}` : '')
+          : (reg.address || 'N/A');
+
+        detailFieldsHtml += formatDetail('Full Address', bdnFullAddr, 'excel-detail-span-2');
+
+        const totalBdnDonated = Number(reg.totalTimesDonated) || 0;
+        const bdnHistoryStr = totalBdnDonated > 0
+          ? `<span style="color:#059669; font-weight:700;">Donated ${totalBdnDonated} time${totalBdnDonated > 1 ? 's' : ''}</span> · Last: <strong>${reg.lastDonationDate || 'None'}</strong>`
+          : `<span style="color:#64748B;">First-time donor (0 previous donations)</span>`;
+        detailFieldsHtml += formatDetail('Donation History', bdnHistoryStr);
         detailFieldsHtml += formatDetail('Aadhar Card', reg.aadharCard ? `<a href="${formatPdfUrl(reg.aadharCard)}" target="_blank" style="${docLinkStyle}">View Aadhar</a>` : '<span style="color:#94A3B8;">None</span>');
         detailFieldsHtml += formatDetail('Signature', reg.signature ? `<a href="${formatPdfUrl(reg.signature)}" target="_blank" style="${docLinkStyle}">View Signature</a>` : '<span style="color:#94A3B8;">None</span>');
       } else if (isReq) {
@@ -1019,7 +1321,19 @@ document.addEventListener('DOMContentLoaded', () => {
         detailFieldsHtml += formatDetail('WhatsApp', `<a href="https://wa.me/91${reg.whatsappNo}" target="_blank" style="${docLinkStyle}">${reg.whatsappNo || 'N/A'}</a>`);
         detailFieldsHtml += formatDetail('Hospital Admitted', reg.admittedHospital || 'N/A');
         detailFieldsHtml += formatDetail('Blood Needed At', reg.bloodHospitalDetails || 'N/A');
-        detailFieldsHtml += formatDetail('Patient Address', `${reg.address || ''}, ${reg.villageTownWard || ''}, PO: ${reg.postOffice || ''}, PS: ${reg.policeStation || ''}, ${reg.district || ''} - ${reg.pinCode || ''}`);
+        
+        const reqParts = [];
+        if (reg.address) reqParts.push(reg.address.trim());
+        if (reg.villageTownWard) reqParts.push(reg.villageTownWard.trim());
+        if (reg.postOffice) reqParts.push(`PO: ${reg.postOffice.trim()}`);
+        if (reg.policeStation) reqParts.push(`PS: ${reg.policeStation.trim()}`);
+        if (reg.district) reqParts.push(reg.district.trim());
+        const reqPin = reg.pinCode || reg.pin;
+        const reqFullAddr = reqParts.length > 0
+          ? reqParts.join(', ') + (reqPin ? ` - ${reqPin.trim()}` : '')
+          : (reg.address || 'N/A');
+
+        detailFieldsHtml += formatDetail('Patient Address', reqFullAddr, 'excel-detail-span-2');
         detailFieldsHtml += formatDetail('Patient Photo', reg.patientPhoto ? `<a href="${formatPdfUrl(reg.patientPhoto)}" target="_blank" style="${docLinkStyle}">View Patient Photo</a>` : '<span style="color:#94A3B8;">None</span>');
       }
 
@@ -1161,7 +1475,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Full action buttons inside the expanded drawer
       let detailActionButtonsHtml = '';
-      if ((user.role === 'Secretary' && ['pending', 'verified', 'issue_reported'].includes(currentRegFilter)) || (user.role === 'President' && ['verified', 'issue_reported'].includes(currentRegFilter))) {
+      if (currentRegFilter === 'blood_requests') {
+        if (user && (user.role === 'Secretary' || user.role === 'President')) {
+          detailActionButtonsHtml = `
+            <div style="display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: flex-end; width: 100%;">
+              <button onclick="window.updateRegStatus('${reg.type}', '${reg._id}', 'accepted')" style="padding: 0.55rem 1.25rem; background: var(--success); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">✓ Mark Fulfilled / Accepted</button>
+              <button onclick="window.updateRegStatus('${reg.type}', '${reg._id}', 'rejected')" style="padding: 0.55rem 1.25rem; background: white; color: var(--danger); border: 1px solid var(--danger); border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">✕ Reject Request</button>
+              <button onclick="window.openForwardModal('${reg.type}', '${reg._id}')" style="padding: 0.55rem 1.25rem; background: #3B82F6; color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">➔ Forward Request</button>
+              <button onclick="window.deleteRegistration('${reg.type}', '${reg._id}', '${safeName}')" style="padding: 0.55rem 1.25rem; background: white; color: #DC2626; border: 1.5px solid #DC2626; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">🗑 Delete</button>
+            </div>
+          `;
+        } else if (user && reg.assignedToRole && user.role === reg.assignedToRole) {
+          detailActionButtonsHtml = `
+            <div style="display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: flex-end; width: 100%;">
+              <button onclick="window.openReportIssueModal('${reg.type}', '${reg._id}')" style="padding: 0.55rem 1.25rem; background: white; color: #EF4444; border: 1px solid #EF4444; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">⚠ Report Issue</button>
+              <button onclick="window.openVerifyForwardModal('${reg.type}', '${reg._id}')" style="padding: 0.55rem 1.25rem; background: var(--success); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">✓ Verify & Forward</button>
+            </div>
+          `;
+        }
+      } else if ((user.role === 'Secretary' && ['pending', 'verified', 'issue_reported'].includes(currentRegFilter)) || (user.role === 'President' && ['verified', 'issue_reported'].includes(currentRegFilter))) {
         detailActionButtonsHtml = `
           <div style="display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: flex-end; width: 100%;">
             <button onclick="window.updateRegStatus('${reg.type}', '${reg._id}', 'accepted')" style="padding: 0.55rem 1.25rem; background: var(--success); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">✓ Final Accept</button>
@@ -1325,7 +1657,57 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
       `);
-    });
+    }; // end buildRecordHtml
+
+    if (shouldGroup) {
+      // ── Grouped: Employee → Volunteer → Member ──
+      const typeOrder = ['employee', 'volunteer', 'member'];
+      const typeMeta = {
+        employee: { label: 'Employees', emoji: '👔', color: '#1D4ED8', bg: '#EFF6FF', border: '#BFDBFE' },
+        volunteer: { label: 'Volunteers', emoji: '🤝', color: '#059669', bg: '#ECFDF5', border: '#6EE7B7' },
+        member:   { label: 'Members',    emoji: '🏅', color: '#9333EA', bg: '#F5F3FF', border: '#C4B5FD' },
+      };
+
+      let globalIndex = 0;
+      typeOrder.forEach(typeName => {
+        const group = filtered.filter(r => r.type === typeName);
+        if (group.length === 0) return;
+
+        const meta = typeMeta[typeName];
+
+        // Desktop: group separator row
+        rowsArr.push(`
+          <tr style="background: ${meta.bg}; border-top: 2px solid ${meta.border}; border-bottom: 1px solid ${meta.border};">
+            <td colspan="9" style="padding: 0.55rem 1rem; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: ${meta.color}; border: none;">
+              <span style="display: inline-flex; align-items: center; gap: 6px;">
+                <span style="font-size: 1rem;">${meta.emoji}</span>
+                ${meta.label}
+                <span style="font-weight: 600; font-size: 0.72rem; padding: 1px 7px; border-radius: 20px; background: ${meta.color}; color: white; margin-left: 4px;">${group.length}</span>
+              </span>
+            </td>
+          </tr>
+        `);
+
+        // Mobile: group heading card
+        mobileCardsArr.push(`
+          <div style="display: flex; align-items: center; gap: 8px; padding: 0.55rem 0.85rem; margin: 0.65rem 0 0.35rem; background: ${meta.bg}; border-radius: 8px; border: 1.5px solid ${meta.border};">
+            <span style="font-size: 1.1rem;">${meta.emoji}</span>
+            <span style="font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: ${meta.color};">${meta.label}</span>
+            <span style="font-weight: 700; font-size: 0.72rem; padding: 1px 8px; border-radius: 20px; background: ${meta.color}; color: white; margin-left: auto;">${group.length}</span>
+          </div>
+        `);
+
+        group.forEach(reg => {
+          buildRecordHtml(reg, globalIndex, false);
+          globalIndex++;
+        });
+      });
+    } else {
+      // ── Flat rendering (specific type filter selected, or Blood Mode) ──
+      filtered.forEach((reg, index) => {
+        buildRecordHtml(reg, index, false);
+      });
+    }
 
     const rowsHtml = rowsArr.join('');
     const mobileCardsHtml = mobileCardsArr.join('');
@@ -1338,12 +1720,12 @@ document.addEventListener('DOMContentLoaded', () => {
               <tr>
                 <th style="width: 50px; text-align: center;">#</th>
                 <th style="width: 50px; text-align: center;">Photo</th>
-                <th>Applicant Name & Type</th>
+                <th>Applicant Name &amp; Type</th>
                 <th>Applied Date</th>
                 <th>Contact Info</th>
                 <th>Key Details</th>
                 <th>Tracking / Status</th>
-                <th>Documents & Files</th>
+                <th>Documents &amp; Files</th>
                 <th style="text-align: center; min-width: 140px;">Actions</th>
               </tr>
             </thead>
