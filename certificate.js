@@ -10,7 +10,7 @@ const ORG = {
   tagline: 'Empowering Youth, Transforming Communities',
   address: 'Kakodonga, Golaghat, Assam, India',
   pan: 'AACAU3169R',
-  reg80G: 'AACAU3169R/80G/2024-25',
+  reg80G: 'AACAU3169RF20241',
   reg12A: 'AACAU3169R/12A/2024-25',
 };
 
