@@ -394,6 +394,8 @@ const uploadGallery = multer({
 
 // Serve gallery images statically at /images
 app.use('/images', express.static(IMAGES_DIR));
+// Serve website frontend files from root directory
+app.use(express.static(path.join(__dirname, '..')));
 
 app.post('/api/register/volunteer', upload.fields([
   { name: 'addressProofs', maxCount: 5 },
@@ -499,6 +501,55 @@ app.post('/api/register/blood-donor', upload.fields([
   } catch (error) {
     console.error('Error registering blood donor:', error);
     res.status(500).json({ error: 'Failed to register blood donor' });
+  }
+});
+
+// ─── Public Approved Blood Donors Directory ──────────────────────────────────
+app.get(['/api/blood-donors', '/api/public/blood-donors'], async (req, res) => {
+  try {
+    if (!BloodDonor) return res.status(503).json({ error: 'Database not ready' });
+
+    const { bloodGroup, district, search } = req.query;
+    const query = { status: 'accepted' };
+
+    if (bloodGroup && bloodGroup.toLowerCase() !== 'all') {
+      query.bloodGroup = bloodGroup.trim();
+    }
+
+    if (district && district.toLowerCase() !== 'all' && district.trim()) {
+      query.district = { $regex: new RegExp(district.trim(), 'i') };
+    }
+
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      query.$or = [
+        { fullName: searchRegex },
+        { guardianName: searchRegex },
+        { district: searchRegex },
+        { villageTownWard: searchRegex },
+        { postOffice: searchRegex },
+        { policeStation: searchRegex },
+        { pinCode: searchRegex },
+        { address: searchRegex },
+        { bloodGroup: searchRegex },
+        { registrationNo: searchRegex }
+      ];
+    }
+
+    // Never return sensitive documents (aadharNo, aadharCard, signature) to the public
+    const donors = await BloodDonor.find(query)
+      .select('fullName guardianName dob bloodGroup photo mobileNo whatsappNo email address villageTownWard postOffice policeStation district pinCode totalTimesDonated lastDonationDate registrationNo date status')
+      .sort({ date: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      count: donors.length,
+      donors
+    });
+  } catch (error) {
+    console.error('Error fetching approved blood donors:', error);
+    res.status(500).json({ error: 'Failed to fetch blood donors' });
   }
 });
 

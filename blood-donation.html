@@ -102,6 +102,462 @@
       font-weight: 700;
       margin-bottom: 1rem;
     }
+
+    /* ═══════════════ APPROVED BLOOD DONORS DIRECTORY ═══════════════ */
+    .approved-donors-section {
+      margin-top: 3.5rem;
+      padding-top: 3rem;
+      border-top: 2px dashed #CBD5E1;
+      position: relative;
+    }
+    .donors-section-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .donors-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #FEF2F2;
+      color: #DC2626;
+      border: 1px solid #FECDD3;
+      padding: 0.4rem 1.1rem;
+      border-radius: 50px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 0.85rem;
+      box-shadow: 0 2px 6px rgba(220,38,38,0.08);
+    }
+    .donors-section-header h2 {
+      font-family: var(--font-display, 'Playfair Display', serif);
+      font-size: 2.2rem;
+      color: var(--green-deep, #1B4332);
+      margin: 0 0 0.6rem 0;
+      line-height: 1.25;
+    }
+    .donors-section-header p {
+      color: #64748B;
+      font-size: 0.98rem;
+      max-width: 680px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    .donors-filter-toolbar {
+      background: white;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 1.25rem;
+      margin-bottom: 1.8rem;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.04);
+    }
+    .donors-filter-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .group-filter-chip {
+      padding: 0.42rem 0.95rem;
+      border-radius: 50px;
+      border: 1px solid #E2E8F0;
+      background: #F8FAFC;
+      color: #475569;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .group-filter-chip:hover {
+      background: #FEF2F2;
+      color: #DC2626;
+      border-color: #FECDD3;
+    }
+    .group-filter-chip.active {
+      background: #DC2626;
+      color: white;
+      border-color: #DC2626;
+      box-shadow: 0 3px 10px rgba(220,38,38,0.3);
+    }
+    .donors-search-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .donors-search-box {
+      flex: 1;
+      min-width: 240px;
+      position: relative;
+    }
+    .donors-search-box input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.6rem;
+      border: 1px solid #CBD5E1;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .donors-search-box input:focus {
+      border-color: #DC2626;
+      box-shadow: 0 0 0 3px rgba(220,38,38,0.12);
+    }
+    .donors-search-box svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94A3B8;
+      pointer-events: none;
+    }
+    .donors-refresh-btn {
+      padding: 0.72rem 1.1rem;
+      background: #F1F5F9;
+      color: #334155;
+      border: 1px solid #CBD5E1;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s ease;
+      white-space: nowrap;
+    }
+    .donors-refresh-btn:hover {
+      background: #E2E8F0;
+    }
+    .donors-status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      font-size: 0.85rem;
+      color: #64748B;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .donors-count-pill {
+      background: #ECFDF5;
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+      padding: 0.3rem 0.85rem;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Donor Card Grid */
+    .approved-donors-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 1.5rem;
+    }
+    .donor-public-card {
+      background: white;
+      border: 1px solid #E2E8F0;
+      border-radius: 18px;
+      padding: 1.5rem;
+      position: relative;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+    .donor-public-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+      border-color: #FECDD3;
+    }
+    .donor-card-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .donor-blood-badge {
+      background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+      color: white;
+      padding: 0.35rem 0.85rem;
+      border-radius: 50px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 2px 8px rgba(220,38,38,0.3);
+    }
+    .donor-verified-badge {
+      background: #ECFDF5;
+      color: #059669;
+      border: 1px solid #A7F3D0;
+      padding: 0.25rem 0.65rem;
+      border-radius: 50px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .donor-avatar-wrap {
+      text-align: center;
+      margin-bottom: 0.85rem;
+      position: relative;
+    }
+    .donor-avatar-img {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid white;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+      background: #F1F5F9;
+      display: inline-block;
+    }
+    .donor-avatar-placeholder {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%);
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: 700;
+      border: 3px solid white;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+      margin: 0 auto;
+    }
+    .donor-card-name {
+      font-size: 1.15rem;
+      color: #1E293B;
+      font-weight: 700;
+      margin: 0 0 3px 0;
+      text-align: center;
+    }
+    .donor-reg-no {
+      text-align: center;
+      font-size: 0.74rem;
+      color: #64748B;
+      font-family: monospace;
+      margin-bottom: 0.85rem;
+      letter-spacing: 0.03em;
+    }
+    .donor-details-list {
+      background: #F8FAFC;
+      border: 1px solid #EDF2F7;
+      border-radius: 10px;
+      padding: 0.85rem;
+      margin-bottom: 1rem;
+      font-size: 0.82rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+    .donor-detail-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      color: #475569;
+      line-height: 1.4;
+    }
+    .donor-detail-item svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+      color: #94A3B8;
+    }
+    .donor-detail-item strong {
+      color: #1E293B;
+    }
+    .donor-card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: auto;
+    }
+    .btn-donor-action {
+      padding: 0.6rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-donor-call {
+      background: #1B4332;
+      color: white;
+    }
+    .btn-donor-call:hover {
+      background: #143D2B;
+      color: white;
+    }
+    .btn-donor-whatsapp {
+      background: #25D366;
+      color: white;
+    }
+    .btn-donor-whatsapp:hover {
+      background: #1EBE5D;
+      color: white;
+    }
+    .btn-donor-full-details {
+      grid-column: 1 / -1;
+      background: #F1F5F9;
+      color: #334155;
+      border: 1px solid #CBD5E1;
+      padding: 0.5rem;
+      font-size: 0.8rem;
+      border-radius: 8px;
+      margin-top: 0.35rem;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.2s ease;
+    }
+    .btn-donor-full-details:hover {
+      background: #E2E8F0;
+    }
+    .donors-empty-state {
+      background: white;
+      border: 1px dashed #CBD5E1;
+      border-radius: 16px;
+      padding: 3.5rem 1.5rem;
+      text-align: center;
+      grid-column: 1 / -1;
+    }
+    .donors-empty-state-icon {
+      font-size: 3.2rem;
+      margin-bottom: 0.75rem;
+    }
+    .donors-loading-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 3.5rem 1rem;
+      color: #64748B;
+      font-size: 0.95rem;
+    }
+    .donors-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid #E2E8F0;
+      border-top-color: #DC2626;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 0.75rem;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Modal for Full Donor Details */
+    .donor-profile-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      backdrop-filter: blur(5px);
+    }
+    .donor-profile-modal-overlay.active {
+      display: flex;
+      animation: fadeIn 0.25s ease;
+    }
+    .donor-profile-modal-card {
+      background: white;
+      border-radius: 20px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 2rem;
+      position: relative;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3);
+      border-top: 6px solid #DC2626;
+    }
+    .modal-close-icon {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: #F1F5F9;
+      border: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748B;
+      transition: all 0.2s ease;
+    }
+    .modal-close-icon:hover {
+      background: #E2E8F0;
+      color: #0F172A;
+    }
+    .modal-donor-header {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid #E2E8F0;
+    }
+    .modal-donor-avatar {
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #FEF2F2;
+      box-shadow: 0 4px 12px rgba(220,38,38,0.15);
+      flex-shrink: 0;
+    }
+    .modal-grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+      margin-bottom: 1.25rem;
+    }
+    .modal-info-box {
+      background: #F8FAFC;
+      border: 1px solid #EDF2F7;
+      border-radius: 10px;
+      padding: 0.7rem 0.9rem;
+    }
+    .modal-info-box .info-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      color: #64748B;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      margin-bottom: 2px;
+    }
+    .modal-info-box .info-value {
+      font-size: 0.92rem;
+      color: #1E293B;
+      font-weight: 600;
+      word-break: break-word;
+    }
   </style>
 </head>
 <body>
@@ -742,8 +1198,154 @@
       </div>
       <!-- /#bloodRequestFormContainer -->
 
+      <!-- ═══════════════════ APPROVED BLOOD DONORS DIRECTORY (LAST PART) ═══════════════════ -->
+      <div class="approved-donors-section" id="approvedDonorsSection">
+        <div class="donors-section-header">
+          <div class="donors-header-badge">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+            </svg>
+            Live Emergency Life-Saver Network
+          </div>
+          <h2>Verified Voluntary Blood Donors</h2>
+          <p>
+            The voluntary blood donors listed below have been officially verified and approved by the administration of Udyam Social Development Foundation. You can view their photo, blood group, contact details, and location for emergency blood assistance.
+          </p>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="donors-filter-toolbar">
+          <div class="donors-filter-chips" id="bloodGroupFilterChips">
+            <button type="button" class="group-filter-chip active" data-group="all">All Groups</button>
+            <button type="button" class="group-filter-chip" data-group="A+">🩸 A+</button>
+            <button type="button" class="group-filter-chip" data-group="A-">🩸 A-</button>
+            <button type="button" class="group-filter-chip" data-group="B+">🩸 B+</button>
+            <button type="button" class="group-filter-chip" data-group="B-">🩸 B-</button>
+            <button type="button" class="group-filter-chip" data-group="AB+">🩸 AB+</button>
+            <button type="button" class="group-filter-chip" data-group="AB-">🩸 AB-</button>
+            <button type="button" class="group-filter-chip" data-group="O+">🩸 O+</button>
+            <button type="button" class="group-filter-chip" data-group="O-">🩸 O-</button>
+          </div>
+
+          <div class="donors-search-row">
+            <div class="donors-search-box">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+              <input type="text" id="donorSearchInput" placeholder="Quick search donor by Name, District (e.g. Golaghat), Town or Reg No..." />
+            </div>
+            <button type="button" class="donors-refresh-btn" id="refreshDonorsBtn" title="Reload approved donors list">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="donors-status-bar">
+          <div>
+            Showing <strong id="donorsCountText">0</strong> approved blood donors
+          </div>
+          <div class="donors-count-pill" id="donorsLiveBadge">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: #10B981; display: inline-block;"></span>
+            Verified Donors Registry
+          </div>
+        </div>
+
+        <!-- Donors Grid -->
+        <div class="approved-donors-grid" id="approvedDonorsGrid">
+          <div class="donors-loading-state">
+            <div class="donors-spinner"></div>
+            Loading verified blood donors...
+          </div>
+        </div>
+      </div>
+
     </div>
   </section>
+
+  <!-- ═══════════════════ FULL DONOR PROFILE MODAL ═══════════════════ -->
+  <div class="donor-profile-modal-overlay" id="donorDetailsModal" onclick="if(event.target === this) closeDonorDetailsModal()">
+    <div class="donor-profile-modal-card">
+      <button type="button" class="modal-close-icon" onclick="closeDonorDetailsModal()" aria-label="Close modal">✕</button>
+      
+      <div class="modal-donor-header">
+        <img id="detailModalPhoto" class="modal-donor-avatar" src="images/logo.jpg" alt="Donor Photo" />
+        <div>
+          <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 4px; flex-wrap: wrap;">
+            <span id="detailModalBloodGroup" class="donor-blood-badge" style="font-size: 0.88rem; padding: 0.25rem 0.75rem;">O+</span>
+            <span class="donor-verified-badge" style="font-size: 0.72rem;">✓ Official Admin Approved</span>
+          </div>
+          <h3 id="detailModalName" style="margin: 0 0 4px 0; font-size: 1.4rem; color: #1E293B; font-family: var(--font-display, 'Playfair Display', serif);">Donor Name</h3>
+          <span id="detailModalRegNo" style="font-size: 0.8rem; color: #64748B; font-family: monospace;">REG-BLD/...</span>
+        </div>
+      </div>
+
+      <div class="modal-grid-2col">
+        <div class="modal-info-box">
+          <div class="info-label">Father / Guardian Name</div>
+          <div class="info-value" id="detailModalGuardian">—</div>
+        </div>
+        <div class="modal-info-box">
+          <div class="info-label">Date of Birth / Age</div>
+          <div class="info-value" id="detailModalDob">—</div>
+        </div>
+        <div class="modal-info-box">
+          <div class="info-label">Primary Mobile</div>
+          <div class="info-value"><a id="detailModalMobileLink" href="#" style="color: #1B4332; text-decoration: none; font-weight: 700;">—</a></div>
+        </div>
+        <div class="modal-info-box">
+          <div class="info-label">WhatsApp Number</div>
+          <div class="info-value"><a id="detailModalWhatsappLink" href="#" target="_blank" style="color: #059669; text-decoration: none; font-weight: 700;">—</a></div>
+        </div>
+        <div class="modal-info-box" style="grid-column: 1 / -1;">
+          <div class="info-label">Email Address</div>
+          <div class="info-value" id="detailModalEmail">—</div>
+        </div>
+        <div class="modal-info-box" style="grid-column: 1 / -1;">
+          <div class="info-label">Full Residential Address</div>
+          <div class="info-value" id="detailModalAddress">—</div>
+        </div>
+        <div class="modal-info-box">
+          <div class="info-label">Village / Town / Ward</div>
+          <div class="info-value" id="detailModalVillage">—</div>
+        </div>
+        <div class="modal-info-box">
+          <div class="info-label">Post Office (P.O.)</div>
+          <div class="info-value" id="detailModalPO">—</div>
+        </div>
+        <div class="modal-info-box">
+          <div class="info-label">Police Station</div>
+          <div class="info-value" id="detailModalPS">—</div>
+        </div>
+        <div class="modal-info-box">
+          <div class="info-label">District & PIN</div>
+          <div class="info-value" id="detailModalDistrictPin">—</div>
+        </div>
+        <div class="modal-info-box">
+          <div class="info-label">Total Blood Donations</div>
+          <div class="info-value" id="detailModalDonationCount">0 Times</div>
+        </div>
+        <div class="modal-info-box">
+          <div class="info-label">Last Donation Date</div>
+          <div class="info-value" id="detailModalLastDate">Not specified</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap;">
+        <a id="detailModalCallBtn" href="#" class="btn-donor-action btn-donor-call" style="flex: 1; padding: 0.8rem 1rem; font-size: 0.95rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+          Call Donor Now
+        </a>
+        <a id="detailModalWhatsAppBtn" href="#" target="_blank" class="btn-donor-action btn-donor-whatsapp" style="flex: 1; padding: 0.8rem 1rem; font-size: 0.95rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+          Chat on WhatsApp
+        </a>
+      </div>
+    </div>
+  </div>
 
   <!-- ═══════════════════ SUCCESS MODAL & DONOR SLIP ═══════════════════ -->
   <div class="donor-slip-modal" id="successModal">
@@ -1328,6 +1930,38 @@
         if (!registeredRequestData) return;
         generateBloodRequestSlipPDF(registeredRequestData);
       });
+
+      // ── Approved Blood Donors Filter & Search Listeners ──
+      const filterChips = document.querySelectorAll('#bloodGroupFilterChips .group-filter-chip');
+      filterChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          filterChips.forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          currentSelectedGroup = chip.getAttribute('data-group') || 'all';
+          renderFilteredDonors();
+        });
+      });
+
+      const searchInput = document.getElementById('donorSearchInput');
+      if (searchInput) {
+        let debounceTimer;
+        searchInput.addEventListener('input', () => {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            renderFilteredDonors();
+          }, 200);
+        });
+      }
+
+      const refreshBtn = document.getElementById('refreshDonorsBtn');
+      if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+          fetchApprovedDonors();
+        });
+      }
+
+      // Initial fetch of approved blood donors
+      fetchApprovedDonors();
     });
 
     function closeSuccessModal() {
@@ -1578,6 +2212,314 @@
       doc.text('Emergency: +91 60027 36095 · www.udyamsdf.org', 74, 193, { align: 'center' });
 
       doc.save(`Udyam_Blood_Request_${req.patientName.replace(/\s+/g, '_')}.pdf`);
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
+    //  APPROVED BLOOD DONORS DIRECTORY (LIVE PUBLIC DISPLAY)
+    // ═════════════════════════════════════════════════════════════════════
+    let allApprovedDonors = [];
+    let currentSelectedGroup = 'all';
+
+    async function fetchApprovedDonors() {
+      const grid = document.getElementById('approvedDonorsGrid');
+      const countEl = document.getElementById('donorsCountText');
+      if (!grid) return;
+
+      grid.innerHTML = `
+        <div class="donors-loading-state">
+          <div class="donors-spinner"></div>
+          <div>Loading verified blood donors...</div>
+        </div>
+      `;
+
+      try {
+        let res;
+        try {
+          res = await fetch(`${API_BASE}/api/blood-donors`);
+          if (!res.ok) throw new Error(`Status ${res.status}`);
+        } catch (primaryErr) {
+          // If local endpoint fails and RENDER_URL is defined, attempt fallback
+          if (typeof RENDER_URL !== 'undefined' && API_BASE !== RENDER_URL) {
+            console.warn('Primary blood donor endpoint failed, trying Render fallback:', primaryErr);
+            res = await fetch(`${RENDER_URL}/api/blood-donors`);
+            if (!res.ok) throw new Error(`Fallback status ${res.status}`);
+          } else {
+            throw primaryErr;
+          }
+        }
+        const data = await res.json();
+
+        allApprovedDonors = (data && data.donors) ? data.donors : [];
+        if (countEl) countEl.textContent = allApprovedDonors.length;
+
+        renderFilteredDonors();
+      } catch (err) {
+        console.error('Error fetching approved blood donors:', err);
+        grid.innerHTML = `
+          <div class="donors-empty-state">
+            <div class="donors-empty-state-icon">⚠️</div>
+            <h3 style="color: #1E293B; margin: 0 0 8px;">Unable to Load Donors List</h3>
+            <p style="color: #64748B; font-size: 0.9rem; margin: 0 0 1rem;">
+              Could not connect to the blood registry server. Please verify your connection or try again.
+            </p>
+            <button type="button" class="donors-refresh-btn" onclick="fetchApprovedDonors()" style="margin: 0 auto;">
+              🔄 Retry Now
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    function renderFilteredDonors() {
+      const grid = document.getElementById('approvedDonorsGrid');
+      const countEl = document.getElementById('donorsCountText');
+      const searchInput = document.getElementById('donorSearchInput');
+      const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+      if (!grid) return;
+
+      let filtered = allApprovedDonors;
+
+      // Filter by blood group
+      if (currentSelectedGroup !== 'all') {
+        filtered = filtered.filter(d => (d.bloodGroup || '').toUpperCase() === currentSelectedGroup.toUpperCase());
+      }
+
+      // Filter by search query
+      if (query) {
+        filtered = filtered.filter(d => {
+          const name = (d.fullName || '').toLowerCase();
+          const guardian = (d.guardianName || '').toLowerCase();
+          const district = (d.district || '').toLowerCase();
+          const town = (d.villageTownWard || '').toLowerCase();
+          const po = (d.postOffice || '').toLowerCase();
+          const ps = (d.policeStation || '').toLowerCase();
+          const pin = (d.pinCode || '').toLowerCase();
+          const address = (d.address || '').toLowerCase();
+          const group = (d.bloodGroup || '').toLowerCase();
+          const regNo = (d.registrationNo || '').toLowerCase();
+          return name.includes(query) || guardian.includes(query) || district.includes(query) || town.includes(query) || po.includes(query) || ps.includes(query) || pin.includes(query) || address.includes(query) || group.includes(query) || regNo.includes(query);
+        });
+      }
+
+      if (countEl) countEl.textContent = filtered.length;
+
+      if (filtered.length === 0) {
+        const isFilterActive = currentSelectedGroup !== 'all' || query !== '';
+        grid.innerHTML = `
+          <div class="donors-empty-state">
+            <div class="donors-empty-state-icon">🩸</div>
+            <h3 style="color: #1E293B; margin: 0 0 8px;">
+              ${isFilterActive ? 'No Matching Donors Found' : 'No Approved Blood Donors Yet'}
+            </h3>
+            <p style="color: #64748B; font-size: 0.92rem; max-width: 500px; margin: 0 auto 1.2rem; line-height: 1.6;">
+              ${isFilterActive 
+                ? 'Try selecting a different blood group filter or clearing your search keywords.' 
+                : 'When administrators final approve registered blood donors, their verified photos, names, and contact details will appear here automatically.'}
+            </p>
+            ${isFilterActive ? `
+              <button type="button" class="donors-refresh-btn" onclick="resetDonorFilters()" style="margin: 0 auto;">
+                Clear All Filters
+              </button>
+            ` : `
+              <button type="button" onclick="switchBloodTab('donor')" style="padding: 0.7rem 1.4rem; background: #DC2626; color: white; border: none; border-radius: 50px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(220,38,38,0.3);">
+                <span>🩸 Register as Voluntary Donor</span>
+              </button>
+            `}
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(donor => {
+        const photoUrl = donor.photo || '';
+        const initial = (donor.fullName || 'D').charAt(0).toUpperCase();
+        const bloodGroup = donor.bloodGroup || 'O+';
+        const timesDonated = Number(donor.totalTimesDonated) || 0;
+        const donationLabel = timesDonated > 0 ? `${timesDonated} Times Donated` : 'Voluntary Donor';
+        const lastDonation = donor.lastDonationDate ? `Last: ${formatDisplayDate(donor.lastDonationDate)}` : 'Ready to Donate';
+        const locationStr = [donor.villageTownWard, donor.district].filter(Boolean).join(', ') || (donor.district || 'Assam');
+        const regNo = donor.registrationNo || 'UDYAM-VERIFIED';
+        const cleanMobile = (donor.mobileNo || '').replace(/\D/g, '');
+        const cleanWhatsApp = (donor.whatsappNo || cleanMobile).replace(/\D/g, '');
+        const waText = encodeURIComponent(`Hello ${donor.fullName}, I found your verified blood donor profile (${bloodGroup}) on Udyam Social Development Foundation emergency registry.`);
+
+        return `
+          <div class="donor-public-card" data-id="${donor._id}">
+            <div class="donor-card-topbar">
+              <span class="donor-blood-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                ${escapeHtml(bloodGroup)}
+              </span>
+              <span class="donor-verified-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                Verified Donor
+              </span>
+            </div>
+
+            <div class="donor-avatar-wrap">
+              ${photoUrl ? `
+                <img class="donor-avatar-img" src="${escapeHtml(photoUrl)}" alt="${escapeHtml(donor.fullName)}" onerror="this.onerror=null; this.src='images/logo.jpg';" />
+              ` : `
+                <div class="donor-avatar-placeholder">${initial}</div>
+              `}
+            </div>
+
+            <h3 class="donor-card-name">${escapeHtml(donor.fullName)}</h3>
+            <div class="donor-reg-no">${escapeHtml(regNo)}</div>
+
+            <div class="donor-details-list">
+              <div class="donor-detail-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span><strong>Location:</strong> ${escapeHtml(locationStr)}</span>
+              </div>
+              <div class="donor-detail-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                <span><strong>History:</strong> ${escapeHtml(donationLabel)}</span>
+              </div>
+              <div class="donor-detail-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span><strong>Status:</strong> ${escapeHtml(lastDonation)}</span>
+              </div>
+            </div>
+
+            <div class="donor-card-actions">
+              ${cleanMobile ? `
+                <a href="tel:${cleanMobile}" class="btn-donor-action btn-donor-call" title="Call ${escapeHtml(donor.fullName)}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                  Call
+                </a>
+              ` : ''}
+              ${cleanWhatsApp ? `
+                <a href="https://wa.me/91${cleanWhatsApp}?text=${waText}" target="_blank" class="btn-donor-action btn-donor-whatsapp" title="WhatsApp ${escapeHtml(donor.fullName)}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                  WhatsApp
+                </a>
+              ` : ''}
+              <button type="button" class="btn-donor-full-details" onclick="openDonorDetailsModal('${donor._id}')">
+                👁️ View Complete Profile
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function resetDonorFilters() {
+      currentSelectedGroup = 'all';
+      const chips = document.querySelectorAll('#bloodGroupFilterChips .group-filter-chip');
+      chips.forEach(c => {
+        c.classList.toggle('active', c.getAttribute('data-group') === 'all');
+      });
+      const searchInput = document.getElementById('donorSearchInput');
+      if (searchInput) searchInput.value = '';
+      renderFilteredDonors();
+    }
+
+    function openDonorDetailsModal(donorId) {
+      const donor = allApprovedDonors.find(d => String(d._id) === String(donorId));
+      if (!donor) return;
+
+      const modal = document.getElementById('donorDetailsModal');
+      const photoEl = document.getElementById('detailModalPhoto');
+      const nameEl = document.getElementById('detailModalName');
+      const bloodGroupEl = document.getElementById('detailModalBloodGroup');
+      const regNoEl = document.getElementById('detailModalRegNo');
+      const guardianEl = document.getElementById('detailModalGuardian');
+      const dobEl = document.getElementById('detailModalDob');
+      const mobileLinkEl = document.getElementById('detailModalMobileLink');
+      const whatsappLinkEl = document.getElementById('detailModalWhatsappLink');
+      const emailEl = document.getElementById('detailModalEmail');
+      const addressEl = document.getElementById('detailModalAddress');
+      const villageEl = document.getElementById('detailModalVillage');
+      const poEl = document.getElementById('detailModalPO');
+      const psEl = document.getElementById('detailModalPS');
+      const districtPinEl = document.getElementById('detailModalDistrictPin');
+      const donationCountEl = document.getElementById('detailModalDonationCount');
+      const lastDateEl = document.getElementById('detailModalLastDate');
+      const callBtn = document.getElementById('detailModalCallBtn');
+      const waBtn = document.getElementById('detailModalWhatsAppBtn');
+
+      if (photoEl) {
+        photoEl.src = donor.photo || 'images/logo.jpg';
+        photoEl.onerror = () => { photoEl.src = 'images/logo.jpg'; };
+      }
+      if (nameEl) nameEl.textContent = donor.fullName || '—';
+      if (bloodGroupEl) bloodGroupEl.textContent = `🩸 ${donor.bloodGroup || 'O+'}`;
+      if (regNoEl) regNoEl.textContent = donor.registrationNo || 'UDYAM-VERIFIED-DONOR';
+      if (guardianEl) guardianEl.textContent = donor.guardianName || '—';
+      
+      let ageStr = '—';
+      if (donor.dob) {
+        const birthDate = new Date(donor.dob);
+        if (!isNaN(birthDate)) {
+          const age = Math.floor((new Date() - birthDate) / (365.25 * 24 * 60 * 60 * 1000));
+          ageStr = `${donor.dob} (${age} Yrs)`;
+        } else {
+          ageStr = donor.dob;
+        }
+      }
+      if (dobEl) dobEl.textContent = ageStr;
+
+      const cleanMobile = (donor.mobileNo || '').replace(/\D/g, '');
+      const cleanWhatsApp = (donor.whatsappNo || cleanMobile).replace(/\D/g, '');
+
+      if (mobileLinkEl) {
+        mobileLinkEl.textContent = donor.mobileNo || '—';
+        mobileLinkEl.href = cleanMobile ? `tel:${cleanMobile}` : '#';
+      }
+      if (whatsappLinkEl) {
+        whatsappLinkEl.textContent = donor.whatsappNo || '—';
+        whatsappLinkEl.href = cleanWhatsApp ? `https://wa.me/91${cleanWhatsApp}` : '#';
+      }
+      if (emailEl) {
+        emailEl.innerHTML = donor.email ? `<a href="mailto:${escapeHtml(donor.email)}" style="color:#1B4332; text-decoration:none;">${escapeHtml(donor.email)}</a>` : '—';
+      }
+      if (addressEl) addressEl.textContent = donor.address || '—';
+      if (villageEl) villageEl.textContent = donor.villageTownWard || '—';
+      if (poEl) poEl.textContent = donor.postOffice || '—';
+      if (psEl) psEl.textContent = donor.policeStation || '—';
+      if (districtPinEl) districtPinEl.textContent = `${donor.district || 'Golaghat'}${donor.pinCode ? ' - ' + donor.pinCode : ''}`;
+      if (donationCountEl) donationCountEl.textContent = donor.totalTimesDonated > 0 ? `${donor.totalTimesDonated} Times Donated` : 'First-time voluntary donor';
+      if (lastDateEl) lastDateEl.textContent = donor.lastDonationDate ? formatDisplayDate(donor.lastDonationDate) : 'Ready to donate';
+
+      if (callBtn) {
+        callBtn.href = cleanMobile ? `tel:${cleanMobile}` : '#';
+        callBtn.style.display = cleanMobile ? 'inline-flex' : 'none';
+      }
+      if (waBtn) {
+        const waText = encodeURIComponent(`Hello ${donor.fullName}, reaching out regarding voluntary blood donation through Udyam Foundation.`);
+        waBtn.href = cleanWhatsApp ? `https://wa.me/91${cleanWhatsApp}?text=${waText}` : '#';
+        waBtn.style.display = cleanWhatsApp ? 'inline-flex' : 'none';
+      }
+
+      if (modal) modal.classList.add('active');
+    }
+
+    function closeDonorDetailsModal() {
+      const modal = document.getElementById('donorDetailsModal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    function formatDisplayDate(dateStr) {
+      if (!dateStr) return '—';
+      try {
+        const d = new Date(dateStr);
+        if (isNaN(d)) return dateStr;
+        return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      } catch (e) {
+        return dateStr;
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
   </script>
 </body>
