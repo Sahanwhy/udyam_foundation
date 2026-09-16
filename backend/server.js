@@ -975,9 +975,9 @@ const ORG = {
   shortName: 'Udyam Social Development Foundation',
   tagline: 'Empowering Youth, Transforming Communities',
   address: 'Kakodonga, Golaghat, Assam — 785621, India',
-  pan: 'AAETU1234F',
-  reg80G: 'AAETU1234F/80G/2024-25',
-  reg12A: 'AAETU1234F/12A/2024-25',
+  pan: 'AACAU3169R',
+  reg80G: 'AACAU3169R/80G/2024-25',
+  reg12A: 'AACAU3169R/12A/2024-25',
   website: 'udyamfoundation.org',
   email: EMAIL_FROM,
 };
