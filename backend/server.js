@@ -975,9 +975,9 @@ const ORG = {
   shortName: 'Udyam Social Development Foundation',
   tagline: 'Empowering Youth, Transforming Communities',
   address: 'Kakodonga, Golaghat, Assam — 785621, India',
-  pan: 'AACAU3169R',
-  reg80G: 'AACAU3169R/80G/2024-25',
-  reg12A: 'AACAU3169R/12A/2024-25',
+  pan: 'AAETU1234F',
+  reg80G: 'AAETU1234F/80G/2024-25',
+  reg12A: 'AAETU1234F/12A/2024-25',
   website: 'udyamfoundation.org',
   email: EMAIL_FROM,
 };
@@ -992,7 +992,7 @@ function numberToWords(num) {
   const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
     'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
   const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-  if (num === 0) return 'Zero Rupees Only';
+  if (num === 0) return 'Zero';
   function convert(n) {
     if (n < 20) return ones[n];
     if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
@@ -1001,359 +1001,166 @@ function numberToWords(num) {
     if (n < 10000000) return convert(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 ? ' ' + convert(n % 100000) : '');
     return convert(Math.floor(num / 10000000)) + ' Crore' + (n % 10000000 ? ' ' + convert(n % 10000000) : '');
   }
-  const text = convert(Math.floor(num)).trim();
-  const unit = Math.floor(num) === 1 ? 'Rupee' : 'Rupees';
-  return `${text} ${unit} Only`;
+  return convert(Math.floor(num)) + ' Rupees Only';
 }
 
 function generateReceiptPDF(donor) {
   return new Promise((resolve, reject) => {
-    // Standard A4: 595.28 x 841.89 pt
-    const doc = new PDFDocument({ size: 'A4', margin: 0, autoFirstPage: true });
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
     const chunks = [];
     doc.on('data', chunk => chunks.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    const GREEN_DARK = '#143826';
-    const GREEN_MID = '#1E5638';
-    const GREEN_EMERALD = '#059669';
-    const GREEN_LIGHT = '#F0FDF4';
-    const GREEN_BORDER = '#86EFAC';
+    const GREEN_DEEP = '#1B4332';
+    const GREEN_MID = '#2D6A4F';
     const SAFFRON = '#E8883A';
-    const CREAM_BG = '#FDFBF7';
-    const BORDER_LIGHT = '#E5E7EB';
-    const TEXT_DARK = '#111827';
-    const TEXT_MUTED = '#4B5563';
-    const TEXT_LIGHT = '#6B7280';
+    const CREAM = '#FDF8F0';
+    const LIGHT_GRAY = '#F3F4F6';
+    const MID_GRAY = '#6B7280';
+    const DARK = '#1F2937';
     const WHITE = '#FFFFFF';
-
     const pageWidth = doc.page.width;
-    const pageHeight = doc.page.height;
-    const margin = 40;
+    const margin = 50;
     const contentW = pageWidth - margin * 2;
-
-    const now = donor.date ? new Date(donor.date) : new Date();
+    const now = new Date();
     const receiptNo = donor.receiptNo || generateReceiptNumber(donor.date || donor.createdAt);
     const with80G = Boolean(donor.with80G);
 
-    // ── 1. Top Decorative Bar ───────────────────────────────────────────
-    doc.rect(0, 0, pageWidth, 4).fill(SAFFRON);
+    // ── Header Banner ──────────────────────────────────────────────────────────
+    doc.rect(0, 0, pageWidth, 90).fill(GREEN_DEEP);
 
-    // ── 2. Header Banner (0 to 98) ──────────────────────────────────────
-    doc.rect(0, 4, pageWidth, 94).fill(GREEN_DARK);
+    // Saffron accent stripe
+    doc.rect(0, 80, pageWidth, 6).fill(SAFFRON);
 
-    // Logo Container (White rounded card framing the logo cleanly)
-    const logoSize = 58;
-    const logoX = margin;
-    const logoY = 18;
-    doc.roundedRect(logoX, logoY, logoSize + 8, logoSize + 8, 8).fill(WHITE);
-    doc.roundedRect(logoX, logoY, logoSize + 8, logoSize + 8, 8).strokeColor('#A7F3D0').lineWidth(0.8).stroke();
-
+    // Logo Image
     const logoPath = path.join(__dirname, 'images', 'logo.jpg');
+    let hasLogo = false;
     if (fs.existsSync(logoPath)) {
       try {
-        doc.image(logoPath, logoX + 4, logoY + 4, { width: logoSize, height: logoSize });
+        doc.image(logoPath, margin + 10, 14, { width: 52, height: 52 });
+        hasLogo = true;
       } catch (e) {
-        console.error('Logo render error:', e);
+        console.error('Failed to render logo in PDF:', e);
       }
     }
 
-    // Header Details (Beside Logo)
-    const headerTextX = logoX + logoSize + 18;
-    const headerTextW = contentW - (logoSize + 18) - 105;
+    const textOffset = hasLogo ? 60 : 0;
+    const textWidth = contentW - textOffset;
 
-    doc.fillColor(WHITE).font('Helvetica-Bold').fontSize(14)
-      .text('UDYAM SOCIAL DEVELOPMENT FOUNDATION', headerTextX, 22, { width: headerTextW });
+    // Org Name
+    doc.fillColor(WHITE).font('Helvetica-Bold').fontSize(15)
+      .text(ORG.name, margin + textOffset, 20, { width: textWidth, align: hasLogo ? 'left' : 'center' });
 
-    doc.fillColor('#A7F3D0').font('Helvetica-Bold').fontSize(8.5)
-      .text(ORG.tagline, headerTextX, 40, { width: headerTextW });
+    // Tagline
+    doc.fillColor('#A7F3D0').font('Helvetica').fontSize(9)
+      .text(ORG.tagline, margin + textOffset, 42, { width: textWidth, align: hasLogo ? 'left' : 'center' });
 
-    doc.fillColor('#D1FAE5').font('Helvetica').fontSize(7.5)
-      .text('Registered Section 8 Non-Profit Organization | Govt. of India', headerTextX, 52, { width: headerTextW });
+    // Address
+    doc.fillColor('#D1FAE5').font('Helvetica').fontSize(8)
+      .text(ORG.address, margin + textOffset, 56, { width: textWidth, align: hasLogo ? 'left' : 'center' });
 
-    doc.fillColor('#E5E7EB').font('Helvetica').fontSize(7.5)
-      .text(ORG.address, headerTextX, 64, { width: headerTextW });
+    // ── Receipt Title Band ─────────────────────────────────────────────────────
+    const titleY = 96;
+    doc.rect(margin, titleY, contentW, 28).fill(CREAM);
+    doc.rect(margin, titleY, 4, 28).fill(SAFFRON);
+    doc.fillColor(GREEN_DEEP).font('Helvetica-Bold').fontSize(13)
+      .text(with80G ? 'DONATION RECEIPT — 80G TAX EXEMPTION' : 'DONATION RECEIPT', margin + 14, titleY + 8, { width: contentW - 14 });
 
-    doc.fillColor('#6EE7B7').font('Helvetica').fontSize(7.5)
-      .text(`Email: ${ORG.email}   •   Website: ${ORG.website}`, headerTextX, 76, { width: headerTextW });
+    let y = titleY + 42;
 
-    // Right Badge in Header
-    const badgeW = 98;
-    const badgeH = 48;
-    const badgeX = margin + contentW - badgeW;
-    const badgeY = 24;
-    doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 6).fill('#0B2418');
-    doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 6).strokeColor('#2D6A4F').lineWidth(0.8).stroke();
+    // ── Receipt Meta Row ───────────────────────────────────────────────────────
+    doc.fillColor(MID_GRAY).font('Helvetica').fontSize(8.5)
+      .text(`Receipt No: ${receiptNo}`, margin, y)
+      .text(`Date: ${now.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}`, margin + contentW / 2, y, { width: contentW / 2, align: 'right' });
 
-    doc.fillColor('#FBBF24').font('Helvetica-Bold').fontSize(7.5)
-      .text('80G & 12A', badgeX, badgeY + 8, { width: badgeW, align: 'center' });
-    doc.fillColor(WHITE).font('Helvetica-Bold').fontSize(7)
-      .text('TAX EXEMPT', badgeX, badgeY + 19, { width: badgeW, align: 'center' });
-    doc.fillColor('#34D399').font('Helvetica').fontSize(6.5)
-      .text('GOVT. RECOGNIZED', badgeX, badgeY + 30, { width: badgeW, align: 'center' });
+    y += 16;
+    doc.moveTo(margin, y).lineTo(margin + contentW, y).strokeColor('#E5E7EB').lineWidth(0.5).stroke();
+    y += 14;
 
-    // Saffron divider stripe
-    doc.rect(0, 98, pageWidth, 4).fill(SAFFRON);
+    // ── Donor Details Section ──────────────────────────────────────────────────
+    doc.rect(margin, y, contentW, 16).fill(GREEN_DEEP);
+    doc.fillColor(WHITE).font('Helvetica-Bold').fontSize(9)
+      .text('DONOR INFORMATION', margin + 10, y + 4);
+    y += 24;
 
-    // ── 3. Title & Meta Band ────────────────────────────────────────────
-    let currentY = 112;
-    const titleBarH = 38;
-
-    doc.roundedRect(margin, currentY, contentW, titleBarH, 6).fill(CREAM_BG);
-    doc.roundedRect(margin, currentY, contentW, titleBarH, 6).strokeColor(BORDER_LIGHT).lineWidth(0.8).stroke();
-    doc.roundedRect(margin, currentY, 4, titleBarH, 2).fill(SAFFRON);
-
-    const titleText = with80G ? 'DONATION RECEIPT — 80G TAX EXEMPTION' : 'DONATION RECEIPT';
-    const subTitleText = with80G
-      ? 'Receipt & Exemption Certificate under Section 80G of the Income Tax Act, 1961'
-      : 'Official acknowledgement of voluntary contribution';
-
-    doc.fillColor(GREEN_DARK).font('Helvetica-Bold').fontSize(11.5)
-      .text(titleText, margin + 14, currentY + 7);
-    doc.fillColor(TEXT_MUTED).font('Helvetica').fontSize(7.5)
-      .text(subTitleText, margin + 14, currentY + 22);
-
-    const metaW = 200;
-    const metaX = margin + contentW - metaW - 12;
-
-    doc.fillColor(GREEN_DARK).font('Helvetica-Bold').fontSize(8.5)
-      .text(`Receipt No: ${receiptNo}`, metaX, currentY + 8, { width: metaW, align: 'right' });
-
-    const formattedDate = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
-    doc.fillColor(TEXT_LIGHT).font('Helvetica').fontSize(8)
-      .text(`Date of Issue: ${formattedDate}`, metaX, currentY + 22, { width: metaW, align: 'right' });
-
-    currentY += titleBarH + 12;
-
-    // ── 4. Two-Column Cards: Donor Info (Left) & Payment Details (Right) ─
-    const colGap = 12;
-    const colW = (contentW - colGap) / 2;
-    const col1X = margin;
-    const col2X = margin + colW + colGap;
-    const cardsH = 126;
-
-    function drawSectionCard(x, y, w, h, title) {
-      doc.roundedRect(x, y, w, h, 6).fill(WHITE);
-      doc.roundedRect(x, y, w, h, 6).strokeColor(BORDER_LIGHT).lineWidth(0.8).stroke();
-
-      const headerH = 22;
-      doc.roundedRect(x, y, w, headerH, 6).fill('#F8FAFC');
-      doc.rect(x, y + headerH - 4, w, 4).fill('#F8FAFC');
-      doc.roundedRect(x, y, w, h, 6).strokeColor(BORDER_LIGHT).lineWidth(0.8).stroke();
-      doc.moveTo(x, y + headerH).lineTo(x + w, y + headerH).strokeColor(BORDER_LIGHT).lineWidth(0.8).stroke();
-
-      doc.circle(x + 12, y + 11, 3).fill(GREEN_MID);
-      doc.fillColor(GREEN_DARK).font('Helvetica-Bold').fontSize(8.5)
-        .text(title, x + 20, y + 7);
+    function infoRow(label, value, currentY) {
+      doc.fillColor(MID_GRAY).font('Helvetica-Bold').fontSize(9).text(label, margin + 8, currentY, { width: 120 });
+      doc.fillColor(DARK).font('Helvetica').fontSize(9).text(value || '—', margin + 130, currentY, { width: contentW - 138 });
+      return currentY + 18;
     }
 
-    drawSectionCard(col1X, currentY, colW, cardsH, 'DONOR INFORMATION');
-    drawSectionCard(col2X, currentY, colW, cardsH, 'PAYMENT & TRANSACTION DETAILS');
+    y = infoRow('Full Name', donor.fullName, y);
+    y = infoRow('Email Address', donor.email, y);
+    y = infoRow('Phone Number', donor.phone, y);
+    y = infoRow('Address', donor.address, y);
+    if (with80G && donor.pan) y = infoRow('PAN Card No.', donor.pan.toUpperCase(), y);
 
-    let rowY = currentY + 29;
-    const labelW = 74;
-    const valW = colW - labelW - 18;
+    y += 8;
 
-    function renderCardRow(colX, y, label, val, isHighlight = false) {
-      doc.fillColor(TEXT_LIGHT).font('Helvetica').fontSize(8)
-        .text(label, colX + 10, y, { width: labelW });
-      if (isHighlight) {
-        doc.fillColor(GREEN_DARK).font('Helvetica-Bold').fontSize(8.5)
-          .text(val || '—', colX + 10 + labelW, y, { width: valW });
-      } else {
-        doc.fillColor(TEXT_DARK).font('Helvetica').fontSize(8)
-          .text(val || '—', colX + 10 + labelW, y, { width: valW });
-      }
-      return y + 18;
-    }
+    // ── Payment Details Section ────────────────────────────────────────────────
+    doc.rect(margin, y, contentW, 16).fill(GREEN_DEEP);
+    doc.fillColor(WHITE).font('Helvetica-Bold').fontSize(9)
+      .text('PAYMENT DETAILS', margin + 10, y + 4);
+    y += 24;
 
-    rowY = renderCardRow(col1X, rowY, 'Full Name:', donor.fullName, true);
-    if (with80G && donor.pan) {
-      rowY = renderCardRow(col1X, rowY, 'PAN Card No.:', donor.pan.toUpperCase(), true);
-    } else {
-      rowY = renderCardRow(col1X, rowY, 'PAN Card No.:', donor.pan ? donor.pan.toUpperCase() : 'Not Provided');
-    }
-    rowY = renderCardRow(col1X, rowY, 'Email Address:', donor.email);
-    rowY = renderCardRow(col1X, rowY, 'Phone Number:', donor.phone);
-    renderCardRow(col1X, rowY, 'Address:', donor.address || 'Golaghat, Assam');
+    y = infoRow('Payment ID', donor.paymentId || '—', y);
+    y = infoRow('Order ID', donor.orderId || '—', y);
+    y = infoRow('Payment Method', 'Online (Razorpay)', y);
+    y = infoRow('Payment Status', '✓ Successful', y);
+    y = infoRow('Payment Date', now.toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'short' }), y);
 
-    let pRowY = currentY + 29;
-    pRowY = renderCardRow(col2X, pRowY, 'Payment ID:', donor.paymentId || '—');
-    pRowY = renderCardRow(col2X, pRowY, 'Order ID:', donor.orderId || '—');
-    pRowY = renderCardRow(col2X, pRowY, 'Payment Mode:', 'Online (Razorpay / UPI)');
+    y += 12;
 
-    // Payment Status with clean green pill badge (NO broken unicode character!)
-    doc.fillColor(TEXT_LIGHT).font('Helvetica').fontSize(8)
-      .text('Payment Status:', col2X + 10, pRowY, { width: labelW });
+    // ── Amount Box ────────────────────────────────────────────────────────────
+    doc.rect(margin, y, contentW, 56).fill(CREAM).stroke(GREEN_MID);
+    doc.rect(margin, y, contentW, 56).strokeColor(GREEN_MID).lineWidth(1).stroke();
 
-    const badgeStatusX = col2X + 10 + labelW;
-    const badgeStatusW = 96;
-    const badgeStatusH = 14;
-    doc.roundedRect(badgeStatusX, pRowY - 2, badgeStatusW, badgeStatusH, 4).fill('#ECFDF5');
-    doc.roundedRect(badgeStatusX, pRowY - 2, badgeStatusW, badgeStatusH, 4).strokeColor('#A7F3D0').lineWidth(0.6).stroke();
-    doc.fillColor('#065F46').font('Helvetica-Bold').fontSize(7.5)
-      .text('PAID / SUCCESSFUL', badgeStatusX, pRowY + 1.5, { width: badgeStatusW, align: 'center' });
+    doc.fillColor(MID_GRAY).font('Helvetica').fontSize(8.5)
+      .text('DONATION AMOUNT', margin + 12, y + 10);
+    doc.fillColor(GREEN_DEEP).font('Helvetica-Bold').fontSize(22)
+      .text(formatIndianAmount(donor.amount), margin + 12, y + 22);
+    doc.fillColor(MID_GRAY).font('Helvetica-Oblique').fontSize(8)
+      .text(`(${numberToWords(donor.amount)})`, margin + 12, y + 45);
 
-    pRowY += 18;
-    const dateFormattedFull = now.toLocaleString('en-IN', {
-      day: '2-digit', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', hour12: true
-    });
-    renderCardRow(col2X, pRowY, 'Payment Date:', dateFormattedFull);
+    y += 68;
 
-    currentY += cardsH + 12;
-
-    // ── 5. Amount Received Card ─────────────────────────────────────────
-    const amountCardH = 56;
-    doc.roundedRect(margin, currentY, contentW, amountCardH, 6).fill(CREAM_BG);
-    doc.roundedRect(margin, currentY, contentW, amountCardH, 6).strokeColor(GREEN_MID).lineWidth(0.8).stroke();
-    doc.roundedRect(margin, currentY, 4, amountCardH, 2).fill(GREEN_MID);
-
-    doc.fillColor(TEXT_LIGHT).font('Helvetica-Bold').fontSize(7.5)
-      .text('TOTAL DONATION RECEIVED', margin + 14, currentY + 8);
-
-    doc.fillColor(GREEN_DARK).font('Helvetica-Bold').fontSize(19)
-      .text(formatIndianAmount(donor.amount), margin + 14, currentY + 19);
-
-    doc.fillColor(TEXT_MUTED).font('Helvetica-Oblique').fontSize(8)
-      .text(`(${numberToWords(donor.amount)})`, margin + 14, currentY + 41);
-
-    const rightBoxW = 160;
-    const rightBoxX = margin + contentW - rightBoxW - 12;
-    const rightBoxY = currentY + 8;
-    const rightBoxH = 40;
-
-    doc.roundedRect(rightBoxX, rightBoxY, rightBoxW, rightBoxH, 5).fill(WHITE);
-    doc.roundedRect(rightBoxX, rightBoxY, rightBoxW, rightBoxH, 5).strokeColor(GREEN_BORDER).lineWidth(0.6).stroke();
-
-    doc.fillColor(GREEN_MID).font('Helvetica-Bold').fontSize(7.5)
-      .text('Voluntary Contribution', rightBoxX, rightBoxY + 6, { width: rightBoxW, align: 'center' });
-    doc.fillColor(TEXT_MUTED).font('Helvetica').fontSize(7)
-      .text('Empowering Youth of Assam', rightBoxX, rightBoxY + 17, { width: rightBoxW, align: 'center' });
-    doc.fillColor(GREEN_EMERALD).font('Helvetica-Bold').fontSize(7)
-      .text(with80G ? '50% Tax Exemption Claimable' : 'Donation Acknowledged', rightBoxX, rightBoxY + 28, { width: rightBoxW, align: 'center' });
-
-    currentY += amountCardH + 12;
-
-    // ── 6. 80G Tax Exemption Certificate Block (Dynamic Height!) ─────────
+    // ── 80G Certificate Block ─────────────────────────────────────────────────
     if (with80G) {
-      const certText = `This is to certify that ${ORG.name} (PAN: ${ORG.pan}), registered under Section 80G ` +
-        `(Registration No.: ${ORG.reg80G}), has received a voluntary donation of ${formatIndianAmount(donor.amount)} ` +
-        `from ${donor.fullName}${donor.pan ? ' (PAN: ' + donor.pan.toUpperCase() + ')' : ''}, residing at ${donor.address || 'India'}. ` +
-        `This donation qualifies for tax deduction under Section 80G(5)(vi) of the Income Tax Act, 1961, subject to statutory limits.`;
+      doc.rect(margin, y, contentW, 70).fill('#F0FDF4').strokeColor(GREEN_MID).lineWidth(0.8).stroke();
+      doc.rect(margin, y, 4, 70).fill(GREEN_MID);
 
-      doc.font('Helvetica').fontSize(8);
-      const certTextW = contentW - 24;
-      const certTextH = doc.heightOfString(certText, { width: certTextW, lineGap: 2.5 });
+      doc.fillColor(GREEN_DEEP).font('Helvetica-Bold').fontSize(9)
+        .text('80G TAX EXEMPTION CERTIFICATE', margin + 12, y + 10);
 
-      const metaBoxH = 26;
-      const certCardPadding = 10;
-      const certCardH = 24 + certTextH + 8 + metaBoxH + certCardPadding;
+      const certText = `This is to certify that ${ORG.shortName} (PAN: ${ORG.pan}), registered under Section 80G ` +
+        `(Reg. No.: ${ORG.reg80G}), has received a voluntary donation of ${formatIndianAmount(donor.amount)} ` +
+        `from ${donor.fullName}${donor.pan ? ' (PAN: ' + donor.pan.toUpperCase() + ')' : ''}, residing at ${donor.address}. ` +
+        `The donor is entitled to claim deduction under Section 80G of the Income Tax Act, 1961, subject to applicable limits.`;
 
-      doc.roundedRect(margin, currentY, contentW, certCardH, 6).fill(GREEN_LIGHT);
-      doc.roundedRect(margin, currentY, contentW, certCardH, 6).strokeColor(GREEN_BORDER).lineWidth(0.8).stroke();
-      doc.roundedRect(margin, currentY, 4, certCardH, 2).fill(GREEN_MID);
+      doc.fillColor('#374151').font('Helvetica').fontSize(8)
+        .text(certText, margin + 12, y + 24, { width: contentW - 24, lineGap: 2 });
 
-      doc.fillColor(GREEN_DARK).font('Helvetica-Bold').fontSize(8.5)
-        .text('SECTION 80G TAX EXEMPTION CERTIFICATE', margin + 12, currentY + 8);
+      doc.fillColor(MID_GRAY).font('Helvetica').fontSize(7.5)
+        .text(`Org. PAN: ${ORG.pan}   |   80G Reg.: ${ORG.reg80G}   |   12A Reg.: ${ORG.reg12A}`, margin + 12, y + 56);
 
-      doc.fillColor(GREEN_MID).font('Helvetica').fontSize(7)
-        .text('Issued under Rule 18AA of Income Tax Rules, 1962', margin + contentW - 210, currentY + 9, { width: 200, align: 'right' });
-
-      const textStartY = currentY + 22;
-      doc.fillColor('#1F2937').font('Helvetica').fontSize(8)
-        .text(certText, margin + 12, textStartY, { width: certTextW, lineGap: 2.5 });
-
-      // Dedicated Org Metadata Sub-card (No overlapping!)
-      const metaBoxY = textStartY + certTextH + 8;
-      const metaBoxW = contentW - 24;
-      const metaBoxX = margin + 12;
-
-      doc.roundedRect(metaBoxX, metaBoxY, metaBoxW, metaBoxH, 4).fill(WHITE);
-      doc.roundedRect(metaBoxX, metaBoxY, metaBoxW, metaBoxH, 4).strokeColor(GREEN_BORDER).lineWidth(0.6).stroke();
-
-      const itemW = metaBoxW / 4;
-      function drawCertMetaItem(index, label, val, isGreen = false) {
-        const itemX = metaBoxX + index * itemW;
-        if (index > 0) {
-          doc.moveTo(itemX, metaBoxY + 3).lineTo(itemX, metaBoxY + metaBoxH - 3).strokeColor('#E5E7EB').lineWidth(0.6).stroke();
-        }
-        doc.fillColor(TEXT_LIGHT).font('Helvetica').fontSize(6.5)
-          .text(label, itemX, metaBoxY + 4, { width: itemW, align: 'center' });
-        doc.fillColor(isGreen ? '#047857' : GREEN_DARK).font('Helvetica-Bold').fontSize(7.5)
-          .text(val, itemX, metaBoxY + 14, { width: itemW, align: 'center' });
-      }
-
-      drawCertMetaItem(0, 'ORGANIZATION PAN', ORG.pan);
-      drawCertMetaItem(1, '80G REGISTRATION NO.', ORG.reg80G);
-      drawCertMetaItem(2, '12A REGISTRATION NO.', ORG.reg12A);
-      drawCertMetaItem(3, 'TAX EXEMPTION', '50% Deductible', true);
-
-      currentY += certCardH + 12;
+      y += 82;
     }
 
-    // ── 7. Declaration & Authorized Signatory Block ──────────────────────
-    currentY += 8;
-    const signCardY = currentY;
+    // ── Footer ────────────────────────────────────────────────────────────────
+    const footerY = Math.max(y + 14, 700);
+    doc.moveTo(margin, footerY).lineTo(margin + contentW, footerY).strokeColor('#E5E7EB').lineWidth(0.5).stroke();
 
-    const notesW = contentW - 190;
-    doc.fillColor(GREEN_DARK).font('Helvetica-Bold').fontSize(8)
-      .text('IMPORTANT NOTES & TAX DECLARATION:', margin, signCardY);
+    doc.fillColor(GREEN_DEEP).font('Helvetica-BoldOblique').fontSize(10)
+      .text('"Thank you for your generous contribution."', margin, footerY + 10, { width: contentW, align: 'center' });
+    doc.fillColor(MID_GRAY).font('Helvetica').fontSize(8.5)
+      .text('Your support helps us empower youth and transform communities in Golaghat.', margin, footerY + 26, { width: contentW, align: 'center' });
+    doc.fillColor('#9CA3AF').font('Helvetica').fontSize(7.5)
+      .text('This is a computer-generated receipt and does not require a signature.', margin, footerY + 40, { width: contentW, align: 'center' });
 
-    const notes = [
-      '• Tax Exemption: Donations to Udyam Social Development Foundation are eligible for 50% deduction under Section 80G(5)(vi) of the Income Tax Act, 1961.',
-      '• Official Proof: As per CBDT guidelines, this digital receipt serves as official confirmation of voluntary contribution.',
-      '• Form 10BD & 10BE: Annual donation statement is submitted to the Income Tax Department; certificate in Form 10BE will be generated accordingly.',
-      '• Donor Assistance: For any queries, receipts, or verification, please email us at contact@udyamfoundation.org.',
-    ];
-    let noteY = signCardY + 13;
-    notes.forEach(note => {
-      doc.fillColor(TEXT_MUTED).font('Helvetica').fontSize(7)
-        .text(note, margin, noteY, { width: notesW, lineGap: 2 });
-      noteY += doc.heightOfString(note, { width: notesW, lineGap: 2 }) + 3;
-    });
-
-    const stampW = 175;
-    const stampX = margin + contentW - stampW;
-    const stampY = signCardY;
-
-    doc.fillColor(GREEN_DARK).font('Helvetica-Bold').fontSize(7.5)
-      .text('For Udyam Social Development Foundation', stampX, stampY, { width: stampW, align: 'center' });
-
-    const sealBoxX = stampX + (stampW - 136) / 2;
-    const sealBoxY = stampY + 13;
-    const sealBoxW = 136;
-    const sealBoxH = 38;
-
-    doc.roundedRect(sealBoxX, sealBoxY, sealBoxW, sealBoxH, 4).fill('#F0FDF4');
-    doc.roundedRect(sealBoxX, sealBoxY, sealBoxW, sealBoxH, 4).strokeColor(GREEN_MID).lineWidth(0.8).stroke();
-    doc.roundedRect(sealBoxX + 2, sealBoxY + 2, sealBoxW - 4, sealBoxH - 4, 3).strokeColor('#86EFAC').lineWidth(0.5).stroke();
-
-    doc.fillColor(GREEN_DARK).font('Helvetica-Bold').fontSize(6.5)
-      .text('UDYAM SOCIAL DEV. FOUNDATION', sealBoxX, sealBoxY + 6, { width: sealBoxW, align: 'center' });
-    doc.fillColor(GREEN_EMERALD).font('Helvetica-Bold').fontSize(8.5)
-      .text('E-VERIFIED DONATION', sealBoxX, sealBoxY + 16, { width: sealBoxW, align: 'center' });
-    doc.fillColor(TEXT_LIGHT).font('Helvetica').fontSize(6.5)
-      .text(`Date of Issue: ${formattedDate}`, sealBoxX, sealBoxY + 27, { width: sealBoxW, align: 'center' });
-
-    doc.fillColor(TEXT_DARK).font('Helvetica-Bold').fontSize(8)
-      .text('Authorized Signatory', stampX, stampY + 57, { width: stampW, align: 'center' });
-    doc.fillColor(TEXT_LIGHT).font('Helvetica').fontSize(6.5)
-      .text('Finance & Accounts Directorate', stampX, stampY + 68, { width: stampW, align: 'center' });
-
-    // ── 8. Footer (at bottom of page) ───────────────────────────────────
-    const footerLineY = pageHeight - 44;
-    doc.moveTo(margin, footerLineY).lineTo(margin + contentW, footerLineY).strokeColor(BORDER_LIGHT).lineWidth(0.6).stroke();
-
-    doc.fillColor(GREEN_DARK).font('Helvetica-BoldOblique').fontSize(8)
-      .text('"Thank you for your generous contribution towards youth empowerment & rural community development."', margin, footerLineY + 6, { width: contentW, align: 'center' });
-
-    doc.fillColor(TEXT_LIGHT).font('Helvetica').fontSize(6.5)
-      .text('This is a computer-generated receipt and requires no physical signature. Registered Section 8 NGO under Ministry of Corporate Affairs, Govt. of India.', margin, footerLineY + 17, { width: contentW, align: 'center' });
-
-    doc.rect(0, pageHeight - 14, pageWidth, 4).fill(SAFFRON);
-    doc.rect(0, pageHeight - 10, pageWidth, 10).fill(GREEN_DARK);
+    // Bottom green strip
+    doc.rect(0, doc.page.height - 12, pageWidth, 12).fill(GREEN_DEEP);
+    doc.rect(0, doc.page.height - 18, pageWidth, 6).fill(SAFFRON);
 
     doc.end();
   });
