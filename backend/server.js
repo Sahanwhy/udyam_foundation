@@ -1020,6 +1020,125 @@ async function sendApprovalEmail(doc, type, registrationNo) {
   });
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// sendRejectionEmail — sent when admin Final Rejects any registration
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendRejectionEmail(doc, type) {
+  const typeLabelMap = {
+    volunteer:    'Volunteer',
+    employee:     'Employee',
+    member:       'Member',
+    blood_donor:  'Blood Donor'
+  };
+  const typeLabel      = typeLabelMap[type] || 'Registration';
+  const applicantName  = doc.fullName || doc.patientName || 'Applicant';
+  const applicantEmail = doc.email;
+
+  if (!applicantEmail || !applicantEmail.trim()) {
+    console.log('[Rejection Email] Skipping: applicant email missing');
+    return null;
+  }
+
+  const isBloodDonor = (type === 'blood_donor');
+  const logoSrc      = getLogoDataUri();
+
+  const subject = isBloodDonor
+    ? `Regarding Your Voluntary Blood Donor Registration — Udyam Social Development Foundation`
+    : `Regarding Your ${typeLabel} Application — Udyam Social Development Foundation`;
+
+  // Body copy varies slightly for blood donors vs other types
+  const bodyIntro = isBloodDonor
+    ? `Thank you for volunteering to register as a <strong>Blood Donor</strong> with <strong>Udyam Social Development Foundation</strong>. After careful review of your application, we regret to inform you that we are unable to approve your registration at this time.`
+    : `Thank you for applying for <strong>${typeLabel}</strong> registration with <strong>Udyam Social Development Foundation</strong>. After careful review of your application, we regret to inform you that we are unable to approve your registration at this time.`;
+
+  const bodyNextSteps = isBloodDonor
+    ? `You are welcome to reapply in the future if your circumstances change, or contact us for clarification on why your application was not approved.`
+    : `You may reapply after addressing any concerns, or contact us for more information.`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; color: #333333; }
+        .email-container { max-width: 600px; background-color: #ffffff; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e1e8ed; }
+        .email-header { background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%); padding: 30px 20px; text-align: center; color: #ffffff; }
+        .email-logo { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); margin-bottom: 12px; }
+        .email-header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+        .email-header p { margin: 5px 0 0 0; font-size: 14px; opacity: 0.9; }
+        .email-body { padding: 30px 25px; line-height: 1.7; font-size: 15px; }
+        .badge-rejected { display: inline-block; background-color: #FEE2E2; color: #991B1B; font-weight: 700; padding: 6px 16px; border-radius: 50px; font-size: 13px; text-transform: uppercase; margin-bottom: 15px; border: 1px solid #FECACA; }
+        .details-box { background-color: #FFF7F7; border: 1px solid #FECACA; border-left: 5px solid #DC2626; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .details-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #FECACA; }
+        .details-row:last-child { border-bottom: none; }
+        .details-label { font-weight: 600; color: #64748B; }
+        .details-value { font-weight: 700; color: #1E293B; }
+        .notice-box { background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 14px 18px; margin: 18px 0; font-size: 14px; color: #78350F; }
+        .email-footer { background-color: #F1F5F9; padding: 20px; text-align: center; font-size: 12px; color: #64748B; border-top: 1px solid #E2E8F0; }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="email-header">
+          <img src="${logoSrc}" alt="Udyam Foundation Logo" class="email-logo" />
+          <h1>Udyam Social Development Foundation</h1>
+          <p>${isBloodDonor ? 'Blood Donor Registration — Application Update' : `${typeLabel} Registration — Application Update`}</p>
+        </div>
+        <div class="email-body">
+          <div class="badge-rejected">✗ Application Not Approved</div>
+          <p>Dear <strong>${applicantName}</strong>,</p>
+          <p>${bodyIntro}</p>
+
+          <div class="details-box">
+            <div class="details-row">
+              <span class="details-label">Applicant Name:</span>
+              <span class="details-value">${applicantName}</span>
+            </div>
+            <div class="details-row">
+              <span class="details-label">Application Type:</span>
+              <span class="details-value">${typeLabel}</span>
+            </div>
+            <div class="details-row">
+              <span class="details-label">Decision Date:</span>
+              <span class="details-value">${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            </div>
+            <div class="details-row">
+              <span class="details-label">Status:</span>
+              <span class="details-value" style="color: #DC2626;">Not Approved</span>
+            </div>
+          </div>
+
+          <div class="notice-box">
+            ℹ️ ${bodyNextSteps} For any queries, please write to us at
+            <a href="mailto:info@udyamsdf.org" style="color: #92400E; font-weight: 600;">info@udyamsdf.org</a>
+            or call our helpline at <strong>+91 60027 36095</strong>.
+          </div>
+
+          <p>We appreciate your interest in Udyam Foundation and your willingness to contribute to our mission of empowering communities.</p>
+          <p style="margin-top: 25px; margin-bottom: 0;">With regards,<br><strong>Executive Board</strong><br>Udyam Social Development Foundation</p>
+        </div>
+        <div class="email-footer">
+          <p>© ${new Date().getFullYear()} Udyam Social Development Foundation. All rights reserved.<br>Kakodonga, Golaghat, Assam — 785621, India</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text =
+    `Dear ${applicantName},\n\n` +
+    `We regret to inform you that your ${typeLabel} application with Udyam Social Development Foundation has not been approved at this time.\n\n` +
+    `Application Type : ${typeLabel}\n` +
+    `Decision Date    : ${new Date().toLocaleDateString('en-IN')}\n` +
+    `Status           : Not Approved\n\n` +
+    `${bodyNextSteps}\n\n` +
+    `For queries, contact us at info@udyamsdf.org or +91 60027 36095.\n\n` +
+    `With regards,\nExecutive Board\nUdyam Social Development Foundation`;
+
+  return sendMailHelper({ to: applicantEmail, subject, text, html });
+}
+
 // ─── PDF Receipt Generator (server-side) ─────────────────────────────────────
 const ORG = {
   name: 'Udyam Social Development Foundation',
@@ -1736,10 +1855,17 @@ app.patch('/api/admin/registrations/:type/:id/status', authMiddleware, async (re
 
     const updatedDoc = await Model.findByIdAndUpdate(id, updatePayload, { new: true });
 
-    // Send email notification to applicant upon acceptance/approval
+    // Send email notification to applicant upon final acceptance
     if (status === 'accepted' && updatedDoc && updatedDoc.email) {
       sendApprovalEmail(updatedDoc, type, generatedNo).catch(err => {
         console.error('Error sending approval email to applicant:', err);
+      });
+    }
+
+    // Send email notification to applicant upon final rejection
+    if (status === 'rejected' && updatedDoc && updatedDoc.email) {
+      sendRejectionEmail(updatedDoc, type).catch(err => {
+        console.error('Error sending rejection email to applicant:', err);
       });
     }
 

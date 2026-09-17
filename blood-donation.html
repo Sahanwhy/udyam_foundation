@@ -1978,108 +1978,140 @@
         return;
       }
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
 
-      // Background card
-      doc.setFillColor(253, 246, 236); // warm cream
-      doc.rect(0, 0, 148, 210, 'F');
+      // Helper to draw the slip once logo is ready (or skipped)
+      function drawSlip(logoDataUrl) {
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
 
-      // Top Header Banner
-      doc.setFillColor(27, 67, 50); // forest green
-      doc.rect(0, 0, 148, 38, 'F');
+        // Background card
+        doc.setFillColor(253, 246, 236); // warm cream
+        doc.rect(0, 0, 148, 210, 'F');
 
-      // Decorative crimson strip
-      doc.setFillColor(220, 38, 38);
-      doc.rect(0, 38, 148, 3, 'F');
+        // Top Header Banner
+        doc.setFillColor(27, 67, 50); // forest green
+        doc.rect(0, 0, 148, 38, 'F');
 
-      // Title
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
-      doc.text('UDYAM SOCIAL DEVELOPMENT FOUNDATION', 74, 15, { align: 'center' });
+        // Decorative crimson strip
+        doc.setFillColor(220, 38, 38);
+        doc.rect(0, 38, 148, 3, 'F');
 
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.text('Regd. Office: Golaghat, Assam · Est. 1 May 2022', 74, 22, { align: 'center' });
-      doc.setFont('helvetica', 'bold');
-      doc.text('VOLUNTARY BLOOD DONOR ACKNOWLEDGEMENT SLIP', 74, 30, { align: 'center' });
+        // Logo on the left side of the header
+        if (logoDataUrl) {
+          try {
+            doc.addImage(logoDataUrl, 'JPEG', 5, 4, 30, 30);
+          } catch(e) {
+            // Logo failed to embed, continue without it
+          }
+        }
 
-      // Blood Group Watermark / Badge Box
-      doc.setFillColor(254, 242, 242);
-      doc.setDrawColor(220, 38, 38);
-      doc.roundedRect(102, 48, 36, 32, 4, 4, 'FD');
+        // Title text — shifted right to accommodate logo
+        const textX = logoDataUrl ? 92 : 74;
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('UDYAM SOCIAL DEVELOPMENT FOUNDATION', textX, 13, { align: 'center' });
 
-      doc.setTextColor(220, 38, 38);
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'bold');
-      doc.text('BLOOD GROUP', 120, 56, { align: 'center' });
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Regd. Office: Golaghat, Assam · Est. 1 May 2022', textX, 21, { align: 'center' });
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.text('VOLUNTARY BLOOD DONOR ACKNOWLEDGEMENT SLIP', textX, 30, { align: 'center' });
 
-      doc.setFontSize(22);
-      doc.text(donor.bloodGroup, 120, 70, { align: 'center' });
+        // Blood Group Watermark / Badge Box
+        doc.setFillColor(254, 242, 242);
+        doc.setDrawColor(220, 38, 38);
+        doc.roundedRect(102, 48, 36, 32, 4, 4, 'FD');
 
-      // Donor Information
-      doc.setTextColor(27, 67, 50);
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text('DONOR DETAILS', 12, 54);
+        doc.setTextColor(220, 38, 38);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.text('BLOOD GROUP', 120, 56, { align: 'center' });
 
-      doc.setDrawColor(200, 200, 200);
-      doc.line(12, 57, 95, 57);
+        doc.setFontSize(22);
+        doc.text(donor.bloodGroup, 120, 70, { align: 'center' });
 
-      const fields = [
-        ['Registration ID:', donor.regId],
-        ['Full Name:', donor.fullName],
-        ['Guardian Name:', donor.guardianName],
-        ['Date of Birth:', donor.dob],
-        ['Aadhar No:', 'XXXXXXXX' + donor.aadharNo.slice(-4)],
-        ['Mobile No:', donor.mobileNo],
-        ['WhatsApp No:', donor.whatsappNo],
-        ['Email:', donor.email],
-        ['Times Donated:', String(donor.totalTimesDonated)],
-        ['Last Donation:', donor.lastDonationDate],
-        ['Registration Date:', donor.date]
-      ];
+        // Donor Information
+        doc.setTextColor(27, 67, 50);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text('DONOR DETAILS', 12, 54);
 
-      let yPos = 64;
-      fields.forEach(([label, value]) => {
+        doc.setDrawColor(200, 200, 200);
+        doc.line(12, 57, 95, 57);
+
+        const fields = [
+          ['Registration ID:', donor.regId],
+          ['Full Name:', donor.fullName],
+          ['Guardian Name:', donor.guardianName],
+          ['Date of Birth:', donor.dob],
+          ['Aadhar No:', 'XXXXXXXX' + donor.aadharNo.slice(-4)],
+          ['Mobile No:', donor.mobileNo],
+          ['WhatsApp No:', donor.whatsappNo],
+          ['Email:', donor.email],
+          ['Times Donated:', String(donor.totalTimesDonated)],
+          ['Last Donation:', donor.lastDonationDate],
+          ['Registration Date:', donor.date]
+        ];
+
+        let yPos = 64;
+        fields.forEach(([label, value]) => {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(8.5);
+          doc.setTextColor(100, 116, 139);
+          doc.text(label, 12, yPos);
+
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(30, 41, 59);
+          doc.text(String(value || 'N/A'), 48, yPos);
+          yPos += 7.2;
+        });
+
+        // Address Box
+        yPos += 2;
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(8.5);
         doc.setTextColor(100, 116, 139);
-        doc.text(label, 12, yPos);
+        doc.text('Address:', 12, yPos);
 
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(30, 41, 59);
-        doc.text(String(value || 'N/A'), 48, yPos);
-        yPos += 7.2;
-      });
+        const splitAddress = doc.splitTextToSize(donor.address, 120);
+        doc.text(splitAddress, 12, yPos + 5);
 
-      // Address Box
-      yPos += 2;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8.5);
-      doc.setTextColor(100, 116, 139);
-      doc.text('Address:', 12, yPos);
+        // Footer note
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(12, 172, 124, 26, 3, 3, 'FD');
 
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(30, 41, 59);
-      const splitAddress = doc.splitTextToSize(donor.address, 120);
-      doc.text(splitAddress, 12, yPos + 5);
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(7.5);
+        doc.setTextColor(75, 85, 99);
+        doc.text('"A single drop of blood can make a huge difference. You are registered in', 74, 180, { align: 'center' });
+        doc.text('Udyam Foundation Emergency Lifeline network to serve society voluntarily."', 74, 185, { align: 'center' });
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(27, 67, 50);
+        doc.text('Helpline: +91 60027 36095 · Website: www.udyamsdf.org', 74, 192, { align: 'center' });
 
-      // Footer note
-      doc.setFillColor(255, 255, 255);
-      doc.setDrawColor(226, 232, 240);
-      doc.roundedRect(12, 172, 124, 26, 3, 3, 'FD');
+        doc.save(`Udyam_Blood_Donor_${donor.fullName.replace(/\s+/g, '_')}.pdf`);
+      } // end drawSlip
 
-      doc.setFont('helvetica', 'italic');
-      doc.setFontSize(7.5);
-      doc.setTextColor(75, 85, 99);
-      doc.text('"A single drop of blood can make a huge difference. You are registered in', 74, 180, { align: 'center' });
-      doc.text('Udyam Foundation Emergency Lifeline network to serve society voluntarily."', 74, 185, { align: 'center' });
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(27, 67, 50);
-      doc.text('Helpline: +91 60027 36095 · Website: www.udyamsdf.org', 74, 192, { align: 'center' });
-
-      doc.save(`Udyam_Blood_Donor_${donor.fullName.replace(/\s+/g, '_')}.pdf`);
+      // Load logo image as base64 via canvas, then draw the slip
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      logoImg.onload = function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = logoImg.naturalWidth;
+        canvas.height = logoImg.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(logoImg, 0, 0);
+        const logoDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        drawSlip(logoDataUrl);
+      };
+      logoImg.onerror = function() {
+        drawSlip(null); // fallback: generate without logo
+      };
+      logoImg.src = 'backend/images/logo.jpg';
     }
 
     function generateBloodRequestSlipPDF(req) {
