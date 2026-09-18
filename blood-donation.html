@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,600&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="certificate.js"></script>
   <script src="api-config.js"></script>
   <style>
     .blood-page-container {
@@ -1350,10 +1351,8 @@
   <!-- ═══════════════════ SUCCESS MODAL & DONOR SLIP ═══════════════════ -->
   <div class="donor-slip-modal" id="successModal">
     <div class="donor-slip-card">
-      <div style="width: 64px; height: 64px; border-radius: 50%; background: #DC2626; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem; box-shadow: 0 8px 24px rgba(220,38,38,0.35);">
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
-        </svg>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 1rem;">
+        <img src="backend/images/logo.jpg" alt="Udyam Foundation Logo" style="width: 58px; height: 58px; border-radius: 50%; object-fit: contain; border: 2px solid #1B4332; background: #ffffff; padding: 2px; box-shadow: 0 4px 14px rgba(27,67,50,0.25);" onerror="this.onerror=null; this.src='images/logo.jpg';" />
       </div>
       <div class="slip-badge">Registration Successful</div>
       <h3 style="font-size: 1.6rem; color: #1B4332; margin-bottom: 0.5rem; font-family: var(--font-display);">Thank You, Blood Donor!</h3>
@@ -1362,6 +1361,13 @@
       </p>
 
       <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 1.2rem; margin-bottom: 1.5rem; text-align: left;">
+        <div style="display: flex; align-items: center; gap: 12px; border-bottom: 1px dashed #CBD5E1; padding-bottom: 0.85rem; margin-bottom: 0.85rem;">
+          <img src="backend/images/logo.jpg" alt="Udyam Foundation Logo" style="width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid #1B4332; object-fit: contain; background: #ffffff; padding: 2px; flex-shrink: 0;" onerror="this.onerror=null; this.src='images/logo.jpg';" />
+          <div>
+            <div style="font-size: 0.86rem; font-weight: 700; color: #1B4332; letter-spacing: 0.3px;">UDYAM SOCIAL DEVELOPMENT FOUNDATION</div>
+            <div style="font-size: 0.74rem; color: #64748B;">Official Voluntary Blood Donor Slip · Golaghat, Assam</div>
+          </div>
+        </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
           <span style="color: #64748B; font-size: 0.85rem;">Donor Name:</span>
           <strong id="modalDonorName" style="color: #1E293B;"></strong>
@@ -1395,10 +1401,8 @@
   <!-- ═══════════════════ BLOOD REQUEST SUCCESS MODAL ═══════════════════ -->
   <div class="donor-slip-modal" id="requestSuccessModal">
     <div class="donor-slip-card" style="border-top-color: #DC2626;">
-      <div style="width: 64px; height: 64px; border-radius: 50%; background: #DC2626; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem; box-shadow: 0 8px 24px rgba(220,38,38,0.35);">
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-        </svg>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 1rem;">
+        <img src="backend/images/logo.jpg" alt="Udyam Foundation Logo" style="width: 58px; height: 58px; border-radius: 50%; object-fit: contain; border: 2px solid #DC2626; background: #ffffff; padding: 2px; box-shadow: 0 4px 14px rgba(220,38,38,0.25);" onerror="this.onerror=null; this.src='images/logo.jpg';" />
       </div>
       <div class="slip-badge" style="background: #FEF2F2; color: #DC2626;">Blood Request Received</div>
       <h3 style="font-size: 1.55rem; color: #1B4332; margin-bottom: 0.5rem; font-family: var(--font-display);">Emergency Request Registered</h3>
@@ -1407,6 +1411,13 @@
       </p>
 
       <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 1.2rem; margin-bottom: 1.5rem; text-align: left;">
+        <div style="display: flex; align-items: center; gap: 12px; border-bottom: 1px dashed #FECACA; padding-bottom: 0.85rem; margin-bottom: 0.85rem;">
+          <img src="backend/images/logo.jpg" alt="Udyam Foundation Logo" style="width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid #DC2626; object-fit: contain; background: #ffffff; padding: 2px; flex-shrink: 0;" onerror="this.onerror=null; this.src='images/logo.jpg';" />
+          <div>
+            <div style="font-size: 0.86rem; font-weight: 700; color: #991B1B; letter-spacing: 0.3px;">UDYAM SOCIAL DEVELOPMENT FOUNDATION</div>
+            <div style="font-size: 0.74rem; color: #64748B;">Emergency Blood Requisition Slip · 24/7 Helpline</div>
+          </div>
+        </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
           <span style="color: #64748B; font-size: 0.85rem;">Patient Name:</span>
           <strong id="modalReqPatientName" style="color: #1E293B;"></strong>
@@ -1972,6 +1983,33 @@
       document.getElementById('requestSuccessModal').classList.remove('active');
     }
 
+    // ── Helper to retrieve slip logo Base64 reliably ──
+    function getSlipLogo(callback) {
+      if (window.LOGO_BASE64) {
+        callback(window.LOGO_BASE64);
+        return;
+      }
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      logoImg.onload = function() {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = logoImg.naturalWidth;
+          canvas.height = logoImg.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(logoImg, 0, 0);
+          const logoDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+          callback(logoDataUrl);
+        } catch(e) {
+          callback(null);
+        }
+      };
+      logoImg.onerror = function() {
+        callback(null);
+      };
+      logoImg.src = 'backend/images/logo.jpg';
+    }
+
     function generateDonorSlipPDF(donor) {
       if (!window.jspdf || !window.jspdf.jsPDF) {
         alert('PDF generator is still loading. Please try in a moment.');
@@ -1979,8 +2017,7 @@
       }
       const { jsPDF } = window.jspdf;
 
-      // Helper to draw the slip once logo is ready (or skipped)
-      function drawSlip(logoDataUrl) {
+      getSlipLogo(function(logoDataUrl) {
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
 
         // Background card
@@ -1995,10 +2032,12 @@
         doc.setFillColor(220, 38, 38);
         doc.rect(0, 38, 148, 3, 'F');
 
-        // Logo on the left side of the header
+        // Logo in white badge on header left
         if (logoDataUrl) {
           try {
-            doc.addImage(logoDataUrl, 'JPEG', 5, 4, 30, 30);
+            doc.setFillColor(255, 255, 255);
+            doc.roundedRect(6, 4, 30, 30, 3, 3, 'F');
+            doc.addImage(logoDataUrl, 'JPEG', 7, 5, 28, 28);
           } catch(e) {
             // Logo failed to embed, continue without it
           }
@@ -2008,12 +2047,12 @@
         const textX = logoDataUrl ? 92 : 74;
         doc.setTextColor(255, 255, 255);
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(12);
-        doc.text('UDYAM SOCIAL DEVELOPMENT FOUNDATION', textX, 13, { align: 'center' });
+        doc.setFontSize(11);
+        doc.text('UDYAM SOCIAL DEVELOPMENT FOUNDATION', textX, 14, { align: 'center' });
 
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.text('Regd. Office: Golaghat, Assam · Est. 1 May 2022', textX, 21, { align: 'center' });
+        doc.text('Regd. Office: Golaghat, Assam · Est. 1 May 2022', textX, 22, { align: 'center' });
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(8.5);
         doc.text('VOLUNTARY BLOOD DONOR ACKNOWLEDGEMENT SLIP', textX, 30, { align: 'center' });
@@ -2029,7 +2068,7 @@
         doc.text('BLOOD GROUP', 120, 56, { align: 'center' });
 
         doc.setFontSize(22);
-        doc.text(donor.bloodGroup, 120, 70, { align: 'center' });
+        doc.text(donor.bloodGroup || '', 120, 70, { align: 'center' });
 
         // Donor Information
         doc.setTextColor(27, 67, 50);
@@ -2040,17 +2079,18 @@
         doc.setDrawColor(200, 200, 200);
         doc.line(12, 57, 95, 57);
 
+        const aadharDisplay = donor.aadharNo ? 'XXXXXXXX' + String(donor.aadharNo).slice(-4) : 'N/A';
         const fields = [
           ['Registration ID:', donor.regId],
           ['Full Name:', donor.fullName],
           ['Guardian Name:', donor.guardianName],
           ['Date of Birth:', donor.dob],
-          ['Aadhar No:', 'XXXXXXXX' + donor.aadharNo.slice(-4)],
+          ['Aadhar No:', aadharDisplay],
           ['Mobile No:', donor.mobileNo],
           ['WhatsApp No:', donor.whatsappNo],
           ['Email:', donor.email],
-          ['Times Donated:', String(donor.totalTimesDonated)],
-          ['Last Donation:', donor.lastDonationDate],
+          ['Times Donated:', String(donor.totalTimesDonated || 0)],
+          ['Last Donation:', donor.lastDonationDate || 'N/A'],
           ['Registration Date:', donor.date]
         ];
 
@@ -2076,7 +2116,7 @@
 
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(30, 41, 59);
-        const splitAddress = doc.splitTextToSize(donor.address, 120);
+        const splitAddress = doc.splitTextToSize(donor.address || 'N/A', 120);
         doc.text(splitAddress, 12, yPos + 5);
 
         // Footer note
@@ -2093,25 +2133,9 @@
         doc.setTextColor(27, 67, 50);
         doc.text('Helpline: +91 60027 36095 · Website: www.udyamsdf.org', 74, 192, { align: 'center' });
 
-        doc.save(`Udyam_Blood_Donor_${donor.fullName.replace(/\s+/g, '_')}.pdf`);
-      } // end drawSlip
-
-      // Load logo image as base64 via canvas, then draw the slip
-      const logoImg = new Image();
-      logoImg.crossOrigin = 'anonymous';
-      logoImg.onload = function() {
-        const canvas = document.createElement('canvas');
-        canvas.width = logoImg.naturalWidth;
-        canvas.height = logoImg.naturalHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(logoImg, 0, 0);
-        const logoDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-        drawSlip(logoDataUrl);
-      };
-      logoImg.onerror = function() {
-        drawSlip(null); // fallback: generate without logo
-      };
-      logoImg.src = 'backend/images/logo.jpg';
+        const safeDonorName = (donor.fullName || 'Donor').replace(/\s+/g, '_');
+        doc.save(`Udyam_Blood_Donor_${safeDonorName}.pdf`);
+      });
     }
 
     function generateBloodRequestSlipPDF(req) {
@@ -2120,130 +2144,147 @@
         return;
       }
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
 
-      // Background card
-      doc.setFillColor(254, 248, 248); // light emergency tint
-      doc.rect(0, 0, 148, 210, 'F');
+      getSlipLogo(function(logoDataUrl) {
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
 
-      // Top Header Banner
-      doc.setFillColor(185, 28, 28); // deep crimson red
-      doc.rect(0, 0, 148, 38, 'F');
+        // Background card
+        doc.setFillColor(254, 248, 248); // light emergency tint
+        doc.rect(0, 0, 148, 210, 'F');
 
-      // Decorative forest green strip
-      doc.setFillColor(27, 67, 50);
-      doc.rect(0, 38, 148, 3, 'F');
+        // Top Header Banner
+        doc.setFillColor(185, 28, 28); // deep crimson red
+        doc.rect(0, 0, 148, 38, 'F');
 
-      // Title
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(13);
-      doc.text('UDYAM SOCIAL DEVELOPMENT FOUNDATION', 74, 15, { align: 'center' });
+        // Decorative forest green strip
+        doc.setFillColor(27, 67, 50);
+        doc.rect(0, 38, 148, 3, 'F');
 
-      doc.setFontSize(8.5);
-      doc.setFont('helvetica', 'normal');
-      doc.text('Regd. Office: Golaghat, Assam · Est. 1 May 2022', 74, 22, { align: 'center' });
-      doc.setFont('helvetica', 'bold');
-      doc.text('EMERGENCY BLOOD REQUISITION ACKNOWLEDGEMENT SLIP', 74, 30, { align: 'center' });
+        // Logo in white badge on header left
+        if (logoDataUrl) {
+          try {
+            doc.setFillColor(255, 255, 255);
+            doc.roundedRect(6, 4, 30, 30, 3, 3, 'F');
+            doc.addImage(logoDataUrl, 'JPEG', 7, 5, 28, 28);
+          } catch(e) {
+            // Logo failed to embed, continue without it
+          }
+        }
 
-      // Blood Group Watermark / Badge Box
-      doc.setFillColor(254, 242, 242);
-      doc.setDrawColor(220, 38, 38);
-      doc.roundedRect(102, 47, 36, 34, 4, 4, 'FD');
+        // Title
+        const textX = logoDataUrl ? 92 : 74;
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text('UDYAM SOCIAL DEVELOPMENT FOUNDATION', textX, 14, { align: 'center' });
 
-      doc.setTextColor(220, 38, 38);
-      doc.setFontSize(7.5);
-      doc.setFont('helvetica', 'bold');
-      doc.text('BLOOD NEEDED', 120, 54, { align: 'center' });
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Regd. Office: Golaghat, Assam · Est. 1 May 2022', textX, 22, { align: 'center' });
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.text('EMERGENCY BLOOD REQUISITION ACKNOWLEDGEMENT SLIP', textX, 30, { align: 'center' });
 
-      doc.setFontSize(22);
-      doc.text(req.patientBloodGroup, 120, 67, { align: 'center' });
+        // Blood Group Watermark / Badge Box
+        doc.setFillColor(254, 242, 242);
+        doc.setDrawColor(220, 38, 38);
+        doc.roundedRect(102, 47, 36, 34, 4, 4, 'FD');
 
-      doc.setFontSize(7.5);
-      doc.setTextColor(100, 116, 139);
-      doc.text(req.bloodQuantity, 120, 75, { align: 'center' });
+        doc.setTextColor(220, 38, 38);
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'bold');
+        doc.text('BLOOD NEEDED', 120, 54, { align: 'center' });
 
-      // Patient Information Section Header
-      doc.setTextColor(185, 28, 28);
-      doc.setFontSize(10.5);
-      doc.setFont('helvetica', 'bold');
-      doc.text('PATIENT & HOSPITAL DETAILS', 12, 53);
+        doc.setFontSize(22);
+        doc.text(req.patientBloodGroup || '', 120, 67, { align: 'center' });
 
-      doc.setDrawColor(220, 220, 220);
-      doc.line(12, 56, 95, 56);
+        doc.setFontSize(7.5);
+        doc.setTextColor(100, 116, 139);
+        doc.text(req.bloodQuantity || '', 120, 75, { align: 'center' });
 
-      const fields = [
-        ['Request ID:', req.reqId],
-        ['Patient Name:', req.patientName],
-        ['Guardian Name:', req.guardianName],
-        ['Patient Age:', `${req.patientAge} Years`],
-        ['Quantity Required:', req.bloodQuantity],
-        ['Date Needed:', req.requiredDate],
-        ['Contact Phone:', req.contactNo],
-        ['WhatsApp No:', req.whatsappNo],
-        ['Hospital Admitted:', req.admittedHospital],
-        ['Request Date:', req.date]
-      ];
+        // Patient Information Section Header
+        doc.setTextColor(185, 28, 28);
+        doc.setFontSize(10.5);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PATIENT & HOSPITAL DETAILS', 12, 53);
 
-      let yPos = 62;
-      fields.forEach(([label, value]) => {
+        doc.setDrawColor(220, 220, 220);
+        doc.line(12, 56, 95, 56);
+
+        const fields = [
+          ['Request ID:', req.reqId],
+          ['Patient Name:', req.patientName],
+          ['Guardian Name:', req.guardianName],
+          ['Patient Age:', `${req.patientAge} Years`],
+          ['Quantity Required:', req.bloodQuantity],
+          ['Date Needed:', req.requiredDate],
+          ['Contact Phone:', req.contactNo],
+          ['WhatsApp No:', req.whatsappNo],
+          ['Hospital Admitted:', req.admittedHospital],
+          ['Request Date:', req.date]
+        ];
+
+        let yPos = 62;
+        fields.forEach(([label, value]) => {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(8.2);
+          doc.setTextColor(100, 116, 139);
+          doc.text(label, 12, yPos);
+
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(30, 41, 59);
+          const splitVal = doc.splitTextToSize(String(value || 'N/A'), 55);
+          doc.text(splitVal, 48, yPos);
+          yPos += Math.max(6.5, splitVal.length * 4.5);
+        });
+
+        // Hospital Where Blood Required
+        yPos += 1;
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(8.2);
         doc.setTextColor(100, 116, 139);
-        doc.text(label, 12, yPos);
+        doc.text('Blood Needed At:', 12, yPos);
 
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(30, 41, 59);
-        const splitVal = doc.splitTextToSize(String(value || 'N/A'), 55);
-        doc.text(splitVal, 48, yPos);
-        yPos += Math.max(6.5, splitVal.length * 4.5);
+        const splitHosp = doc.splitTextToSize(req.bloodHospitalDetails || 'N/A', 90);
+        doc.text(splitHosp, 48, yPos);
+        yPos += Math.max(7, splitHosp.length * 4.5);
+
+        // Patient Address
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.2);
+        doc.setTextColor(100, 116, 139);
+        doc.text('Patient Address:', 12, yPos);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(30, 41, 59);
+        const splitAddr = doc.splitTextToSize(req.address || 'N/A', 90);
+        doc.text(splitAddr, 48, yPos);
+        yPos += Math.max(7, splitAddr.length * 4.5);
+
+        // Footer note
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(254, 202, 202);
+        doc.roundedRect(12, 172, 124, 26, 3, 3, 'FD');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(185, 28, 28);
+        doc.text('24/7 EMERGENCY BLOOD COORDINATION HELPLINE', 74, 180, { align: 'center' });
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(75, 85, 99);
+        doc.text('Keep this slip ready when contacting our emergency team or hospital blood bank.', 74, 186, { align: 'center' });
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(27, 67, 50);
+        doc.text('Emergency: +91 60027 36095 · www.udyamsdf.org', 74, 193, { align: 'center' });
+
+        const safePatientName = (req.patientName || 'Patient').replace(/\s+/g, '_');
+        doc.save(`Udyam_Blood_Request_${safePatientName}.pdf`);
       });
-
-      // Hospital Where Blood Required
-      yPos += 1;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8.2);
-      doc.setTextColor(100, 116, 139);
-      doc.text('Blood Needed At:', 12, yPos);
-
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(30, 41, 59);
-      const splitHosp = doc.splitTextToSize(req.bloodHospitalDetails, 90);
-      doc.text(splitHosp, 48, yPos);
-      yPos += Math.max(7, splitHosp.length * 4.5);
-
-      // Patient Address
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8.2);
-      doc.setTextColor(100, 116, 139);
-      doc.text('Patient Address:', 12, yPos);
-
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(30, 41, 59);
-      const splitAddr = doc.splitTextToSize(req.address, 90);
-      doc.text(splitAddr, 48, yPos);
-      yPos += Math.max(7, splitAddr.length * 4.5);
-
-      // Footer note
-      doc.setFillColor(255, 255, 255);
-      doc.setDrawColor(254, 202, 202);
-      doc.roundedRect(12, 172, 124, 26, 3, 3, 'FD');
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.setTextColor(185, 28, 28);
-      doc.text('24/7 EMERGENCY BLOOD COORDINATION HELPLINE', 74, 180, { align: 'center' });
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.5);
-      doc.setTextColor(75, 85, 99);
-      doc.text('Keep this slip ready when contacting our emergency team or hospital blood bank.', 74, 186, { align: 'center' });
-
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(27, 67, 50);
-      doc.text('Emergency: +91 60027 36095 · www.udyamsdf.org', 74, 193, { align: 'center' });
-
-      doc.save(`Udyam_Blood_Request_${req.patientName.replace(/\s+/g, '_')}.pdf`);
     }
 
     // ═════════════════════════════════════════════════════════════════════
