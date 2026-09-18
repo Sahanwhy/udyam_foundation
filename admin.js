@@ -728,9 +728,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const index = allRegistrations.findIndex(r => r._id === id);
         if (index > -1) {
           allRegistrations[index].status = status;
+          // Persist the generated registration number so the Accepted section can display it
+          if (status === 'accepted' && res.registrationNo) {
+            allRegistrations[index].registrationNo = res.registrationNo;
+          }
         }
         renderRegistrations();
         updateSidebarBadges();
+        // Show a success toast with the registration number when accepted
+        if (status === 'accepted' && res.registrationNo) {
+          alert(`✅ Application Approved!\n\nUnique Registration No: ${res.registrationNo}\n\nAn approval email with this number has been sent to the applicant.`);
+        }
       } else {
         alert(res.error || 'Failed to update status');
       }
@@ -1169,11 +1177,13 @@ document.addEventListener('DOMContentLoaded', () => {
         keyInfoHtml = `
           <div style="font-weight:700; color:#059669; font-size:0.82rem;">₹${reg.amount || 0}</div>
           <div style="font-size:0.7rem; color:#64748B;">${reg.validity || 'N/A'}</div>
+          ${reg.registrationNo ? `<div style="font-size:0.7rem; font-weight:700; color:#047857; font-family:monospace; background:#D1FAE5; padding:1px 5px; border-radius:3px; margin-top:2px; border:1px solid #6EE7B7;" title="Unique Registration No">${reg.registrationNo}</div>` : ''}
         `;
       } else {
         keyInfoHtml = `
           <span style="color:#1D4ED8; font-weight:700; font-size:0.8rem; background:#EFF6FF; padding:1px 6px; border-radius:4px; border:1px solid #BFDBFE;">🩸 ${reg.bloodGroup || 'N/A'}</span>
           ${reg.district ? `<div style="font-size:0.7rem; color:#64748B; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📍 ${reg.district}</div>` : ''}
+          ${reg.registrationNo ? `<div style="font-size:0.7rem; font-weight:700; color:#047857; font-family:monospace; background:#D1FAE5; padding:1px 5px; border-radius:3px; margin-top:2px; border:1px solid #6EE7B7;" title="Unique Registration No">${reg.registrationNo}</div>` : ''}
         `;
       }
 
@@ -1571,13 +1581,25 @@ document.addEventListener('DOMContentLoaded', () => {
           <td colspan="9" class="excel-detail-cell">
             <div style="display: flex; flex-direction: column; gap: 0.85rem;">
               <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; border-bottom: 1px solid #CBD5E1; padding-bottom: 0.5rem;">
-                <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                   <span style="font-weight: 700; font-size: 1rem; color: #0F172A;">${applicantName}</span>
                   <span class="excel-badge-type excel-type-${reg.type}">${typeLabel}</span>
                   <span style="font-size: 0.75rem; color: #64748B;">ID: ${reg._id}</span>
+                  ${reg.registrationNo ? `<span style="display:inline-flex; align-items:center; gap:5px; background:linear-gradient(135deg,#D1FAE5,#A7F3D0); color:#047857; font-weight:800; font-size:0.8rem; font-family:monospace; padding:3px 10px; border-radius:6px; border:1.5px solid #34D399; box-shadow:0 1px 4px rgba(16,185,129,0.15);" title="Unique Registration Number">🎫 ${reg.registrationNo}</span>` : ''}
                 </div>
                 <button type="button" class="excel-act-btn" style="background: white; border: 1px solid #CBD5E1; color: #475569;" onclick="window.toggleRegDetail('${reg._id}')">▲ Close Details</button>
               </div>
+              ${reg.registrationNo ? `
+              <div style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5); border:2px solid #34D399; border-radius:10px; padding:0.85rem 1.1rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; box-shadow:0 2px 8px rgba(16,185,129,0.1);">
+                <div>
+                  <div style="font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.07em; color:#065F46; margin-bottom:3px;">🎫 Unique Registration Number</div>
+                  <div style="font-size:1.15rem; font-weight:800; font-family:monospace; color:#047857; letter-spacing:0.04em;">${reg.registrationNo}</div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-size:0.65rem; font-weight:700; text-transform:uppercase; color:#065F46; margin-bottom:3px;">Status</div>
+                  <span style="display:inline-flex; align-items:center; gap:4px; background:#047857; color:white; padding:4px 12px; border-radius:20px; font-size:0.75rem; font-weight:700;">✓ Accepted &amp; Selected</span>
+                </div>
+              </div>` : ''}
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.65rem;">${detailFieldsHtml}</div>
               ${detailTrackingHtml}
               ${detailAttachmentsHtml}
@@ -1607,6 +1629,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="excel-badge-type excel-type-${reg.type}">${typeLabel}</span>
                 <span class="m-card-date">🕒 ${new Date(reg.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} · ${new Date(reg.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
+              ${reg.registrationNo ? `<div style="display:inline-flex; align-items:center; gap:4px; margin-top:4px; background:linear-gradient(135deg,#D1FAE5,#A7F3D0); color:#047857; font-weight:800; font-size:0.72rem; font-family:monospace; padding:2px 8px; border-radius:5px; border:1.5px solid #34D399;">🎫 ${reg.registrationNo}</div>` : ''}
             </div>
           </div>
           <div class="m-card-meta-grid">

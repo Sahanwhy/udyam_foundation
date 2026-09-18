@@ -249,6 +249,8 @@ const bloodRequestSchema = new mongoose.Schema({
   bloodQuantity: { type: String, required: true },
   requiredDate: { type: String, required: true },
   patientPhoto: { type: String, default: '' },
+  memberRegNo: { type: String, required: true },
+  memberRegSlip: { type: String, default: '' },
   status: { type: String, enum: ['pending', 'accepted', 'rejected', 'forwarded', 'verified', 'issue_reported', 'fulfilled', 'contacted'], default: 'pending' },
   assignedToRole: { type: String, default: 'Secretary' },
   assignedToAdminId: { type: String, default: null },
@@ -554,7 +556,8 @@ app.get(['/api/blood-donors', '/api/public/blood-donors'], async (req, res) => {
 });
 
 app.post('/api/register/blood-request', upload.fields([
-  { name: 'patientPhoto', maxCount: 1 }
+  { name: 'patientPhoto', maxCount: 1 },
+  { name: 'memberRegSlip', maxCount: 1 }
 ]), async (req, res) => {
   try {
     if (!BloodRequest) return res.status(503).json({ error: 'Database not ready' });
@@ -575,14 +578,21 @@ app.post('/api/register/blood-request', upload.fields([
       admittedHospital,
       bloodHospitalDetails,
       bloodQuantity,
-      requiredDate
+      requiredDate,
+      memberRegNo
     } = req.body;
 
-    if (!patientName || !patientBloodGroup || !guardianName || !patientAge || !contactNo || !whatsappNo || !address || !villageTownWard || !postOffice || !pinCode || !policeStation || !district || !admittedHospital || !bloodHospitalDetails || !bloodQuantity || !requiredDate) {
-      return res.status(400).json({ error: 'All required fields must be provided' });
+    if (!patientName || !patientBloodGroup || !guardianName || !patientAge || !contactNo || !whatsappNo || !address || !villageTownWard || !postOffice || !pinCode || !policeStation || !district || !admittedHospital || !bloodHospitalDetails || !bloodQuantity || !requiredDate || !memberRegNo) {
+      return res.status(400).json({ error: 'All required fields must be provided, including Member Registration Number' });
     }
 
     const patientPhoto = req.files && req.files['patientPhoto'] ? req.files['patientPhoto'][0].path : '';
+    const memberRegSlip = req.files && req.files['memberRegSlip'] ? req.files['memberRegSlip'][0].path : '';
+
+    if (!memberRegSlip) {
+      return res.status(400).json({ error: 'Member Registration Slip (PDF) is required to request blood.' });
+    }
+
     const requestNo = `REQ-BLD/${new Date().getFullYear()}/${Math.floor(10000 + Math.random() * 90000)}`;
 
     const newBloodRequest = new BloodRequest({
@@ -603,6 +613,8 @@ app.post('/api/register/blood-request', upload.fields([
       bloodQuantity: bloodQuantity.trim(),
       requiredDate: requiredDate.trim(),
       patientPhoto,
+      memberRegNo: memberRegNo.trim(),
+      memberRegSlip,
       requestNo
     });
 
