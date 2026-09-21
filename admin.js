@@ -719,6 +719,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateRegistrationStatus = async (type, id, status) => {
     try {
+      if (status === 'rejected') {
+        const confirmed = confirm(
+          'Are you sure you want to Final Reject this application?\n\nA rejection notification email will be automatically sent to the applicant.'
+        );
+        if (!confirmed) return;
+      }
+
       const res = await apiRequest(`/api/admin/registrations/${type}/${id}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status })
@@ -738,6 +745,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show a success toast with the registration number when accepted
         if (status === 'accepted' && res.registrationNo) {
           alert(`✅ Application Approved!\n\nUnique Registration No: ${res.registrationNo}\n\nAn approval email with this number has been sent to the applicant.`);
+        } else if (status === 'rejected') {
+          alert(`❌ Application Rejected.\n\nA rejection notification email has been sent to the applicant.`);
         }
       } else {
         alert(res.error || 'Failed to update status');

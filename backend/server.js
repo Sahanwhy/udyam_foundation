@@ -555,6 +555,54 @@ app.get(['/api/blood-donors', '/api/public/blood-donors'], async (req, res) => {
   }
 });
 
+// Helper for safely escaping regex characters
+function escapeRegex(str) {
+  return typeof str === 'string' ? str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
+}
+
+// ─── Public Approved Members Directory ───────────────────────────────────────
+app.get(['/api/members', '/api/public/members'], async (req, res) => {
+  try {
+    if (!Member) return res.status(503).json({ error: 'Database not ready' });
+
+    const { bloodGroup, district, search } = req.query;
+    const query = { status: { $in: ['accepted', 'verified'] } };
+
+    if (bloodGroup && bloodGroup.toLowerCase() !== 'all') {
+      query.bloodGroup = bloodGroup.trim();
+    }
+
+    if (district && district.toLowerCase() !== 'all' && district.trim()) {
+      query.district = { $regex: new RegExp(escapeRegex(district.trim()), 'i') };
+    }
+
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(escapeRegex(search.trim()), 'i');
+      query.$or = [
+        { fullName: searchRegex },
+        { district: searchRegex },
+        { bloodGroup: searchRegex },
+        { registrationNo: searchRegex }
+      ];
+    }
+
+    // Return only public-safe fields — no payment IDs, address proofs, or personal docs
+    const members = await Member.find(query)
+      .select('fullName bloodGroup photo district validity registrationNo date status')
+      .sort({ date: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      count: members.length,
+      members
+    });
+  } catch (error) {
+    console.error('Error fetching approved members:', error);
+    res.status(500).json({ error: 'Failed to fetch members' });
+  }
+});
+
 app.post('/api/register/blood-request', upload.fields([
   { name: 'patientPhoto', maxCount: 1 },
   { name: 'memberRegSlip', maxCount: 1 }
@@ -904,25 +952,6 @@ function generateRegistrationNo(type) {
 }
 
 function getLogoDataUri() {
-  const possiblePaths = [
-    path.join(__dirname, 'images', 'logo.jpg'),
-    path.join(__dirname, '..', 'images', 'logo.jpg'),
-    path.join(__dirname, 'images', 'logo.png'),
-    path.join(__dirname, '..', 'images', 'logo.png')
-  ];
-
-  for (const p of possiblePaths) {
-    if (fs.existsSync(p)) {
-      try {
-        const fileData = fs.readFileSync(p);
-        const base64 = fileData.toString('base64');
-        const ext = path.extname(p).toLowerCase() === '.png' ? 'png' : 'jpeg';
-        return `data:image/${ext};base64,${base64}`;
-      } catch (e) {
-        console.error('Error reading logo file for email:', e);
-      }
-    }
-  }
   return 'https://udyamsdf.org/images/logo.jpg';
 }
 
@@ -1868,23 +1897,31 @@ app.patch('/api/admin/registrations/:type/:id/status', authMiddleware, async (re
     const updatedDoc = await Model.findByIdAndUpdate(id, updatePayload, { new: true });
 
     // Send email notification to applicant upon final acceptance
-    if (status === 'accepted' && updatedDoc && updatedDoc.email) {
-      sendApprovalEmail(updatedDoc, type, generatedNo).catch(err => {
-        console.error('Error sending approval email to applicant:', err);
-      });
+    if (status === 'accepted' && updatedDoc && updatedDoc.email && updatedDoc.email.trim()) {
+      console.log(`[Status Update] Final accept for ${type} (${updatedDoc._id}). Sending approval email to ${updatedDoc.email}...`);
+      sendApprovalEmail(updatedDoc, type, generatedNo)
+        .then(() => console.log(`[Status Update] Approval email sent successfully to ${updatedDoc.email}`))
+        .catch(err => {
+          console.error(`[Status Update] Error sending approval email to applicant (${updatedDoc.email}):`, err);
+        });
     }
 
     // Send email notification to applicant upon final rejection
-    if (status === 'rejected' && updatedDoc && updatedDoc.email) {
-      sendRejectionEmail(updatedDoc, type).catch(err => {
-        console.error('Error sending rejection email to applicant:', err);
-      });
+    if (status === 'rejected' && updatedDoc && updatedDoc.email && updatedDoc.email.trim()) {
+      console.log(`[Status Update] Final reject for ${type} (${updatedDoc._id}). Sending rejection email to ${updatedDoc.email}...`);
+      sendRejectionEmail(updatedDoc, type)
+        .then(() => console.log(`[Status Update] Rejection email sent successfully to ${updatedDoc.email}`))
+        .catch(err => {
+          console.error(`[Status Update] Error sending rejection email to applicant (${updatedDoc.email}):`, err);
+        });
     }
 
     res.json({
       success: true,
       message: status === 'accepted'
         ? `Registration approved successfully! Unique Registration No: ${generatedNo}`
+        : status === 'rejected'
+        ? 'Registration rejected. Rejection notification email has been sent to the applicant.'
         : 'Status updated successfully',
       data: updatedDoc,
       registrationNo: generatedNo
