@@ -306,7 +306,40 @@ const adminMessageSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }, { collection: 'admin_messages' });
 
-let AdminUser, Volunteer, Employee, Member, BloodDonor, BloodRequest, GalleryPhoto, AdminMessage, GalleryCategory;
+const billApplicationSchema = new mongoose.Schema({
+  vendorName: { type: String, required: true },
+  billPurpose: { type: String, required: true },
+  financialYear: { type: String, default: '' },
+  billNo: { type: String, default: '' },
+  billDate: { type: String, default: '' },
+  totalAmount: { type: Number, default: 0 },
+  installment: { type: String, default: '' },
+  amountPaid: { type: Number, default: 0 },
+  paymentMode: { type: String, default: '' },
+  remarks: { type: String, default: '' },
+  billPdf: { type: String, default: '' },
+  
+  // PAYMENT DETAILS
+  paymentStatus: { type: String, enum: ['Paid', 'Pending', 'Partially Paid'], default: 'Pending' },
+  transactionId: { type: String, default: '' },
+  paymentDate: { type: String, default: '' },
+  
+  // WORKFLOW & AUDIT
+  status: { type: String, enum: ['pending', 'accepted', 'rejected', 'forwarded', 'verified', 'issue_reported'], default: 'pending' },
+  assignedToRole: { type: String, default: 'Secretary' },
+  assignedToAdminId: { type: String, default: null },
+  assignedToAdminName: { type: String, default: null },
+  assignedToAdminEmail: { type: String, default: null },
+  forwardAttachments: [mongoose.Schema.Types.Mixed],
+  forwardNotes: [{ note: String, authorName: String, authorRole: String, date: { type: Date, default: Date.now } }],
+  verifiedBy: [{ name: String, role: String, date: { type: Date, default: Date.now } }],
+  issueText: { type: String, default: '' },
+  date: { type: Date, default: Date.now },
+  createdByAdminId: { type: String, default: null },
+  createdByAdminName: { type: String, default: null }
+}, { collection: 'bill_applications' });
+
+let AdminUser, Volunteer, Employee, Member, BloodDonor, BloodRequest, GalleryPhoto, AdminMessage, GalleryCategory, BillApplication;
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
@@ -321,6 +354,7 @@ mongoose.connect(process.env.MONGO_URI)
     Member = registrationDb.model('Member', memberSchema);
     BloodDonor = registrationDb.model('BloodDonor', bloodDonorSchema);
     BloodRequest = registrationDb.model('BloodRequest', bloodRequestSchema);
+    BillApplication = registrationDb.model('BillApplication', billApplicationSchema);
 
     const galleryDb = mongoose.connection.useDb('Gallery');
     GalleryPhoto = galleryDb.model('GalleryPhoto', galleryPhotoSchema);
@@ -396,6 +430,42 @@ const uploadGallery = multer({
 
 // Serve gallery images statically at /images
 app.use('/images', express.static(IMAGES_DIR));
+
+// Bill PDFs local disk storage — saves to ./uploads/bills/
+const BILLS_DIR = path.join(__dirname, 'uploads', 'bills');
+if (!fs.existsSync(BILLS_DIR)) {
+  fs.mkdirSync(BILLS_DIR, { recursive: true });
+}
+
+const billStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, BILLS_DIR);
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const base = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
+    const unique = Date.now();
+    cb(null, `bill_${base}_${unique}${ext}`);
+  }
+});
+
+const uploadBillPdf = multer({
+  storage: billStorage,
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const isPdf = file.mimetype === 'application/pdf' || ext === '.pdf';
+    if (isPdf) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF files are allowed for bill upload.'));
+    }
+  },
+  limits: { fileSize: 25 * 1024 * 1024 } // 25 MB per file
+});
+
+// Serve uploads statically at /uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Serve website frontend files from root directory
 app.use(express.static(path.join(__dirname, '..')));
 
@@ -943,7 +1013,8 @@ function generateRegistrationNo(type) {
     volunteer: 'VOL',
     employee: 'EMP',
     member: 'MEM',
-    blood_donor: 'BDN'
+    blood_donor: 'BDN',
+    bill: 'BILL'
   };
   const prefix = prefixMap[type] || 'REG';
   const year = new Date().getFullYear();
@@ -1836,14 +1907,16 @@ app.get('/api/admin/registrations', authMiddleware, async (req, res) => {
     const members = await Member.find().lean();
     const bloodDonors = BloodDonor ? await BloodDonor.find().lean() : [];
     const bloodRequests = BloodRequest ? await BloodRequest.find().lean() : [];
+    const bills = BillApplication ? await BillApplication.find().lean() : [];
 
     const formattedVolunteers = volunteers.map(v => ({ ...v, type: 'volunteer' }));
     const formattedEmployees = employees.map(e => ({ ...e, type: 'employee' }));
     const formattedMembers = members.map(m => ({ ...m, type: 'member' }));
     const formattedBloodDonors = bloodDonors.map(b => ({ ...b, type: 'blood_donor' }));
     const formattedBloodRequests = bloodRequests.map(r => ({ ...r, fullName: r.patientName, type: 'blood_request' }));
+    const formattedBills = bills.map(b => ({ ...b, fullName: b.vendorName, type: 'bill' }));
 
-    const allRegistrations = [...formattedVolunteers, ...formattedEmployees, ...formattedMembers, ...formattedBloodDonors, ...formattedBloodRequests].sort((a, b) => b.date - a.date);
+    const allRegistrations = [...formattedVolunteers, ...formattedEmployees, ...formattedMembers, ...formattedBloodDonors, ...formattedBloodRequests, ...formattedBills].sort((a, b) => b.date - a.date);
     res.json(allRegistrations);
   } catch (error) {
     console.error('Error fetching registrations:', error);
@@ -1877,6 +1950,7 @@ app.patch('/api/admin/registrations/:type/:id/status', authMiddleware, async (re
     else if (type === 'member') Model = Member;
     else if (type === 'blood_donor') Model = BloodDonor;
     else if (type === 'blood_request') Model = BloodRequest;
+    else if (type === 'bill') Model = BillApplication;
     else return res.status(400).json({ error: 'Invalid type' });
 
     const existingDoc = await Model.findById(id);
@@ -1953,6 +2027,8 @@ app.delete('/api/admin/registrations/:type/:id', authMiddleware, async (req, res
       deletedDoc = await BloodDonor.findByIdAndDelete(id);
     } else if (type === 'blood_request') {
       deletedDoc = await BloodRequest.findByIdAndDelete(id);
+    } else if (type === 'bill') {
+      deletedDoc = await BillApplication.findByIdAndDelete(id);
     } else {
       return res.status(400).json({ error: 'Invalid registration type.' });
     }
@@ -2036,6 +2112,8 @@ app.patch(
         updatedDoc = await BloodDonor.findByIdAndUpdate(id, updatePayload, { new: true });
       } else if (type === 'blood_request') {
         updatedDoc = await BloodRequest.findByIdAndUpdate(id, updatePayload, { new: true });
+      } else if (type === 'bill') {
+        updatedDoc = await BillApplication.findByIdAndUpdate(id, updatePayload, { new: true });
       } else {
         return res.status(400).json({ error: 'Invalid type' });
       }
@@ -2074,6 +2152,8 @@ app.patch('/api/admin/registrations/:type/:id/verify', authMiddleware, async (re
       updatedDoc = await BloodDonor.findByIdAndUpdate(id, updateData, { new: true });
     } else if (type === 'blood_request') {
       updatedDoc = await BloodRequest.findByIdAndUpdate(id, updateData, { new: true });
+    } else if (type === 'bill') {
+      updatedDoc = await BillApplication.findByIdAndUpdate(id, updateData, { new: true });
     } else {
       return res.status(400).json({ error: 'Invalid type' });
     }
@@ -2158,6 +2238,8 @@ app.patch(
         updatedDoc = await BloodDonor.findByIdAndUpdate(id, updateData, { new: true });
       } else if (type === 'blood_request') {
         updatedDoc = await BloodRequest.findByIdAndUpdate(id, updateData, { new: true });
+      } else if (type === 'bill') {
+        updatedDoc = await BillApplication.findByIdAndUpdate(id, updateData, { new: true });
       } else {
         return res.status(400).json({ error: 'Invalid type' });
       }
@@ -2196,6 +2278,8 @@ app.patch('/api/admin/registrations/:type/:id/report-issue', authMiddleware, asy
       updatedDoc = await BloodDonor.findByIdAndUpdate(id, updateData, { new: true });
     } else if (type === 'blood_request') {
       updatedDoc = await BloodRequest.findByIdAndUpdate(id, updateData, { new: true });
+    } else if (type === 'bill') {
+      updatedDoc = await BillApplication.findByIdAndUpdate(id, updateData, { new: true });
     } else {
       return res.status(400).json({ error: 'Invalid type' });
     }
@@ -2210,6 +2294,89 @@ app.patch('/api/admin/registrations/:type/:id/report-issue', authMiddleware, asy
     res.status(500).json({ error: 'Failed to report issue' });
   }
 });
+
+// Create a new bill application (Secretary only)
+app.post(
+  '/api/admin/bills',
+  authMiddleware,
+  uploadBillPdf.single('billPdf'),
+  async (req, res) => {
+    try {
+      if (!BillApplication) return res.status(503).json({ error: 'Database not ready' });
+
+      if (req.user && req.user.role !== 'Secretary') {
+        return res.status(403).json({ error: 'Only Secretary role can create bill applications.' });
+      }
+
+      const {
+        vendorName,
+        billPurpose,
+        financialYear,
+        billNo,
+        billDate,
+        totalAmount,
+        installment,
+        amountPaid,
+        paymentMode,
+        remarks,
+        paymentStatus,
+        transactionId,
+        paymentDate
+      } = req.body;
+
+      if (!vendorName || !vendorName.trim()) {
+        return res.status(400).json({ error: 'Name of the Payer / Store / Vendor / Supplier is required.' });
+      }
+      if (!billPurpose || !billPurpose.trim()) {
+        return res.status(400).json({ error: 'Bill Purpose is required.' });
+      }
+      if (!billNo || !billNo.trim()) {
+        return res.status(400).json({ error: 'Bill No. is required.' });
+      }
+      if (!billDate) {
+        return res.status(400).json({ error: 'Bill Date is required.' });
+      }
+      if (!req.file) {
+        return res.status(400).json({ error: 'Bill Upload (PDF file only) is required.' });
+      }
+
+      const billPdfPath = `/uploads/bills/${req.file.filename}`;
+
+      const newBill = new BillApplication({
+        vendorName: vendorName.trim(),
+        billPurpose: billPurpose.trim(),
+        financialYear: (financialYear || '').trim(),
+        billNo: billNo.trim(),
+        billDate: billDate || '',
+        totalAmount: Number(totalAmount) || 0,
+        installment: (installment || '').trim(),
+        amountPaid: Number(amountPaid) || 0,
+        paymentMode: (paymentMode || '').trim(),
+        remarks: (remarks || '').trim(),
+        billPdf: billPdfPath,
+        paymentStatus: paymentStatus || 'Pending',
+        transactionId: (transactionId || '').trim(),
+        paymentDate: paymentDate || '',
+        status: 'pending',
+        assignedToRole: 'Secretary',
+        createdByAdminId: req.user.id || null,
+        createdByAdminName: req.user.fullName || 'Secretary',
+        date: new Date()
+      });
+
+      await newBill.save();
+
+      res.status(201).json({
+        success: true,
+        message: 'Bill application created successfully and placed in Pending section.',
+        data: newBill
+      });
+    } catch (error) {
+      console.error('Error creating bill application:', error);
+      res.status(500).json({ error: error.message || 'Failed to create bill application' });
+    }
+  }
+);
 // --- Gallery API Endpoints ---
 
 // Get all gallery photos (public)

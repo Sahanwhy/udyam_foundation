@@ -197,24 +197,42 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentForwardTarget = null; // { type, id }
 
   // ═══════════════════════════════════════════════════════════════
-  // BLOOD DONATION MODE STATE
   // ═══════════════════════════════════════════════════════════════
-  let currentAppMode = localStorage.getItem('udyam_admin_mode') || 'normal'; // 'normal' | 'blood'
+  // DASHBOARD APP MODES: 'normal' | 'blood' | 'bill'
+  // ═══════════════════════════════════════════════════════════════
+  let currentAppMode = localStorage.getItem('udyam_admin_mode') || 'normal'; // 'normal' | 'blood' | 'bill'
 
   const setAppMode = (mode) => {
     currentAppMode = mode;
     localStorage.setItem('udyam_admin_mode', mode);
 
     const isBlood = mode === 'blood';
+    const isBill = mode === 'bill';
 
     // ── Body class ──
     document.body.classList.toggle('blood-mode-active', isBlood);
+    document.body.classList.toggle('bill-mode-active', isBill);
 
-    // ── Header toggle button (top bar) ──
+    // ── Header badges ──
+    const headerBloodBadge = document.getElementById('headerBloodBadge');
+    const headerBillBadge = document.getElementById('headerBillBadge');
+    if (headerBloodBadge) headerBloodBadge.style.display = isBlood ? 'inline-flex' : 'none';
+    if (headerBillBadge) headerBillBadge.style.display = isBill ? 'inline-flex' : 'none';
+
+    // ── Mode Switcher Pills (Header) ──
+    document.querySelectorAll('.mode-pill-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-mode') === mode);
+    });
+
+    // ── Mode Switcher Pills (Sidebar) ──
+    document.querySelectorAll('.sidebar-mode-nav-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-mode') === mode);
+    });
+
+    // ── Legacy header toggle button sync ──
     const headerBtn = document.getElementById('btnToggleBloodMode');
     const headerIcon = document.getElementById('bloodSwitchIcon');
     const headerText = document.getElementById('bloodSwitchText');
-    const headerBadge = document.getElementById('headerBloodBadge');
     if (headerBtn) {
       if (isBlood) {
         headerBtn.classList.add('normal-mode-active');
@@ -226,35 +244,47 @@ document.addEventListener('DOMContentLoaded', () => {
         if (headerText) headerText.textContent = 'Blood Donation';
       }
     }
-    if (headerBadge) headerBadge.style.display = isBlood ? 'inline-flex' : 'none';
 
-    // ── Sidebar mode button ──
-    const sidebarModeIcon = document.getElementById('navBloodModeIcon');
-    const sidebarModeText = document.getElementById('navBloodModeText');
+    // ── Sidebar section title & special navigation items ──
     const regNavSectionTitle = document.getElementById('regNavSectionTitle');
     const bloodReqSectionTitle = document.getElementById('bloodReqNavSectionTitle');
     const navBloodRequests = document.getElementById('nav-blood-requests');
-    if (isBlood) {
-      if (sidebarModeIcon) sidebarModeIcon.textContent = '🌱';
-      if (sidebarModeText) sidebarModeText.textContent = 'Normal Mode';
+    const navCreateBill = document.getElementById('nav-create-bill');
+
+    if (isBill) {
+      if (regNavSectionTitle) regNavSectionTitle.textContent = '🧾 Bill Applications';
+      if (bloodReqSectionTitle) bloodReqSectionTitle.style.display = 'none';
+      if (navBloodRequests) navBloodRequests.style.display = 'none';
+      // Only Secretary role sees Create Bill Application
+      if (navCreateBill) {
+        navCreateBill.style.display = (user && user.role === 'Secretary') ? 'flex' : 'none';
+      }
+    } else if (isBlood) {
       if (regNavSectionTitle) regNavSectionTitle.textContent = '🩸 Blood Donors';
       if (bloodReqSectionTitle) bloodReqSectionTitle.style.display = 'block';
       if (navBloodRequests) navBloodRequests.style.display = 'flex';
+      if (navCreateBill) navCreateBill.style.display = 'none';
     } else {
-      if (sidebarModeIcon) sidebarModeIcon.textContent = '🩸';
-      if (sidebarModeText) sidebarModeText.textContent = 'Blood Donation';
       if (regNavSectionTitle) regNavSectionTitle.textContent = 'Registrations';
       if (bloodReqSectionTitle) bloodReqSectionTitle.style.display = 'none';
       if (navBloodRequests) navBloodRequests.style.display = 'none';
+      if (navCreateBill) navCreateBill.style.display = 'none';
       if (currentRegFilter === 'blood_requests') {
         currentRegFilter = user && user.role === 'President' ? 'verified' : (user && user.role === 'Secretary' ? 'pending' : 'forwarded');
       }
     }
 
-    // ── Type filter select: show only relevant options ──
+    // ── Type filter select dropdown options ──
     const typeSelect = document.getElementById('regTypeFilterSelect');
     if (typeSelect) {
-      if (isBlood) {
+      if (isBill) {
+        typeSelect.innerHTML = `
+          <option value="all">All Bill Applications</option>
+          <option value="bill">Bills</option>
+        `;
+        typeSelect.value = 'all';
+        currentTypeFilter = 'all';
+      } else if (isBlood) {
         typeSelect.innerHTML = currentRegFilter === 'blood_requests' 
           ? '<option value="blood_request">Blood Requests</option>'
           : '<option value="blood_donor">Blood Donors</option>';
@@ -275,21 +305,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Dashboard stats grids ──
     const normalGrid = document.getElementById('normalStatsGrid');
     const bloodGrid = document.getElementById('bloodStatsGrid');
-    if (normalGrid) normalGrid.style.display = isBlood ? 'none' : '';
+    const billGrid = document.getElementById('billStatsGrid');
+    if (normalGrid) normalGrid.style.display = (mode === 'normal') ? '' : 'none';
     if (bloodGrid) bloodGrid.style.display = isBlood ? '' : 'none';
+    if (billGrid) billGrid.style.display = isBill ? '' : 'none';
 
     // ── Update dashboard banner subtitle ──
     const bannerSubtitle = document.getElementById('dynamicBannerSubtitle');
     if (bannerSubtitle) {
-      bannerSubtitle.textContent = isBlood
-        ? '🩸 Managing Blood Donor & Emergency Request Records — review, coordinate, and fulfill.'
-        : "Here's what's happening with Udyam Foundation today.";
+      if (isBill) {
+        bannerSubtitle.textContent = '🧾 Managing Bill Applications & Payment Records — create, forward, verify, and approve bills.';
+      } else if (isBlood) {
+        bannerSubtitle.textContent = '🩸 Managing Blood Donor & Emergency Request Records — review, coordinate, and fulfill.';
+      } else {
+        bannerSubtitle.textContent = "Here's what's happening with Udyam Foundation today.";
+      }
     }
 
-    // ── Update blood stats when switching to blood mode ──
-    if (isBlood) {
-      updateBloodStats();
-    }
+    // ── Stats updates ──
+    if (isBlood) updateBloodStats();
+    if (isBill) updateBillStats();
 
     // ── Refresh registrations + badges ──
     renderRegistrations();
@@ -311,81 +346,101 @@ document.addEventListener('DOMContentLoaded', () => {
     if (totalReqEl) totalReqEl.textContent = requests.length;
   };
 
-  // Wire up both mode toggle buttons (header + sidebar)
-  const wireBloodModeBtn = (btnId) => {
-    const btn = document.getElementById(btnId);
-    if (!btn) return;
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const newMode = currentAppMode === 'blood' ? 'normal' : 'blood';
+  const updateBillStats = () => {
+    const bills = allRegistrations.filter(r => r.type === 'bill');
+    const totalBillsEl = document.getElementById('totalBillsCount');
+    const pendingBillsEl = document.getElementById('pendingBillsCount');
+    const totalAmountEl = document.getElementById('totalBillAmountSum');
+    const totalPaidEl = document.getElementById('totalBillPaidSum');
+    const approvedBillsEl = document.getElementById('approvedBillsCount');
+
+    if (totalBillsEl) totalBillsEl.textContent = bills.length;
+    if (pendingBillsEl) pendingBillsEl.textContent = bills.filter(b => (b.status || 'pending') === 'pending').length;
+
+    const totalSum = bills.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
+    const paidSum = bills.reduce((sum, b) => sum + (Number(b.amountPaid) || 0), 0);
+    if (totalAmountEl) totalAmountEl.textContent = `₹${totalSum.toLocaleString('en-IN')}`;
+    if (totalPaidEl) totalPaidEl.textContent = `₹${paidSum.toLocaleString('en-IN')}`;
+
+    if (approvedBillsEl) approvedBillsEl.textContent = bills.filter(b => b.status === 'accepted' || b.status === 'verified').length;
+  };
+
+  // Wire up mode buttons in header and sidebar
+  const wireAllModeButtons = () => {
+    const handleModeSwitch = (newMode) => {
       setAppMode(newMode);
-      // Switch back to Dashboard view when toggling modes
       navDashboard.classList.add('active');
       regFilterBtns.forEach(b => b.classList.remove('active'));
+      const createBillSec = document.getElementById('createBillSection');
+      if (createBillSec) createBillSec.style.display = 'none';
+      const navBillBtn = document.getElementById('nav-create-bill');
+      if (navBillBtn) navBillBtn.classList.remove('active');
       if (dashboardSection) dashboardSection.style.display = 'block';
       if (registrationsSection) registrationsSection.style.display = 'none';
+    };
+
+    // Header pills
+    document.querySelectorAll('.mode-pill-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const mode = btn.getAttribute('data-mode');
+        if (mode) handleModeSwitch(mode);
+      });
     });
+
+    // Sidebar pills
+    document.querySelectorAll('.sidebar-mode-nav-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const mode = btn.getAttribute('data-mode');
+        if (mode) handleModeSwitch(mode);
+      });
+    });
+
+    // Legacy buttons
+    const legacyHeader = document.getElementById('btnToggleBloodMode');
+    if (legacyHeader) {
+      legacyHeader.addEventListener('click', (e) => {
+        e.preventDefault();
+        const next = currentAppMode === 'blood' ? 'normal' : 'blood';
+        handleModeSwitch(next);
+      });
+    }
   };
-  wireBloodModeBtn('btnToggleBloodMode');
-  wireBloodModeBtn('navBloodModeBtn');
+  wireAllModeButtons();
 
   // Apply persisted mode to UI immediately (before data loads) to avoid flash
   (() => {
     const isBlood = currentAppMode === 'blood';
+    const isBill = currentAppMode === 'bill';
     document.body.classList.toggle('blood-mode-active', isBlood);
-    const headerBtn = document.getElementById('btnToggleBloodMode');
-    const headerIcon = document.getElementById('bloodSwitchIcon');
-    const headerText = document.getElementById('bloodSwitchText');
-    const headerBadge = document.getElementById('headerBloodBadge');
-    if (headerBtn) {
-      if (isBlood) {
-        headerBtn.classList.add('normal-mode-active');
-        if (headerIcon) headerIcon.textContent = '🌱';
-        if (headerText) headerText.textContent = 'Normal Mode';
-      } else {
-        headerBtn.classList.remove('normal-mode-active');
-        if (headerIcon) headerIcon.textContent = '🩸';
-        if (headerText) headerText.textContent = 'Blood Donation';
-      }
-    }
-    if (headerBadge) headerBadge.style.display = isBlood ? 'inline-flex' : 'none';
+    document.body.classList.toggle('bill-mode-active', isBill);
 
-    const sidebarModeIcon = document.getElementById('navBloodModeIcon');
-    const sidebarModeText = document.getElementById('navBloodModeText');
+    const headerBloodBadge = document.getElementById('headerBloodBadge');
+    const headerBillBadge = document.getElementById('headerBillBadge');
+    if (headerBloodBadge) headerBloodBadge.style.display = isBlood ? 'inline-flex' : 'none';
+    if (headerBillBadge) headerBillBadge.style.display = isBill ? 'inline-flex' : 'none';
+
+    document.querySelectorAll('.mode-pill-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-mode') === currentAppMode);
+    });
+    document.querySelectorAll('.sidebar-mode-nav-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-mode') === currentAppMode);
+    });
+
     const regNavSectionTitle = document.getElementById('regNavSectionTitle');
-    const bloodReqSectionTitle = document.getElementById('bloodReqNavSectionTitle');
-    const navBloodRequests = document.getElementById('nav-blood-requests');
-    if (isBlood) {
-      if (sidebarModeIcon) sidebarModeIcon.textContent = '🌱';
-      if (sidebarModeText) sidebarModeText.textContent = 'Normal Mode';
-      if (regNavSectionTitle) regNavSectionTitle.textContent = '🩸 Blood Donors';
-      if (bloodReqSectionTitle) bloodReqSectionTitle.style.display = 'block';
-      if (navBloodRequests) navBloodRequests.style.display = 'flex';
-    } else {
-      if (sidebarModeIcon) sidebarModeIcon.textContent = '🩸';
-      if (sidebarModeText) sidebarModeText.textContent = 'Blood Donation';
-      if (regNavSectionTitle) regNavSectionTitle.textContent = 'Registrations';
-      if (bloodReqSectionTitle) bloodReqSectionTitle.style.display = 'none';
-      if (navBloodRequests) navBloodRequests.style.display = 'none';
-    }
-
-    const typeSelect = document.getElementById('regTypeFilterSelect');
-    if (typeSelect && isBlood) {
-      typeSelect.innerHTML = '<option value="blood_donor">Blood Donors</option>';
-      currentTypeFilter = 'blood_donor';
+    if (regNavSectionTitle) {
+      if (isBill) regNavSectionTitle.textContent = '🧾 Bill Applications';
+      else if (isBlood) regNavSectionTitle.textContent = '🩸 Blood Donors';
+      else regNavSectionTitle.textContent = 'Registrations';
     }
 
     const normalGrid = document.getElementById('normalStatsGrid');
     const bloodGrid = document.getElementById('bloodStatsGrid');
-    if (normalGrid) normalGrid.style.display = isBlood ? 'none' : '';
+    const billGrid = document.getElementById('billStatsGrid');
+    if (normalGrid) normalGrid.style.display = (currentAppMode === 'normal') ? '' : 'none';
     if (bloodGrid) bloodGrid.style.display = isBlood ? '' : 'none';
-
-    const bannerSubtitle = document.getElementById('dynamicBannerSubtitle');
-    if (bannerSubtitle) {
-      bannerSubtitle.textContent = isBlood
-        ? '🩸 Managing Blood Donor & Emergency Request Records — review, coordinate, and fulfill.'
-        : "Here's what's happening with Udyam Foundation today.";
-    }
+    if (billGrid) billGrid.style.display = isBill ? '' : 'none';
   })();
 
   const fetchAdminUsers = async () => {
@@ -497,6 +552,10 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     navDashboard.classList.add('active');
     regFilterBtns.forEach(b => b.classList.remove('active'));
+    const navCreateBill = document.getElementById('nav-create-bill');
+    if (navCreateBill) navCreateBill.classList.remove('active');
+    const createBillSection = document.getElementById('createBillSection');
+    if (createBillSection) createBillSection.style.display = 'none';
     if (dashboardSection) dashboardSection.style.display = 'block';
     registrationsSection.style.display = 'none';
   });
@@ -507,6 +566,10 @@ document.addEventListener('DOMContentLoaded', () => {
       
       navDashboard.classList.remove('active');
       regFilterBtns.forEach(b => b.classList.remove('active'));
+      const navCreateBill = document.getElementById('nav-create-bill');
+      if (navCreateBill) navCreateBill.classList.remove('active');
+      const createBillSection = document.getElementById('createBillSection');
+      if (createBillSection) createBillSection.style.display = 'none';
       btn.classList.add('active');
       
       currentRegFilter = btn.getAttribute('data-filter');
@@ -520,9 +583,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentRegFilter === 'blood_requests') {
           headerTitle.textContent = '🩸 Blood Donation Requests';
         } else {
-          const suffix = currentAppMode === 'blood' ? 'Blood Donors' : 'Registrations';
+          const suffix = currentAppMode === 'bill' ? 'Bill Applications' : (currentAppMode === 'blood' ? 'Blood Donors' : 'Registrations');
           if (currentRegFilter === 'forwarded' && user && (user.role === 'Secretary' || user.role === 'President')) {
-            headerTitle.textContent = currentAppMode === 'blood' ? 'Track Forwarded Blood Donors' : 'Track Forwarded Applications';
+            headerTitle.textContent = currentAppMode === 'bill' ? 'Track Forwarded Bills' : (currentAppMode === 'blood' ? 'Track Forwarded Blood Donors' : 'Track Forwarded Applications');
           } else {
             const filterName = currentRegFilter.replace('_', ' ');
             headerTitle.textContent = filterName.charAt(0).toUpperCase() + filterName.slice(1) + ' ' + suffix;
@@ -541,6 +604,13 @@ document.addEventListener('DOMContentLoaded', () => {
           typeSelect.innerHTML = '<option value="blood_donor">Blood Donors</option>';
           typeSelect.value = 'blood_donor';
           currentTypeFilter = 'blood_donor';
+        } else if (currentAppMode === 'bill') {
+          typeSelect.innerHTML = `
+            <option value="all">All Bill Applications</option>
+            <option value="bill">Bills</option>
+          `;
+          typeSelect.value = 'all';
+          currentTypeFilter = 'all';
         } else {
           typeSelect.innerHTML = `
             <option value="all">All Application Types</option>
@@ -560,13 +630,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const isRegistrationVisibleToUser = (r, filter) => {
     // ── Mode-based type gate ──
-    if (currentAppMode === 'blood') {
+    if (currentAppMode === 'bill') {
+      if (r.type !== 'bill') return false;
+    } else if (currentAppMode === 'blood') {
       if (filter === 'blood_requests') {
         return r.type === 'blood_request';
       }
       if (r.type !== 'blood_donor') return false;
     } else {
-      if (r.type === 'blood_donor' || r.type === 'blood_request') return false;
+      if (r.type === 'blood_donor' || r.type === 'blood_request' || r.type === 'bill') return false;
     }
 
     const status = r.status || 'pending';
@@ -621,9 +693,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.sidebar-badge').forEach(el => el.remove());
 
     // Scope badge counts to current mode's record types
-    const scopedRegs = allRegistrations.filter(r =>
-      currentAppMode === 'blood' ? r.type === 'blood_donor' : (r.type !== 'blood_donor' && r.type !== 'blood_request')
-    );
+    const scopedRegs = allRegistrations.filter(r => {
+      if (currentAppMode === 'bill') return r.type === 'bill';
+      if (currentAppMode === 'blood') return r.type === 'blood_donor';
+      return r.type !== 'blood_donor' && r.type !== 'blood_request' && r.type !== 'bill';
+    });
 
     const isSecretaryOrPresident = user && (user.role === 'Secretary' || user.role === 'President');
     
@@ -979,7 +1053,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
     if (query) {
       filtered = filtered.filter(r => {
-        const name = (r.fullName || r.patientName || '').toLowerCase();
+        const name = (r.fullName || r.patientName || r.vendorName || '').toLowerCase();
         const email = (r.email || '').toLowerCase();
         const phone = (r.contactNo || r.phone || r.mobileNo || '').toLowerCase();
         const blood = (r.bloodGroup || r.patientBloodGroup || '').toLowerCase();
@@ -989,9 +1063,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const dist = (r.district || '').toLowerCase();
         const village = (r.villageTownWard || '').toLowerCase();
         const hosp = (r.admittedHospital || r.bloodHospitalDetails || '').toLowerCase();
+        const billPurpose = (r.billPurpose || '').toLowerCase();
+        const billNo = (r.billNo || '').toLowerCase();
+        const txId = (r.transactionId || '').toLowerCase();
+        const pMode = (r.paymentMode || '').toLowerCase();
         return name.includes(query) || email.includes(query) || phone.includes(query) || blood.includes(query) ||
                type.includes(query) || assignedRole.includes(query) || assignedAdmin.includes(query) ||
-               dist.includes(query) || village.includes(query) || hosp.includes(query);
+               dist.includes(query) || village.includes(query) || hosp.includes(query) ||
+               billPurpose.includes(query) || billNo.includes(query) || txId.includes(query) || pMode.includes(query);
       });
     }
 
@@ -1000,12 +1079,13 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const headers = ['#', 'Type', 'Name', 'Date Applied', 'Contact Phone', 'Email', 'WhatsApp', 'Blood Group', 'Status', 'Assigned Role', 'Assigned Admin', 'District', 'Address', 'Extra Info'];
+    const headers = ['#', 'Type', 'Name / Vendor', 'Date Applied / Created', 'Contact Phone', 'Email', 'WhatsApp', 'Blood Group', 'Status', 'Assigned Role', 'Assigned Admin', 'District', 'Address', 'Extra Info'];
     const csvRows = filtered.map((r, idx) => {
       const isReq = r.type === 'blood_request';
       const isBdn = r.type === 'blood_donor';
       const isMem = r.type === 'member';
-      const name = r.fullName || r.patientName || '';
+      const isBill = r.type === 'bill';
+      const name = isBill ? (r.vendorName || '') : (r.fullName || r.patientName || '');
       const date = r.date ? new Date(r.date).toLocaleString('en-IN') : '';
       const phone = r.contactNo || r.phone || r.mobileNo || '';
       const email = r.email || '';
@@ -1020,6 +1100,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isReq) extra = `Hospital: ${r.admittedHospital || ''} | Qty: ${r.bloodQuantity || ''} | Date: ${r.requiredDate || ''}`;
       else if (isBdn) extra = `Donations: ${r.totalTimesDonated || 0} | Last: ${r.lastDonationDate || ''}`;
       else if (isMem) extra = `Validity: ${r.validity || ''} | Amount: Rs.${r.amount || 0}`;
+      else if (isBill) extra = `Purpose: ${r.billPurpose || ''} | Bill#: ${r.billNo || ''} | Total: Rs.${r.totalAmount || 0} | Paid: Rs.${r.amountPaid || 0} | Mode: ${r.paymentMode || ''} | Status: ${r.paymentStatus || ''} | FY: ${r.financialYear || ''}`;
 
       return [
         idx + 1,
@@ -1044,9 +1125,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const blobUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = blobUrl;
-    link.download = currentRegFilter === 'blood_requests'
-      ? `udyam_blood_requests_${new Date().toISOString().slice(0, 10)}.csv`
-      : `udyam_applicants_${currentRegFilter}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = currentAppMode === 'bill'
+      ? `udyam_bill_applications_${currentRegFilter}_${new Date().toISOString().slice(0, 10)}.csv`
+      : (currentRegFilter === 'blood_requests'
+        ? `udyam_blood_requests_${new Date().toISOString().slice(0, 10)}.csv`
+        : `udyam_applicants_${currentRegFilter}_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1064,7 +1147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
     if (query) {
       filtered = filtered.filter(r => {
-        const name = (r.fullName || r.patientName || '').toLowerCase();
+        const name = (r.fullName || r.patientName || r.vendorName || '').toLowerCase();
         const email = (r.email || '').toLowerCase();
         const phone = (r.contactNo || r.phone || r.mobileNo || '').toLowerCase();
         const blood = (r.bloodGroup || r.patientBloodGroup || '').toLowerCase();
@@ -1074,9 +1157,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const dist = (r.district || '').toLowerCase();
         const village = (r.villageTownWard || '').toLowerCase();
         const hosp = (r.admittedHospital || r.bloodHospitalDetails || '').toLowerCase();
+        const billPurpose = (r.billPurpose || '').toLowerCase();
+        const billNo = (r.billNo || '').toLowerCase();
+        const txId = (r.transactionId || '').toLowerCase();
+        const pMode = (r.paymentMode || '').toLowerCase();
         return name.includes(query) || email.includes(query) || phone.includes(query) || blood.includes(query) ||
                type.includes(query) || assignedRole.includes(query) || assignedAdmin.includes(query) ||
-               dist.includes(query) || village.includes(query) || hosp.includes(query);
+               dist.includes(query) || village.includes(query) || hosp.includes(query) ||
+               billPurpose.includes(query) || billNo.includes(query) || txId.includes(query) || pMode.includes(query);
       });
     }
 
@@ -1089,20 +1177,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const countBadge = document.getElementById('regCountBadge');
     if (countBadge) {
-      countBadge.textContent = currentRegFilter === 'blood_requests'
-        ? `${filtered.length} blood request${filtered.length !== 1 ? 's' : ''}`
-        : `${filtered.length} applicant${filtered.length !== 1 ? 's' : ''}`;
+      if (currentAppMode === 'bill') {
+        countBadge.textContent = `${filtered.length} bill application${filtered.length !== 1 ? 's' : ''}`;
+      } else if (currentRegFilter === 'blood_requests') {
+        countBadge.textContent = `${filtered.length} blood request${filtered.length !== 1 ? 's' : ''}`;
+      } else {
+        countBadge.textContent = `${filtered.length} applicant${filtered.length !== 1 ? 's' : ''}`;
+      }
     }
 
     if (filtered.length === 0) {
       const isSecOrPres = user && (user.role === 'Secretary' || user.role === 'President');
       const emptyText = query
-        ? `No applicants matching "${query}".`
-        : (currentRegFilter === 'blood_requests')
-          ? 'No blood donation requests received yet.'
-          : (currentRegFilter === 'forwarded' && isSecOrPres)
-            ? 'No applications are currently being tracked or forwarded.'
-            : `No ${currentRegFilter.replace('_', ' ')} registrations found.`;
+        ? `No records matching "${query}".`
+        : (currentAppMode === 'bill')
+          ? (currentRegFilter === 'pending'
+            ? 'No pending bill applications. Create one using "Create Bill Application".'
+            : `No ${currentRegFilter.replace('_', ' ')} bill applications found.`)
+          : (currentRegFilter === 'blood_requests')
+            ? 'No blood donation requests received yet.'
+            : (currentRegFilter === 'forwarded' && isSecOrPres)
+              ? 'No applications are currently being tracked or forwarded.'
+              : `No ${currentRegFilter.replace('_', ' ')} registrations found.`;
       registrationsContainer.innerHTML = `<div style="padding: 3rem; text-align: center; color: var(--text-muted); background: white; border-radius: 8px; border: 1px solid var(--border);">${emptyText}</div>`;
       return;
     }
@@ -1120,23 +1216,29 @@ document.addEventListener('DOMContentLoaded', () => {
       const isMem = reg.type === 'member';
       const isBdn = reg.type === 'blood_donor';
       const isReq = reg.type === 'blood_request';
+      const isBill = reg.type === 'bill';
 
-      const applicantName = reg.fullName || reg.patientName || 'Unnamed';
+      const applicantName = isBill ? (reg.vendorName || 'Unnamed Vendor') : (reg.fullName || reg.patientName || 'Unnamed');
       const safeName = applicantName.replace(/'/g, "&apos;");
-      const photoSrc = reg.photo || reg.patientPhoto;
-      const phone = reg.contactNo || reg.phone || reg.mobileNo || 'N/A';
-      const whatsapp = reg.whatsappNo || reg.whatsapp || '';
+      const photoSrc = isBill ? null : (reg.photo || reg.patientPhoto);
+      const phone = isBill ? (reg.submittedByPhone || 'N/A') : (reg.contactNo || reg.phone || reg.mobileNo || 'N/A');
+      const whatsapp = isBill ? '' : (reg.whatsappNo || reg.whatsapp || '');
 
       const typeLabelMap = {
         volunteer: 'Volunteer',
         employee: 'Employee',
         member: 'Member',
         blood_donor: 'Blood Donor',
-        blood_request: 'Blood Request'
+        blood_request: 'Blood Request',
+        bill: 'Bill Request'
       };
       const typeLabel = typeLabelMap[reg.type] || reg.type;
 
-      const formatPdfUrl = url => url;
+      const formatPdfUrl = url => {
+        if (!url) return '';
+        if (url.startsWith('/uploads/')) return `${API_BASE}${url}`;
+        return url;
+      };
       const docLinkStyle = "display:inline-flex; align-items:center; color:var(--primary); text-decoration:none; font-weight:600; font-size:0.72rem; background:rgba(27,67,50,0.08); padding:2px 7px; border-radius:4px; margin-right:4px; border:1px solid rgba(27,67,50,0.12); transition:all 0.15s;";
 
       // Document links summary
@@ -1157,6 +1259,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (reg.signature) docChips.push(`<a href="${formatPdfUrl(reg.signature)}" target="_blank" onclick="event.stopPropagation();" style="${docLinkStyle}">Sign</a>`);
       } else if (isReq) {
         if (reg.patientPhoto) docChips.push(`<a href="${formatPdfUrl(reg.patientPhoto)}" target="_blank" onclick="event.stopPropagation();" style="${docLinkStyle}">Patient Pic</a>`);
+      } else if (isBill) {
+        if (reg.billPdf) {
+          docChips.push(`<a href="${formatPdfUrl(reg.billPdf)}" target="_blank" onclick="event.stopPropagation();" style="${docLinkStyle}">📄 Bill PDF</a>`);
+        }
       }
 
       if (reg.forwardAttachments && reg.forwardAttachments.length > 0) {
@@ -1168,7 +1274,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Key info snippet
       let keyInfoHtml = '';
-      if (isReq) {
+      if (isBill) {
+        const pStatusCol = reg.paymentStatus === 'Paid' ? '#059669' : (reg.paymentStatus === 'Partially Paid' ? '#D97706' : '#DC2626');
+        keyInfoHtml = `
+          <div style="font-weight: 800; color: #1E3A8A; font-size: 0.85rem;">₹${Number(reg.totalAmount || 0).toLocaleString('en-IN')}</div>
+          <div style="font-size: 0.72rem; color: #059669; font-weight: 600;">Paid: ₹${Number(reg.amountPaid || 0).toLocaleString('en-IN')}</div>
+          <div style="font-size: 0.7rem; color: #64748B; max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Bill #${reg.billNo || 'N/A'}">#${reg.billNo || 'N/A'} · <span style="font-weight:700; color:${pStatusCol};">${reg.paymentStatus || 'Pending'}</span></div>
+        `;
+      } else if (isReq) {
         const bg = reg.patientBloodGroup || reg.bloodGroup || 'N/A';
         keyInfoHtml = `
           <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
@@ -1354,6 +1467,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         detailFieldsHtml += formatDetail('Patient Address', reqFullAddr, 'excel-detail-span-2');
         detailFieldsHtml += formatDetail('Patient Photo', reg.patientPhoto ? `<a href="${formatPdfUrl(reg.patientPhoto)}" target="_blank" style="${docLinkStyle}">View Patient Photo</a>` : '<span style="color:#94A3B8;">None</span>');
+      } else if (isBill) {
+        detailFieldsHtml += formatDetail('Payer / Store / Vendor', reg.vendorName || 'N/A', 'excel-detail-span-2');
+        detailFieldsHtml += formatDetail('Bill Purpose', reg.billPurpose || 'N/A', 'excel-detail-span-2');
+        detailFieldsHtml += formatDetail('Financial Year', reg.financialYear || 'N/A');
+        detailFieldsHtml += formatDetail('Bill No.', reg.billNo || 'N/A');
+        detailFieldsHtml += formatDetail('Bill Date', reg.billDate ? new Date(reg.billDate).toLocaleDateString('en-IN') : 'N/A');
+        detailFieldsHtml += formatDetail('Total Bill Amount', `<span style="font-weight:800; color:#1E3A8A; font-size:0.95rem;">₹${Number(reg.totalAmount || 0).toLocaleString('en-IN')}</span>`);
+        detailFieldsHtml += formatDetail('Payment Part / Installment', reg.installment || 'Full Payment');
+        detailFieldsHtml += formatDetail('Amount Paid', `<span style="font-weight:800; color:#059669; font-size:0.95rem;">₹${Number(reg.amountPaid || 0).toLocaleString('en-IN')}</span>`);
+        const balanceAmt = Math.max(0, (Number(reg.totalAmount) || 0) - (Number(reg.amountPaid) || 0));
+        detailFieldsHtml += formatDetail('Balance Due', `<span style="font-weight:800; color:${balanceAmt > 0 ? '#DC2626' : '#64748B'};">₹${balanceAmt.toLocaleString('en-IN')}</span>`);
+        detailFieldsHtml += formatDetail('Payment Mode', reg.paymentMode || 'N/A');
+        const pStatusCol = reg.paymentStatus === 'Paid' ? '#059669' : (reg.paymentStatus === 'Partially Paid' ? '#D97706' : '#DC2626');
+        detailFieldsHtml += formatDetail('Payment Status', `<span style="display:inline-block; padding:2px 8px; border-radius:4px; font-weight:700; color:${pStatusCol}; background:#F8FAFC; border:1px solid #CBD5E1;">${reg.paymentStatus || 'Pending'}</span>`);
+        detailFieldsHtml += formatDetail('Transaction / UTR No.', reg.transactionId || 'N/A');
+        detailFieldsHtml += formatDetail('Payment Date', reg.paymentDate ? new Date(reg.paymentDate).toLocaleDateString('en-IN') : 'N/A');
+        detailFieldsHtml += formatDetail('Remarks', reg.remarks || 'None', 'excel-detail-span-2');
+        if (reg.billPdf) {
+          detailFieldsHtml += formatDetail('Bill Document (PDF)', `<a href="${formatPdfUrl(reg.billPdf)}" target="_blank" style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:#1E3A8A; color:white; text-decoration:none; border-radius:6px; font-weight:700; font-size:0.8rem; box-shadow:0 2px 4px rgba(30,58,138,0.2);">📄 View / Download Bill PDF</a>`, 'excel-detail-span-2');
+        }
+        detailFieldsHtml += formatDetail('Submitted By', `${reg.submittedByName || 'Secretary'} (${reg.submittedByRole || 'Secretary'})`);
       }
 
       // Tracking box in detail drawer
@@ -1555,7 +1689,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </td>
           <td style="text-align: center;">
             <div style="display: flex; justify-content: center; align-items: center;">
-              ${photoSrc ? `<img src="${photoSrc}" alt="Photo" onclick="event.stopPropagation(); window.openPhotoLightbox('${photoSrc.replace(/'/g, "&apos;")}', '${safeName}')" style="width:34px; height:34px; border-radius:50%; object-fit:cover; border:1.5px solid ${isReq ? '#DC2626' : 'var(--primary)'}; cursor:pointer;" title="Click to view full photo" />` : `<div style="width:34px; height:34px; border-radius:50%; background:#F1F5F9; color:#94A3B8; font-size:0.65rem; font-weight:700; display:flex; align-items:center; justify-content:center; border:1px solid #CBD5E1;">N/A</div>`}
+              ${isBill ? `<div style="width:34px; height:34px; border-radius:50%; background:#EFF6FF; color:#1D4ED8; font-size:1.15rem; display:flex; align-items:center; justify-content:center; border:1.5px solid #93C5FD;" title="Bill Application">🧾</div>` : (photoSrc ? `<img src="${photoSrc}" alt="Photo" onclick="event.stopPropagation(); window.openPhotoLightbox('${photoSrc.replace(/'/g, "&apos;")}', '${safeName}')" style="width:34px; height:34px; border-radius:50%; object-fit:cover; border:1.5px solid ${isReq ? '#DC2626' : 'var(--primary)'}; cursor:pointer;" title="Click to view full photo" />` : `<div style="width:34px; height:34px; border-radius:50%; background:#F1F5F9; color:#94A3B8; font-size:0.65rem; font-weight:700; display:flex; align-items:center; justify-content:center; border:1px solid #CBD5E1;">N/A</div>`)}
             </div>
           </td>
           <td>
@@ -1569,11 +1703,16 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="font-size: 0.7rem; color: #64748B;">${new Date(reg.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</div>
           </td>
           <td style="white-space: nowrap;">
-            <div style="display: flex; align-items: center; gap: 5px;">
-              <a href="tel:${phone}" onclick="event.stopPropagation();" style="color: #1E293B; text-decoration: none; font-weight: 600; font-size: 0.78rem;" title="Call">${phone}</a>
-              ${whatsapp ? `<a href="https://wa.me/91${whatsapp}" target="_blank" onclick="event.stopPropagation();" style="display:inline-flex; align-items:center; color:#16A34A; text-decoration:none;" title="Open WhatsApp: ${whatsapp}"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.98-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.24-.74-.66-1.25-1.48-1.39-1.73-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.34-.76-1.84-.2-.49-.4-.42-.56-.43h-.47c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.71 4.3 3.8 2.53 1.09 2.53.73 2.98.69.46-.04 1.47-.6 1.68-1.18.21-.59.21-1.09.15-1.19-.06-.11-.23-.17-.48-.29z"/></svg></a>` : ''}
-            </div>
-            ${reg.email ? `<div style="font-size:0.7rem; color:#64748B; max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${reg.email}">${reg.email}</div>` : ''}
+            ${isBill ? `
+              <div style="font-weight: 600; color: #1E293B; font-size: 0.78rem;">${reg.submittedByName || 'Secretary'}</div>
+              <div style="font-size: 0.7rem; color: #64748B;">Role: ${reg.submittedByRole || 'Secretary'}</div>
+            ` : `
+              <div style="display: flex; align-items: center; gap: 5px;">
+                <a href="tel:${phone}" onclick="event.stopPropagation();" style="color: #1E293B; text-decoration: none; font-weight: 600; font-size: 0.78rem;" title="Call">${phone}</a>
+                ${whatsapp ? `<a href="https://wa.me/91${whatsapp}" target="_blank" onclick="event.stopPropagation();" style="display:inline-flex; align-items:center; color:#16A34A; text-decoration:none;" title="Open WhatsApp: ${whatsapp}"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.98-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.24-.74-.66-1.25-1.48-1.39-1.73-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.34-.76-1.84-.2-.49-.4-.42-.56-.43h-.47c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.71 4.3 3.8 2.53 1.09 2.53.73 2.98.69.46-.04 1.47-.6 1.68-1.18.21-.59.21-1.09.15-1.19-.06-.11-.23-.17-.48-.29z"/></svg></a>` : ''}
+              </div>
+              ${reg.email ? `<div style="font-size:0.7rem; color:#64748B; max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${reg.email}">${reg.email}</div>` : ''}
+            `}
           </td>
           <td>${keyInfoHtml}</td>
           <td>${trackingHtml}</td>
@@ -1628,7 +1767,7 @@ document.addEventListener('DOMContentLoaded', () => {
       mobileCardsArr.push(`
         <div class="mobile-reg-card" id="m-reg-card-${reg._id}">
           <div class="m-card-header">
-            ${photoSrc ? `<img src="${photoSrc}" alt="Photo" onclick="window.openPhotoLightbox('${photoSrc.replace(/'/g, "&apos;")}', '${safeName}')" class="m-card-avatar" title="Click to view full photo" />` : `<div class="m-card-avatar-empty">N/A</div>`}
+            ${isBill ? `<div class="m-card-avatar" style="display:flex;align-items:center;justify-content:center;background:#EFF6FF;border:1.5px solid #93C5FD;font-size:1.4rem;">🧾</div>` : (photoSrc ? `<img src="${photoSrc}" alt="Photo" onclick="window.openPhotoLightbox('${photoSrc.replace(/'/g, "&apos;")}', '${safeName}')" class="m-card-avatar" title="Click to view full photo" />` : `<div class="m-card-avatar-empty">N/A</div>`)}
             <div style="min-width:0; flex:1;">
               <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
                 <span class="m-card-name" title="${applicantName}">${applicantName}</span>
@@ -1643,12 +1782,12 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="m-card-meta-grid">
             <div class="m-card-meta-item">
-              <span class="m-meta-label">Contact</span>
+              <span class="m-meta-label">${isBill ? 'Submitted By' : 'Contact'}</span>
               <div class="m-meta-val" style="display:flex; align-items:center; gap:6px;">
-                <a href="tel:${phone}" class="m-call-btn">📞 ${phone}</a>
-                ${whatsapp ? `<a href="https://wa.me/91${whatsapp}" target="_blank" class="m-wa-btn" title="Open WhatsApp: ${whatsapp}"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.98-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.24-.74-.66-1.25-1.48-1.39-1.73-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.34-.76-1.84-.2-.49-.4-.42-.56-.43h-.47c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.71 4.3 3.8 2.53 1.09 2.53.73 2.98.69.46-.04 1.47-.6 1.68-1.18.21-.59.21-1.09.15-1.19-.06-.11-.23-.17-.48-.29z"/></svg></a>` : ''}
+                ${isBill ? `<span style="font-weight:600; font-size:0.8rem; color:#1E293B;">${reg.submittedByName || 'Secretary'}</span>` : `<a href="tel:${phone}" class="m-call-btn">📞 ${phone}</a>`}
+                ${!isBill && whatsapp ? `<a href="https://wa.me/91${whatsapp}" target="_blank" class="m-wa-btn" title="Open WhatsApp: ${whatsapp}"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.98-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.24-.74-.66-1.25-1.48-1.39-1.73-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.34-.76-1.84-.2-.49-.4-.42-.56-.43h-.47c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.71 4.3 3.8 2.53 1.09 2.53.73 2.98.69.46-.04 1.47-.6 1.68-1.18.21-.59.21-1.09.15-1.19-.06-.11-.23-.17-.48-.29z"/></svg></a>` : ''}
               </div>
-              ${reg.email ? `<div class="m-card-email" title="${reg.email}">${reg.email}</div>` : ''}
+              ${isBill ? `<div class="m-card-email" style="color:#64748B;">Role: ${reg.submittedByRole || 'Secretary'}</div>` : (reg.email ? `<div class="m-card-email" title="${reg.email}">${reg.email}</div>` : '')}
             </div>
             <div class="m-card-meta-item">
               <span class="m-meta-label">Key Info</span>
@@ -2031,18 +2170,26 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if(dashboardSection) dashboardSection.style.display = 'none';
       if(registrationsSection) registrationsSection.style.display = 'none';
+      const createBillSection = document.getElementById('createBillSection');
+      if(createBillSection) createBillSection.style.display = 'none';
+      const navCb = document.getElementById('nav-create-bill');
+      if(navCb) navCb.classList.remove('active');
       if(gallerySection) gallerySection.style.display = 'block';
       
       fetchAdminGallery();
     });
   }
 
-  // Handle other navigation clicks to hide gallery
+  // Handle other navigation clicks to hide gallery and create bill section
   document.querySelectorAll('.nav-item').forEach(nav => {
-    if(nav.id === 'nav-gallery') return;
+    if(nav.id === 'nav-gallery' || nav.id === 'nav-create-bill') return;
     nav.addEventListener('click', (e) => {
       if(nav.target === '_blank') return;
       if(gallerySection) gallerySection.style.display = 'none';
+      const createBillSec = document.getElementById('createBillSection');
+      if(createBillSec) createBillSec.style.display = 'none';
+      const navCb = document.getElementById('nav-create-bill');
+      if(navCb) navCb.classList.remove('active');
     });
   });
 
@@ -3276,4 +3423,312 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('An error occurred while deleting message');
     }
   };
+
+  // ═══════════════════════════════════════════════════════════════
+  // CREATE BILL APPLICATION SECTION (SECRETARY ONLY)
+  // ═══════════════════════════════════════════════════════════════
+  const navCreateBill = document.getElementById('nav-create-bill');
+  const createBillSection = document.getElementById('createBillSection');
+  const createBillForm = document.getElementById('createBillForm');
+  const billDropZone = document.getElementById('billDropZone');
+  const billFileInput = document.getElementById('billFileInput');
+  const billDropZonePrompt = document.getElementById('billDropZonePrompt');
+  const billFileSelectedInfo = document.getElementById('billFileSelectedInfo');
+  const billFileName = document.getElementById('billFileName');
+  const billFileSize = document.getElementById('billFileSize');
+  const removeBillFileBtn = document.getElementById('removeBillFileBtn');
+  const billTotalAmountInput = document.getElementById('billTotalAmount');
+  const billAmountPaidInput = document.getElementById('billAmountPaid');
+  const billSummaryTotal = document.getElementById('billSummaryTotal');
+  const billSummaryPaid = document.getElementById('billSummaryPaid');
+  const billSummaryBalance = document.getElementById('billSummaryBalance');
+  const resetBillFormBtn = document.getElementById('resetBillFormBtn');
+  const submitBillBtn = document.getElementById('submitBillBtn');
+
+  // Helper to format file size
+  const formatFileSize = (bytes) => {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // 1. Navigation click on "Create Bill Application"
+  if (navCreateBill) {
+    navCreateBill.addEventListener('click', (e) => {
+      e.preventDefault();
+
+      if (!user || user.role !== 'Secretary') {
+        alert('Access Restricted: Only the Secretary can create bill applications.');
+        return;
+      }
+
+      // Deactivate all sidebar nav items
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      navCreateBill.classList.add('active');
+
+      // Hide all other sections
+      if (dashboardSection) dashboardSection.style.display = 'none';
+      if (registrationsSection) registrationsSection.style.display = 'none';
+      const gallerySec = document.getElementById('gallerySection');
+      if (gallerySec) gallerySec.style.display = 'none';
+      const msgsSec = document.getElementById('adminMessagesSection');
+      if (msgsSec) msgsSec.style.display = 'none';
+
+      // Show Create Bill section
+      if (createBillSection) {
+        createBillSection.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      // Default bill date to today if empty
+      const billDateEl = document.getElementById('billDate');
+      if (billDateEl && !billDateEl.value) {
+        billDateEl.value = new Date().toISOString().slice(0, 10);
+      }
+    });
+  }
+
+  // 2. Drag & Drop and PDF File Selection Handling
+  const displaySelectedBillFile = (file) => {
+    if (!file) return;
+
+    // Check PDF type strictly
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      alert('Invalid file format. Please upload a PDF file only (.pdf).');
+      if (billFileInput) billFileInput.value = '';
+      return;
+    }
+
+    // Check file size (max 25MB)
+    if (file.size > 25 * 1024 * 1024) {
+      alert('File size exceeds the 25MB limit. Please upload a smaller PDF document.');
+      if (billFileInput) billFileInput.value = '';
+      return;
+    }
+
+    if (billFileName) billFileName.textContent = file.name;
+    if (billFileSize) billFileSize.textContent = formatFileSize(file.size);
+    if (billDropZonePrompt) billDropZonePrompt.style.display = 'none';
+    if (billFileSelectedInfo) billFileSelectedInfo.style.display = 'flex';
+  };
+
+  const clearSelectedBillFile = () => {
+    if (billFileInput) billFileInput.value = '';
+    if (billFileSelectedInfo) billFileSelectedInfo.style.display = 'none';
+    if (billDropZonePrompt) billDropZonePrompt.style.display = 'block';
+  };
+
+  if (billDropZone && billFileInput) {
+    billDropZone.addEventListener('click', (e) => {
+      if (e.target && e.target.id === 'removeBillFileBtn') return;
+      billFileInput.click();
+    });
+
+    billFileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        displaySelectedBillFile(e.target.files[0]);
+      }
+    });
+
+    // Drag-over styling
+    ['dragenter', 'dragover'].forEach(eventName => {
+      billDropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        billDropZone.style.borderColor = '#1E3A8A';
+        billDropZone.style.background = '#EFF6FF';
+      });
+    });
+
+    ['dragleave', 'dragend'].forEach(eventName => {
+      billDropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        billDropZone.style.borderColor = '#93C5FD';
+        billDropZone.style.background = '#F8FAFC';
+      });
+    });
+
+    billDropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      billDropZone.style.borderColor = '#93C5FD';
+      billDropZone.style.background = '#F8FAFC';
+
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        billFileInput.files = e.dataTransfer.files;
+        displaySelectedBillFile(e.dataTransfer.files[0]);
+      }
+    });
+  }
+
+  if (removeBillFileBtn) {
+    removeBillFileBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      clearSelectedBillFile();
+    });
+  }
+
+  // 3. Live Amount & Payment Status Calculation
+  const calculateBillSummary = () => {
+    const total = parseFloat(billTotalAmountInput ? billTotalAmountInput.value : 0) || 0;
+    const paid = parseFloat(billAmountPaidInput ? billAmountPaidInput.value : 0) || 0;
+    const balance = Math.max(0, total - paid);
+
+    if (billSummaryTotal) billSummaryTotal.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (billSummaryPaid) billSummaryPaid.textContent = '₹' + paid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (billSummaryBalance) {
+      billSummaryBalance.textContent = '₹' + balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      billSummaryBalance.style.color = balance > 0 ? '#DC2626' : '#059669';
+    }
+
+    // Auto-sync Payment Status radio pills
+    if (total > 0) {
+      if (paid >= total) {
+        const paidRadio = document.querySelector('input[name="billPaymentStatus"][value="Paid"]');
+        if (paidRadio) paidRadio.checked = true;
+      } else if (paid > 0 && paid < total) {
+        const partRadio = document.querySelector('input[name="billPaymentStatus"][value="Partially Paid"]');
+        if (partRadio) partRadio.checked = true;
+      } else if (paid === 0) {
+        const pendRadio = document.querySelector('input[name="billPaymentStatus"][value="Pending"]');
+        if (pendRadio) pendRadio.checked = true;
+      }
+    }
+  };
+
+  if (billTotalAmountInput) {
+    billTotalAmountInput.addEventListener('input', calculateBillSummary);
+  }
+  if (billAmountPaidInput) {
+    billAmountPaidInput.addEventListener('input', calculateBillSummary);
+  }
+
+  // 4. Reset Form button
+  if (resetBillFormBtn && createBillForm) {
+    resetBillFormBtn.addEventListener('click', () => {
+      createBillForm.reset();
+      clearSelectedBillFile();
+      calculateBillSummary();
+      const billDateEl = document.getElementById('billDate');
+      if (billDateEl) billDateEl.value = new Date().toISOString().slice(0, 10);
+    });
+  }
+
+  // 5. Submit Bill Application Form
+  if (createBillForm) {
+    createBillForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!user || user.role !== 'Secretary') {
+        alert('Permission Denied: Only the Secretary role can create and submit bill applications.');
+        return;
+      }
+
+      // Ensure PDF file is selected
+      if (!billFileInput || !billFileInput.files || billFileInput.files.length === 0) {
+        alert('Please upload the bill document (PDF file only) before submitting.');
+        if (billDropZone) billDropZone.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+
+      const file = billFileInput.files[0];
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+      if (!isPdf) {
+        alert('The uploaded file must be a PDF document (.pdf).');
+        return;
+      }
+
+      const vendorName = document.getElementById('billVendorName')?.value.trim();
+      const billPurpose = document.getElementById('billPurpose')?.value.trim();
+      const financialYear = document.getElementById('billFinancialYear')?.value;
+      const billNo = document.getElementById('billNo')?.value.trim();
+      const billDate = document.getElementById('billDate')?.value;
+      const installment = document.getElementById('billInstallment')?.value.trim();
+      const totalAmount = document.getElementById('billTotalAmount')?.value;
+      const amountPaid = document.getElementById('billAmountPaid')?.value;
+      const paymentMode = document.querySelector('input[name="billPaymentMode"]:checked')?.value || 'Cash';
+      const remarks = document.getElementById('billRemarks')?.value.trim() || '';
+      const paymentStatus = document.querySelector('input[name="billPaymentStatus"]:checked')?.value || 'Pending';
+      const transactionId = document.getElementById('billTransactionId')?.value.trim() || '';
+      const paymentDate = document.getElementById('billPaymentDate')?.value || '';
+
+      if (!vendorName || !billPurpose || !billNo || !billDate || !totalAmount || !amountPaid) {
+        alert('Please fill in all required fields marked with *');
+        return;
+      }
+
+      // Confirmation
+      const confirmCreate = confirm(`Confirm submission of Bill Application?\n\nVendor: ${vendorName}\nBill No: ${billNo}\nTotal Amount: ₹${Number(totalAmount).toLocaleString('en-IN')}\n\nThis application will be created with "Pending" status and can be forwarded to executive roles.`);
+      if (!confirmCreate) return;
+
+      const formData = new FormData();
+      formData.append('vendorName', vendorName);
+      formData.append('billPurpose', billPurpose);
+      formData.append('financialYear', financialYear);
+      formData.append('billNo', billNo);
+      formData.append('billDate', billDate);
+      formData.append('installment', installment);
+      formData.append('totalAmount', totalAmount);
+      formData.append('amountPaid', amountPaid);
+      formData.append('paymentMode', paymentMode);
+      formData.append('remarks', remarks);
+      formData.append('paymentStatus', paymentStatus);
+      formData.append('transactionId', transactionId);
+      formData.append('paymentDate', paymentDate);
+      formData.append('billPdf', file);
+
+      // Submit state
+      const originalBtnHtml = submitBillBtn ? submitBillBtn.innerHTML : 'Create & Submit Bill Application';
+      if (submitBillBtn) {
+        submitBillBtn.disabled = true;
+        submitBillBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;"></span> Submitting Bill...</span>';
+      }
+
+      try {
+        const token = getAuthToken();
+        const res = await fetch(`${API_BASE}/api/admin/bills`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          alert(`✅ Bill Application Created Successfully!\n\nBill No: ${data.data?.billNo || billNo}\nVendor: ${data.data?.vendorName || vendorName}\n\nThe application is placed in your Pending review queue. You can now review or forward it to other roles.`);
+          
+          // Reset form
+          createBillForm.reset();
+          clearSelectedBillFile();
+          calculateBillSummary();
+
+          // Refresh registrations and dashboard
+          await fetchRegistrations();
+
+          // Automatically navigate to Pending section so Secretary sees the new bill
+          const pendingNav = document.getElementById('nav-pending');
+          if (pendingNav) {
+            pendingNav.click();
+          }
+        } else {
+          alert(data.error || 'Failed to create bill application.');
+        }
+      } catch (err) {
+        console.error('Error creating bill application:', err);
+        alert('An unexpected network error occurred while submitting the bill application.');
+      } finally {
+        if (submitBillBtn) {
+          submitBillBtn.disabled = false;
+          submitBillBtn.innerHTML = originalBtnHtml;
+        }
+      }
+    });
+  }
 });
+

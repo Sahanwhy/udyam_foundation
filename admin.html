@@ -1531,6 +1531,170 @@
       background: linear-gradient(135deg, rgba(153, 27, 27, 0.95), rgba(185, 28, 28, 0.85));
       border: 1px solid rgba(239, 68, 68, 0.3);
     }
+
+    /* ══════════════════════════════════════════════════════════
+       BILL APPLICATIONS MODE THEME & COMPONENT STYLES
+    ══════════════════════════════════════════════════════════ */
+    body.bill-mode-active {
+      --primary: #1E3A8A;
+      --primary-light: #2563EB;
+      --accent: #3B82F6;
+      --accent-light: #60A5FA;
+    }
+    body.bill-mode-active .sidebar {
+      background-color: #0A1128;
+      border-right: 1px solid rgba(59, 130, 246, 0.25);
+    }
+    body.bill-mode-active .nav-item.active {
+      border-left: 4px solid #3B82F6 !important;
+      background-color: rgba(59, 130, 246, 0.18) !important;
+      color: #FFFFFF !important;
+    }
+    body.bill-mode-active .welcome-banner {
+      background: linear-gradient(135deg, rgba(30, 58, 138, 0.95), rgba(37, 99, 235, 0.85));
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .bill-mode-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0.3rem 0.85rem;
+      border-radius: 50px;
+      background: #EFF6FF;
+      color: #1D4ED8;
+      border: 1.5px solid #BFDBFE;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .bill-mode-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2563EB;
+      display: inline-block;
+      box-shadow: 0 0 8px rgba(37, 99, 235, 0.7);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    /* Modern Mode Switcher in Header */
+    .mode-switcher-group {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.05);
+      padding: 3px;
+      border-radius: 30px;
+      border: 1px solid var(--border);
+      gap: 3px;
+    }
+    .mode-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0.38rem 0.8rem;
+      border-radius: 20px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .mode-pill-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.6);
+    }
+    .mode-pill-btn.active {
+      background: white;
+      color: var(--primary);
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    body.blood-mode-active .mode-pill-btn.active {
+      color: #DC2626;
+    }
+    body.bill-mode-active .mode-pill-btn.active {
+      color: #1E3A8A;
+    }
+
+    /* Sidebar Mode Selector buttons */
+    .sidebar-mode-nav-btn {
+      padding: 0.45rem 0.75rem !important;
+      font-size: 0.78rem !important;
+      font-weight: 600 !important;
+      border-radius: 6px !important;
+      color: rgba(255, 255, 255, 0.75) !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      border-left: none !important;
+      transition: all 0.15s ease;
+    }
+    .sidebar-mode-nav-btn:hover {
+      background: rgba(255, 255, 255, 0.1) !important;
+      color: white !important;
+    }
+    .sidebar-mode-nav-btn.active {
+      background: rgba(255, 255, 255, 0.18) !important;
+      color: #FFFFFF !important;
+      font-weight: 700 !important;
+      border-left: 3px solid #60A5FA !important;
+    }
+
+    /* Radio Pills for Bill Form */
+    .custom-radio-pill {
+      cursor: pointer;
+      display: inline-flex;
+    }
+    .custom-radio-pill input[type="radio"] {
+      display: none;
+    }
+    .custom-radio-pill span {
+      display: inline-block;
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      border: 1px solid #CBD5E1;
+      background: white;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #475569;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .custom-radio-pill input[type="radio"]:checked + span {
+      background: #EFF6FF;
+      border-color: #3B82F6;
+      color: #1D4ED8;
+      box-shadow: 0 0 0 1px #3B82F6;
+    }
+    .status-pill-paid input[type="radio"]:checked + span {
+      background: #ECFDF5 !important;
+      border-color: #10B981 !important;
+      color: #047857 !important;
+      box-shadow: 0 0 0 1px #10B981 !important;
+    }
+    .status-pill-pending input[type="radio"]:checked + span {
+      background: #FEF3C7 !important;
+      border-color: #F59E0B !important;
+      color: #B45309 !important;
+      box-shadow: 0 0 0 1px #F59E0B !important;
+    }
+    .status-pill-partially input[type="radio"]:checked + span {
+      background: #EFF6FF !important;
+      border-color: #3B82F6 !important;
+      color: #1D4ED8 !important;
+      box-shadow: 0 0 0 1px #3B82F6 !important;
+    }
+
+    .excel-type-bill {
+      background: #EFF6FF;
+      color: #1D4ED8;
+      border: 1px solid #BFDBFE;
+    }
   </style>
 </head>
 <body>
@@ -1572,13 +1736,35 @@
         Admin Messages
       </a>
 
-      <!-- Quick Mode Switcher in Sidebar -->
-      <a href="#" class="nav-item sidebar-mode-toggle" id="navBloodModeBtn" title="Switch to Blood Donation Mode">
-        <span style="font-size: 1.1rem; line-height: 1;" id="navBloodModeIcon">🩸</span>
-        <span id="navBloodModeText">Blood Donation</span>
+      <!-- Dashboard Modes in Sidebar -->
+      <div class="sidebar-mode-section" style="padding: 0.65rem 0.5rem 0.35rem;">
+        <div style="font-size: 0.68rem; text-transform: uppercase; color: rgba(255,255,255,0.45); font-weight: 700; letter-spacing: 0.05em; padding: 0 0.5rem 0.35rem;">Modes</div>
+        <div style="display: flex; flex-direction: column; gap: 3px;">
+          <a href="#" class="nav-item sidebar-mode-nav-btn active" data-mode="normal" id="sideModeNormal">
+            <span>🌱</span> Normal Mode
+          </a>
+          <a href="#" class="nav-item sidebar-mode-nav-btn" data-mode="blood" id="sideModeBlood">
+            <span>🩸</span> Blood Donation
+          </a>
+          <a href="#" class="nav-item sidebar-mode-nav-btn" data-mode="bill" id="sideModeBill">
+            <span>🧾</span> Bill Applications
+          </a>
+        </div>
+      </div>
+
+      <!-- Hidden fallback for legacy handlers -->
+      <a href="#" id="navBloodModeBtn" style="display: none;"><span id="navBloodModeIcon">🩸</span><span id="navBloodModeText">Blood Donation</span></a>
+
+      <div class="nav-section-title" id="regNavSectionTitle" style="padding: 1.25rem 1rem 0.4rem; font-size: 0.72rem; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 700; letter-spacing: 0.05em;">Registrations</div>
+      
+      <!-- Create Bill Application Nav Item (Secretary Only, Active in Bill Mode) -->
+      <a href="#" class="nav-item" id="nav-create-bill" style="display: none; background: rgba(59, 130, 246, 0.18); color: #93C5FD; font-weight: 700; border-left: 4px solid #3B82F6; margin: 0 0.5rem 6px; border-radius: 6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>Create Bill</span>
       </a>
 
-      <div class="nav-section-title" id="regNavSectionTitle" style="padding: 1.5rem 1.5rem 0.5rem; font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 700; letter-spacing: 0.05em;">Registrations</div>
       <a href="#" class="nav-item reg-filter-btn active" data-filter="pending" id="nav-pending">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         Pending
@@ -1639,13 +1825,29 @@
             <span class="blood-mode-dot"></span>
             Blood Donation Mode
           </span>
+          <span id="headerBillBadge" class="bill-mode-header-badge" style="display: none;">
+            <span class="bill-mode-dot"></span>
+            Bill Applications Mode
+          </span>
         </div>
       </div>
       <div class="header-right">
-        <button type="button" id="btnToggleBloodMode" class="btn-blood-mode-switch" title="Toggle between Normal Admin and Blood Donation Mode">
-          <span class="blood-switch-icon" id="bloodSwitchIcon">🩸</span>
-          <span class="blood-switch-text" id="bloodSwitchText">Blood Donation</span>
-        </button>
+        <!-- Modern 3-Mode Switcher in Header -->
+        <div class="mode-switcher-group" id="headerModeSwitcher">
+          <button type="button" class="mode-pill-btn active" data-mode="normal" id="modeBtnNormal" title="Switch to Normal Mode">
+            <span>🌱</span><span class="mode-pill-text">Normal</span>
+          </button>
+          <button type="button" class="mode-pill-btn" data-mode="blood" id="modeBtnBlood" title="Switch to Blood Donation Mode">
+            <span>🩸</span><span class="mode-pill-text">Blood</span>
+          </button>
+          <button type="button" class="mode-pill-btn" data-mode="bill" id="modeBtnBill" title="Switch to Bill Applications Mode">
+            <span>🧾</span><span class="mode-pill-text">Bills</span>
+          </button>
+        </div>
+
+        <!-- Hidden legacy button for fallback -->
+        <button type="button" id="btnToggleBloodMode" style="display: none;"><span id="bloodSwitchIcon"></span><span id="bloodSwitchText"></span></button>
+
         <div class="user-profile">
           <div class="user-info">
             <div class="user-name" id="userName">Admin</div>
@@ -1765,6 +1967,59 @@
               <div class="stat-info">
                 <h3>Blood Requests</h3>
                 <p id="totalBloodRequestsCount">0</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bill Mode Stats (Active in Bill Applications Mode) -->
+          <div class="stats-grid" id="billStatsGrid" style="display: none;">
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(37, 99, 235, 0.1); color: #2563EB;">
+                <span style="font-size: 1.4rem;">🧾</span>
+              </div>
+              <div class="stat-info">
+                <h3>Total Bill Applications</h3>
+                <p id="totalBillsCount">0</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #D97706;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="stat-info">
+                <h3>Pending Review</h3>
+                <p id="pendingBillsCount">0</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #059669;">
+                <span style="font-size: 1.4rem;">💰</span>
+              </div>
+              <div class="stat-info">
+                <h3>Total Bill Amount</h3>
+                <p id="totalBillAmountSum">₹0</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: #7C3AED;">
+                <span style="font-size: 1.4rem;">💳</span>
+              </div>
+              <div class="stat-info">
+                <h3>Total Amount Paid</h3>
+                <p id="totalBillPaidSum">₹0</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10B981;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="stat-info">
+                <h3>Approved / Verified</h3>
+                <p id="approvedBillsCount">0</p>
               </div>
             </div>
           </div>
@@ -2002,6 +2257,241 @@
 
       <div id="registrationsContainer" style="width: 100%;">
         <!-- Excel spreadsheet table will be injected here -->
+      </div>
+    </section>
+
+    <!-- Create Bill Application Section (Secretary Only, in Bill Mode) -->
+    <section id="createBillSection" class="data-section" style="display: none; padding: 0 0 2rem;">
+      <div class="data-section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem; background: white; padding: 1.25rem 1.5rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div>
+          <h2 style="margin: 0 0 0.25rem 0; font-size: 1.35rem; font-weight: 700; color: #1E3A8A; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🧾</span> Create Bill Application
+          </h2>
+          <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">
+            Create and submit a vendor or supplier bill request. Once created, it will be placed in the <strong>Pending</strong> review section and can be forwarded to other executive roles.
+          </p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 50px; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 0.75rem; font-weight: 700;">
+            👑 Secretary Access
+          </span>
+        </div>
+      </div>
+
+      <div class="bill-form-card" style="background: white; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.04); padding: 1.75rem; max-width: 900px; margin: 0 auto;">
+        <form id="createBillForm" autocomplete="off">
+          
+          <!-- PART 1: BILL REQUEST APPLICATION -->
+          <div style="border-bottom: 1.5px solid #E2E8F0; padding-bottom: 1.25rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 1.25rem;">
+              <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: #EFF6FF; color: #1D4ED8; font-weight: 800; font-size: 0.85rem;">1</span>
+              <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 0.04em;">Bill Request Application</h3>
+            </div>
+
+            <div class="form-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+              
+              <!-- Payer / Store / Vendor / Supplier -->
+              <div style="grid-column: span 2;">
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
+                  Name of the Payer / Store / Vendor / Supplier <span style="color: #EF4444;">*</span>
+                </label>
+                <input type="text" id="billVendorName" required placeholder="e.g. M/S Assam Stationery & Printing Works" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.9rem; outline: none; font-family: inherit; transition: border-color 0.2s;" />
+              </div>
+
+              <!-- Bill Purpose -->
+              <div style="grid-column: span 2;">
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
+                  Bill Purpose <span style="color: #EF4444;">*</span>
+                </label>
+                <input type="text" id="billPurpose" required placeholder="e.g. Purchase of office stationery and awareness camp banners" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.9rem; outline: none; font-family: inherit;" />
+              </div>
+
+              <!-- Financial Year -->
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
+                  Financial Year <span style="color: #EF4444;">*</span>
+                </label>
+                <select id="billFinancialYear" required style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.9rem; outline: none; font-family: inherit; background: white;">
+                  <option value="2026-2027">2026-2027</option>
+                  <option value="2025-2026" selected>2025-2026</option>
+                  <option value="2024-2025">2024-2025</option>
+                  <option value="2023-2024">2023-2024</option>
+                </select>
+              </div>
+
+              <!-- Bill No. -->
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
+                  Bill No. <span style="color: #EF4444;">*</span>
+                </label>
+                <input type="text" id="billNo" required placeholder="e.g. INV-2026-0418" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.9rem; outline: none; font-family: inherit;" />
+              </div>
+
+              <!-- Bill Date -->
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
+                  Bill Date <span style="color: #EF4444;">*</span>
+                </label>
+                <input type="date" id="billDate" required style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.9rem; outline: none; font-family: inherit;" />
+              </div>
+
+              <!-- Payment Part / Installment -->
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
+                  Payment Part / Installment <span style="color: #EF4444;">*</span>
+                </label>
+                <input type="text" id="billInstallment" required placeholder="e.g. Full Payment / Part 1 / Advance" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.9rem; outline: none; font-family: inherit;" />
+              </div>
+
+              <!-- Total Bill Amount -->
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
+                  Total Bill Amount (₹) <span style="color: #EF4444;">*</span>
+                </label>
+                <div style="position: relative;">
+                  <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 700; color: #64748B;">₹</span>
+                  <input type="number" step="0.01" min="0" id="billTotalAmount" required placeholder="0.00" style="width: 100%; padding: 0.65rem 0.85rem 0.65rem 2rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.9rem; outline: none; font-family: inherit; font-weight: 600;" />
+                </div>
+              </div>
+
+              <!-- Amount Paid -->
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
+                  Amount Paid (₹) <span style="color: #EF4444;">*</span>
+                </label>
+                <div style="position: relative;">
+                  <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 700; color: #64748B;">₹</span>
+                  <input type="number" step="0.01" min="0" id="billAmountPaid" required placeholder="0.00" style="width: 100%; padding: 0.65rem 0.85rem 0.65rem 2rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.9rem; outline: none; font-family: inherit; font-weight: 600;" />
+                </div>
+              </div>
+
+              <!-- Payment Mode -->
+              <div style="grid-column: span 2;">
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                  Payment Mode <span style="color: #EF4444;">*</span>
+                </label>
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                  <label class="custom-radio-pill">
+                    <input type="radio" name="billPaymentMode" value="Cash" checked />
+                    <span>💵 Cash</span>
+                  </label>
+                  <label class="custom-radio-pill">
+                    <input type="radio" name="billPaymentMode" value="NEFT" />
+                    <span>🏦 NEFT</span>
+                  </label>
+                  <label class="custom-radio-pill">
+                    <input type="radio" name="billPaymentMode" value="Cheque" />
+                    <span>🧾 Cheque</span>
+                  </label>
+                  <label class="custom-radio-pill">
+                    <input type="radio" name="billPaymentMode" value="UPI" />
+                    <span>📱 UPI</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Remarks -->
+              <div style="grid-column: span 2;">
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
+                  Remarks
+                </label>
+                <textarea id="billRemarks" rows="2" placeholder="Any additional remarks or justification..." style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.88rem; outline: none; font-family: inherit; resize: vertical;"></textarea>
+              </div>
+
+              <!-- Bill Upload (PDF only) -->
+              <div style="grid-column: span 2;">
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
+                  Bill Upload (PDF file only) <span style="color: #EF4444;">*</span>
+                </label>
+                <div id="billDropZone" style="border: 2px dashed #93C5FD; background: #F8FAFC; border-radius: 10px; padding: 1.5rem 1rem; text-align: center; cursor: pointer; transition: all 0.2s;">
+                  <input type="file" id="billFileInput" accept="application/pdf,.pdf" required style="display: none;" />
+                  <div id="billDropZonePrompt">
+                    <div style="font-size: 2rem; margin-bottom: 6px;">📄</div>
+                    <div style="font-weight: 600; color: #1E3A8A; font-size: 0.9rem;">Click to upload bill PDF or drag and drop</div>
+                    <div style="font-size: 0.75rem; color: #64748B; margin-top: 4px;">Only PDF documents (.pdf) up to 25MB accepted</div>
+                  </div>
+                  <div id="billFileSelectedInfo" style="display: none; align-items: center; justify-content: center; gap: 10px; background: white; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #CBD5E1;">
+                    <span style="font-size: 1.4rem;">📑</span>
+                    <div style="text-align: left;">
+                      <div id="billFileName" style="font-weight: 700; color: #1E293B; font-size: 0.85rem; word-break: break-all;"></div>
+                      <div id="billFileSize" style="font-size: 0.72rem; color: #64748B;"></div>
+                    </div>
+                    <button type="button" id="removeBillFileBtn" style="margin-left: auto; background: #FEE2E2; color: #DC2626; border: none; border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">✕ Remove</button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- PART 2: PAYMENT DETAILS -->
+          <div style="padding-bottom: 1.25rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 1.25rem;">
+              <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: #ECFDF5; color: #059669; font-weight: 800; font-size: 0.85rem;">2</span>
+              <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 0.04em;">Payment Details</h3>
+            </div>
+
+            <div class="form-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+              
+              <!-- Payment Status -->
+              <div style="grid-column: span 2;">
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                  Payment Status <span style="color: #EF4444;">*</span>
+                </label>
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                  <label class="custom-radio-pill status-pill-paid">
+                    <input type="radio" name="billPaymentStatus" value="Paid" />
+                    <span>✓ Paid</span>
+                  </label>
+                  <label class="custom-radio-pill status-pill-pending">
+                    <input type="radio" name="billPaymentStatus" value="Pending" checked />
+                    <span>⏳ Pending</span>
+                  </label>
+                  <label class="custom-radio-pill status-pill-partially">
+                    <input type="radio" name="billPaymentStatus" value="Partially Paid" />
+                    <span>⚖️ Partially Paid</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Transaction / UTR No. -->
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
+                  Transaction / UTR No.
+                </label>
+                <input type="text" id="billTransactionId" placeholder="e.g. UTR392819284729 / Cheque #123456" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.9rem; outline: none; font-family: inherit;" />
+              </div>
+
+              <!-- Payment Date -->
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
+                  Payment Date
+                </label>
+                <input type="date" id="billPaymentDate" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.9rem; outline: none; font-family: inherit;" />
+              </div>
+
+            </div>
+          </div>
+
+          <!-- SUBMISSION & SUMMARY BAR -->
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding-top: 1.25rem; border-top: 1.5px solid #E2E8F0;">
+            <div id="billBalanceSummary" style="font-size: 0.85rem; color: #475569; font-weight: 600;">
+              Total: <span id="billSummaryTotal" style="color:#0F172A; font-weight:700;">₹0</span> &nbsp;|&nbsp;
+              Paid: <span id="billSummaryPaid" style="color:#059669; font-weight:700;">₹0</span> &nbsp;|&nbsp;
+              Balance: <span id="billSummaryBalance" style="color:#DC2626; font-weight:700;">₹0</span>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+              <button type="button" id="resetBillFormBtn" style="padding: 0.65rem 1.25rem; background: white; border: 1px solid #CBD5E1; border-radius: 8px; font-weight: 600; color: #475569; font-size: 0.88rem; cursor: pointer;">
+                Reset
+              </button>
+              <button type="submit" id="submitBillBtn" style="padding: 0.65rem 1.75rem; background: #1E3A8A; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(30,58,138,0.25); transition: all 0.2s;">
+                <span>➕ Create & Submit Bill Application</span>
+              </button>
+            </div>
+          </div>
+
+        </form>
       </div>
     </section>
 
