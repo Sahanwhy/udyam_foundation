@@ -826,7 +826,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const approverInfo = {
               name: (user && user.fullName) ? user.fullName : (user && user.role) ? user.role : 'Authorized Admin',
-              role: (user && user.role) ? user.role : 'President'
+              role: (user && user.role) ? user.role : 'President',
+              hasPresidentSignature: true
             };
             if (typeof window.generateBillApprovalPDF === 'function') {
               try {
@@ -842,7 +843,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (status === 'accepted') {
           if (type === 'bill') {
             const billVoucherNo = res.registrationNo || (index > -1 && allRegistrations[index]?.registrationNo) || '';
-            alert(`✅ Bill Application Approved!\n\nApproval Voucher No: ${billVoucherNo}\n\nOfficial Bill Payment Approval PDF Voucher with foundation logo has been generated and downloaded.`);
+            alert(`✅ Bill Application Approved!\n\nApproval Voucher No: ${billVoucherNo}\n\nOfficial Bill Payment Approval PDF Voucher with President's signature has been generated and downloaded.`);
           } else if (res.registrationNo) {
             alert(`✅ Application Approved!\n\nUnique Registration No: ${res.registrationNo}\n\nAn approval email with this number has been sent to the applicant.`);
           }
@@ -1964,8 +1965,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     const approverInfo = {
-      name: (user && user.fullName) ? user.fullName : (user && user.role) ? user.role : 'Authorized Admin',
-      role: (user && user.role) ? user.role : 'President'
+      name: (bill.approvedByName) ? bill.approvedByName : (user && user.fullName) ? user.fullName : (user && user.role) ? user.role : 'Authorized Admin',
+      role: (bill.approvedByRole) ? bill.approvedByRole : (user && user.role) ? user.role : 'President',
+      hasPresidentSignature: true
     };
     if (typeof window.generateBillApprovalPDF === 'function') {
       try {

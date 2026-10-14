@@ -337,7 +337,10 @@ const billApplicationSchema = new mongoose.Schema({
   registrationNo: { type: String, default: null },
   date: { type: Date, default: Date.now },
   createdByAdminId: { type: String, default: null },
-  createdByAdminName: { type: String, default: null }
+  createdByAdminName: { type: String, default: null },
+  approvedByName: { type: String, default: '' },
+  approvedByRole: { type: String, default: '' },
+  approvedDate: { type: Date, default: null }
 }, { collection: 'bill_applications' });
 
 let AdminUser, Volunteer, Employee, Member, BloodDonor, BloodRequest, GalleryPhoto, AdminMessage, GalleryCategory, BillApplication;
@@ -1967,6 +1970,11 @@ app.patch('/api/admin/registrations/:type/:id/status', authMiddleware, async (re
         generatedNo = generateRegistrationNo(type);
       }
       updatePayload.registrationNo = generatedNo;
+      if (req.user) {
+        updatePayload.approvedByName = req.user.fullName || req.user.role || 'President';
+        updatePayload.approvedByRole = req.user.role || 'President';
+        updatePayload.approvedDate = new Date();
+      }
     }
 
     const updatedDoc = await Model.findByIdAndUpdate(id, updatePayload, { new: true });
