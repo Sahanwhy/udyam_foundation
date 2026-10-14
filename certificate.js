@@ -275,6 +275,354 @@ function generateMembershipCertificate(data) {
   doc.save(filename);
 }
 
+/* ══════════════════════════════════════════
+   UDYAM — Bill Payment Approval Voucher PDF
+   Generated when Secretary / President final approves a bill
+══════════════════════════════════════════ */
+function generateBillApprovalPDF(data, approverInfo) {
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    console.error('jsPDF is not loaded');
+    if (typeof alert === 'function') alert('PDF Generation error: jsPDF library is not loaded.');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+  const pageWidth = doc.internal.pageSize.getWidth(); // 210mm
+  const pageHeight = doc.internal.pageSize.getHeight(); // 297mm
+  const margin = 14;
+  const contentWidth = pageWidth - margin * 2; // 182mm
+  const now = new Date();
+
+  const voucherNo = data.registrationNo || data.billNo || generateReceiptNumber(data.date || now);
+  const approverRole = (approverInfo && approverInfo.role) || data.approvedByRole || 'Secretary / President';
+  const approverName = (approverInfo && approverInfo.name) || data.approvedByName || 'Authorized Officer';
+
+  // --- Outer Border & Frame ---
+  doc.setDrawColor(27, 67, 50); // Deep forest green
+  doc.setLineWidth(0.6);
+  doc.rect(6, 6, pageWidth - 12, pageHeight - 12);
+  doc.setDrawColor(212, 175, 55); // Gold inner border
+  doc.setLineWidth(0.2);
+  doc.rect(7.5, 7.5, pageWidth - 15, pageHeight - 15);
+
+  // --- Top Header Banner ---
+  doc.setFillColor(27, 67, 50);
+  doc.rect(8, 8, pageWidth - 16, 32, 'F');
+
+  // --- Foundation Logo ---
+  let hasLogo = false;
+  if (typeof LOGO_BASE64 !== 'undefined' && LOGO_BASE64) {
+    try {
+      doc.addImage(LOGO_BASE64, 'JPEG', 12, 9, 28, 28);
+      hasLogo = true;
+    } catch (e1) {
+      try {
+        doc.addImage(LOGO_BASE64, 12, 9, 28, 28);
+        hasLogo = true;
+      } catch (e2) {
+        console.error('Failed to add logo to Bill PDF:', e2);
+      }
+    }
+  }
+
+  const headerTextX = hasLogo ? 44 : pageWidth / 2;
+  const headerAlign = hasLogo ? 'left' : 'center';
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text(ORG.fullName.toUpperCase(), headerTextX, 18, { align: headerAlign });
+
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(8.5);
+  doc.setTextColor(218, 240, 222);
+  doc.text(ORG.tagline, headerTextX, 24, { align: headerAlign });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(240, 245, 240);
+  doc.text(`${ORG.address} | PAN: ${ORG.pan} | 12A & 80G Certified`, headerTextX, 30, { align: headerAlign });
+
+  // Gold accent bar
+  doc.setFillColor(212, 175, 55);
+  doc.rect(8, 40, pageWidth - 16, 1.5, 'F');
+
+  // --- Voucher Title Banner ---
+  doc.setFillColor(243, 248, 244);
+  doc.rect(8, 41.5, pageWidth - 16, 12, 'F');
+  doc.setDrawColor(200, 225, 210);
+  doc.setLineWidth(0.3);
+  doc.line(8, 53.5, pageWidth - 8, 53.5);
+
+  doc.setTextColor(27, 67, 50);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('EXPENDITURE & BILL PAYMENT APPROVAL VOUCHER', pageWidth / 2, 47.5, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(80, 80, 80);
+  doc.text('Sanctioned & Passed for Disbursement | Office of the General Secretary & President', pageWidth / 2, 51.5, { align: 'center' });
+
+  // --- Metadata Box (Voucher No, Date, Status pill) ---
+  let curY = 57;
+  doc.setFillColor(250, 250, 250);
+  doc.setDrawColor(220, 226, 232);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(margin, curY, contentWidth, 18, 1.5, 1.5, 'FD');
+
+  // Left meta
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.text('APPROVAL VOUCHER NO:', margin + 4, curY + 6);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(27, 67, 50);
+  doc.text(String(voucherNo), margin + 4, curY + 13);
+
+  // Middle meta
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.text('SANCTION DATE:', margin + 70, curY + 6);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(30, 41, 59);
+  doc.text(formatDateTime(now), margin + 70, curY + 13);
+
+  // Status Badge Pill
+  const pillW = 46;
+  const pillH = 10;
+  const pillX = pageWidth - margin - pillW - 4;
+  const pillY = curY + 4;
+  doc.setFillColor(209, 250, 229);
+  doc.setDrawColor(52, 211, 153);
+  doc.roundedRect(pillX, pillY, pillW, pillH, 2, 2, 'FD');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(4, 120, 87);
+  doc.text('PASSED & APPROVED', pillX + pillW / 2, pillY + 6.5, { align: 'center' });
+
+  curY += 22;
+
+  // --- Helper to draw section headers ---
+  function drawSectionHeader(title, y) {
+    doc.setFillColor(27, 67, 50);
+    doc.rect(margin, y, contentWidth, 6, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text(title, margin + 4, y + 4.2);
+    return y + 6;
+  }
+
+  // --- Section 1: Payee & Bill Particulars ---
+  curY = drawSectionHeader('1. PAYEE & INVOICE PARTICULARS', curY);
+
+  const sec1StartY = curY;
+  const sec1H = 34;
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.3);
+  doc.rect(margin, curY, contentWidth, sec1H, 'FD');
+
+  const col1X = margin + 4;
+  const col2X = margin + (contentWidth / 2) + 2;
+
+  function drawCardField(label, val, x, y, maxW = 80) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text(label.toUpperCase(), x, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(30, 41, 59);
+    const splitVal = doc.splitTextToSize(String(val || 'N/A'), maxW);
+    doc.text(splitVal, x, y + 4.5);
+    return y + 10;
+  }
+
+  let lY = curY + 5;
+  drawCardField('Vendor / Store / Payee:', data.vendorName, col1X, lY, 82);
+  drawCardField('Purpose of Expenditure:', data.billPurpose, col2X, lY, 82);
+
+  lY += 10.5;
+  drawCardField('Bill / Invoice Number:', data.billNo, col1X, lY, 82);
+  const formattedBillDate = data.billDate ? new Date(data.billDate).toLocaleDateString('en-IN') : 'N/A';
+  drawCardField('Bill / Invoice Date:', formattedBillDate, col2X, lY, 82);
+
+  lY += 10.5;
+  drawCardField('Financial Year:', data.financialYear || 'N/A', col1X, lY, 82);
+  const submitter = `${data.submittedByName || 'Secretary'} (${data.submittedByRole || 'Secretary'})`;
+  drawCardField('Submitted By:', submitter, col2X, lY, 82);
+
+  curY = sec1StartY + sec1H + 4;
+
+  // --- Section 2: Financial Assessment & Settlement Summary ---
+  curY = drawSectionHeader('2. FINANCIAL ASSESSMENT & DISBURSEMENT SUMMARY', curY);
+
+  const totalAmt = Number(data.totalAmount) || 0;
+  const paidAmt = Number(data.amountPaid) || 0;
+  const balAmt = Math.max(0, totalAmt - paidAmt);
+  const installmentText = data.installment || 'Full Payment';
+
+  const cardW = (contentWidth - 6) / 4;
+  const cardH = 18;
+  const cardY = curY + 2;
+
+  const statCards = [
+    { label: 'TOTAL BILL AMOUNT', val: `INR ${totalAmt.toLocaleString('en-IN')}/-`, bg: [248, 250, 252], col: [30, 58, 138] },
+    { label: 'AMOUNT APPROVED/PAID', val: `INR ${paidAmt.toLocaleString('en-IN')}/-`, bg: [236, 253, 245], col: [5, 150, 105] },
+    { label: 'INSTALLMENT / PART', val: installmentText, bg: [248, 250, 252], col: [30, 41, 59] },
+    { label: 'BALANCE OUTSTANDING', val: `INR ${balAmt.toLocaleString('en-IN')}/-`, bg: [254, 242, 242], col: balAmt > 0 ? [220, 38, 38] : [100, 116, 139] }
+  ];
+
+  statCards.forEach((c, idx) => {
+    const cx = margin + (idx * (cardW + 2));
+    doc.setFillColor(...c.bg);
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(cx, cardY, cardW, cardH, 1, 1, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text(c.label, cx + (cardW / 2), cardY + 5.5, { align: 'center' });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...c.col);
+    const splitV = doc.splitTextToSize(c.val, cardW - 2);
+    doc.text(splitV, cx + (cardW / 2), cardY + 12, { align: 'center' });
+  });
+
+  curY = cardY + cardH + 3;
+
+  // Additional Payment Metadata Box
+  const sec2DetailsH = 22;
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.3);
+  doc.rect(margin, curY, contentWidth, sec2DetailsH, 'FD');
+
+  let pY = curY + 5;
+  drawCardField('Payment Mode / Method:', data.paymentMode || 'Bank Transfer', col1X, pY, 82);
+  drawCardField('Payment Status:', data.paymentStatus || 'Paid', col2X, pY, 82);
+
+  pY += 10;
+  drawCardField('UTR / Transaction Ref No:', data.transactionId || 'N/A', col1X, pY, 82);
+  const formattedPayDate = data.paymentDate ? new Date(data.paymentDate).toLocaleDateString('en-IN') : 'N/A';
+  drawCardField('Payment / Settlement Date:', formattedPayDate, col2X, pY, 82);
+
+  curY += sec2DetailsH + 4;
+
+  // --- Section 3: Audit Trail & Administrative Sanction ---
+  curY = drawSectionHeader('3. VERIFICATION AUDIT TRAIL & REMARKS', curY);
+
+  const sec3H = 26;
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.3);
+  doc.rect(margin, curY, contentWidth, sec3H, 'FD');
+
+  let aY = curY + 5;
+  let verStr = 'Directly submitted for executive sanction.';
+  if (data.verifiedBy && Array.isArray(data.verifiedBy) && data.verifiedBy.length > 0) {
+    verStr = data.verifiedBy.map(v => `${v.role || 'Admin'}: ${v.name || ''} (${v.date ? new Date(v.date).toLocaleDateString('en-IN') : 'Verified'})`).join('  |  ');
+  }
+  drawCardField('Internal Audit & Verification:', verStr, col1X, aY, contentWidth - 8);
+
+  aY += 10.5;
+  const remStr = data.remarks || 'Bill scrutinized, verified against vendor invoice, and authorized for disbursement.';
+  drawCardField('Executive Remarks & Directives:', remStr, col1X, aY, contentWidth - 8);
+
+  curY += sec3H + 6;
+
+  // --- Official Authorization & Signatures Box ---
+  const signH = 36;
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(203, 213, 225);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(margin, curY, contentWidth, signH, 2, 2, 'FD');
+
+  // Left Signature: General Secretary / Submitter
+  const sCol1X = margin + 12;
+  doc.setDrawColor(148, 163, 184);
+  doc.setLineWidth(0.3);
+  doc.line(sCol1X, curY + 20, sCol1X + 44, curY + 20);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(30, 41, 59);
+  doc.text(data.submittedByName || 'General Secretary', sCol1X + 22, curY + 24, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(100, 116, 139);
+  doc.text('Prepared & Submitted By', sCol1X + 22, curY + 28, { align: 'center' });
+  doc.text('Udyam Social Dev Foundation', sCol1X + 22, curY + 31.5, { align: 'center' });
+
+  // Center Official Seal Badge
+  const sealW = 42;
+  const sealH = 26;
+  const sealX = (pageWidth / 2) - (sealW / 2);
+  const sealY = curY + 5;
+  doc.setFillColor(236, 253, 245);
+  doc.setDrawColor(16, 185, 129);
+  doc.setLineWidth(0.5);
+  doc.roundedRect(sealX, sealY, sealW, sealH, 2, 2, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(4, 120, 87);
+  doc.text('★ UDYAM FOUNDATION ★', sealX + (sealW / 2), sealY + 6, { align: 'center' });
+  doc.setFontSize(7.5);
+  doc.setTextColor(6, 95, 70);
+  doc.text('PASSED FOR PAYMENT', sealX + (sealW / 2), sealY + 12, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.5);
+  doc.setTextColor(16, 185, 129);
+  doc.text('SANCTIONED & VERIFIED', sealX + (sealW / 2), sealY + 17, { align: 'center' });
+  doc.setTextColor(100, 116, 139);
+  doc.text(new Date().toLocaleDateString('en-IN'), sealX + (sealW / 2), sealY + 22, { align: 'center' });
+
+  // Right Signature: Approving Authority (President / Secretary)
+  const sCol2X = pageWidth - margin - 56;
+  doc.setDrawColor(148, 163, 184);
+  doc.setLineWidth(0.3);
+  doc.line(sCol2X, curY + 20, sCol2X + 44, curY + 20);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(27, 67, 50);
+  doc.text(approverName, sCol2X + 22, curY + 24, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(100, 116, 139);
+  doc.text(`Approved By (${approverRole})`, sCol2X + 22, curY + 28, { align: 'center' });
+  doc.text('Udyam Social Dev Foundation', sCol2X + 22, curY + 31.5, { align: 'center' });
+
+  curY += signH + 5;
+
+  // --- Document Footer ---
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.2);
+  doc.line(margin, curY, pageWidth - margin, curY);
+
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(6.5);
+  doc.setTextColor(140, 140, 140);
+  doc.text('This voucher is an official computer-generated document of Udyam Social Development Foundation.', pageWidth / 2, curY + 4, { align: 'center' });
+  doc.text('All expenditure records are subject to statutory financial audit under the Indian Societies Registration Act.', pageWidth / 2, curY + 7.5, { align: 'center' });
+
+  // --- Save / Download PDF ---
+  const safeVoucherNo = String(voucherNo).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filename = `Udyam_Bill_Approval_${safeVoucherNo}.pdf`;
+  doc.save(filename);
+}
+
 window.generateDonationCertificate = generateDonationCertificate;
 window.generateMembershipCertificate = generateMembershipCertificate;
+window.generateBillApprovalPDF = generateBillApprovalPDF;
 window.LOGO_BASE64 = LOGO_BASE64;
+

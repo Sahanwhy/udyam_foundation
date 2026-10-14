@@ -816,11 +816,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         renderRegistrations();
         updateSidebarBadges();
+
+        // Auto-generate & download Bill Approval PDF when a bill application is final approved
+        if (type === 'bill' && status === 'accepted') {
+          const approvedBill = (res.data) ? res.data : (index > -1 ? allRegistrations[index] : null);
+          if (approvedBill) {
+            if (res.registrationNo && !approvedBill.registrationNo) {
+              approvedBill.registrationNo = res.registrationNo;
+            }
+            const approverInfo = {
+              name: (user && user.fullName) ? user.fullName : (user && user.role) ? user.role : 'Authorized Admin',
+              role: (user && user.role) ? user.role : 'President'
+            };
+            if (typeof window.generateBillApprovalPDF === 'function') {
+              try {
+                window.generateBillApprovalPDF(approvedBill, approverInfo);
+              } catch (pdfErr) {
+                console.error('Failed to auto-generate bill approval PDF:', pdfErr);
+              }
+            }
+          }
+        }
+
         // Show a success toast with the registration number when accepted
-        if (status === 'accepted' && res.registrationNo) {
-          alert(`✅ Application Approved!\n\nUnique Registration No: ${res.registrationNo}\n\nAn approval email with this number has been sent to the applicant.`);
+        if (status === 'accepted') {
+          if (type === 'bill') {
+            const billVoucherNo = res.registrationNo || (index > -1 && allRegistrations[index]?.registrationNo) || '';
+            alert(`✅ Bill Application Approved!\n\nApproval Voucher No: ${billVoucherNo}\n\nOfficial Bill Payment Approval PDF Voucher with foundation logo has been generated and downloaded.`);
+          } else if (res.registrationNo) {
+            alert(`✅ Application Approved!\n\nUnique Registration No: ${res.registrationNo}\n\nAn approval email with this number has been sent to the applicant.`);
+          }
         } else if (status === 'rejected') {
-          alert(`❌ Application Rejected.\n\nA rejection notification email has been sent to the applicant.`);
+          if (type === 'bill') {
+            alert(`❌ Bill Application Rejected.`);
+          } else {
+            alert(`❌ Application Rejected.\n\nA rejection notification email has been sent to the applicant.`);
+          }
         }
       } else {
         alert(res.error || 'Failed to update status');
@@ -1371,6 +1402,11 @@ document.addEventListener('DOMContentLoaded', () => {
           <button type="button" class="excel-act-btn" style="background:white; color:#DC2626; border:1px solid #FCA5A5;" onclick="event.stopPropagation(); window.deleteRegistration('${reg.type}', '${reg._id}', '${safeName}')" title="Delete">🗑</button>
         `;
       } else if ((user.role === 'Secretary' || user.role === 'President') && ['accepted', 'rejected'].includes(currentRegFilter)) {
+        if (reg.type === 'bill' && reg.status === 'accepted') {
+          rowActionsHtml += `
+            <button type="button" class="excel-act-btn" style="background:#047857; color:white; border:none;" onclick="event.stopPropagation(); window.downloadBillApprovalPDF('${reg._id}')" title="Download Official Approval PDF Voucher">📄 PDF Voucher</button>
+          `;
+        }
         rowActionsHtml += `
           <button type="button" class="excel-act-btn" style="background:white; color:#DC2626; border:1px solid #FCA5A5;" onclick="event.stopPropagation(); window.deleteRegistration('${reg.type}', '${reg._id}', '${safeName}')" title="Delete Application">🗑 Delete</button>
         `;
@@ -1656,8 +1692,12 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
       } else if ((user.role === 'Secretary' || user.role === 'President') && ['accepted', 'rejected'].includes(currentRegFilter)) {
+        const billDownloadBtn = (reg.type === 'bill' && reg.status === 'accepted')
+          ? `<button onclick="window.downloadBillApprovalPDF('${reg._id}')" style="padding: 0.55rem 1.25rem; background: #047857; color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">📄 Download Approval PDF Voucher</button>`
+          : '';
         detailActionButtonsHtml = `
-          <div style="display: flex; justify-content: flex-end; width: 100%;">
+          <div style="display: flex; gap: 0.6rem; justify-content: flex-end; width: 100%; flex-wrap: wrap;">
+            ${billDownloadBtn}
             <button onclick="window.deleteRegistration('${reg.type}', '${reg._id}', '${safeName}')" style="padding: 0.55rem 1.25rem; background: white; color: #DC2626; border: 1.5px solid #DC2626; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">🗑 Permanently Delete Application</button>
           </div>
         `;
@@ -1915,6 +1955,29 @@ document.addEventListener('DOMContentLoaded', () => {
   // Expose to window for inline onclick handlers
   window.updateRegStatus = updateRegistrationStatus;
   window.openForwardModal = openForwardModal;
+
+  // Download official Bill Approval PDF voucher
+  window.downloadBillApprovalPDF = (id) => {
+    const bill = allRegistrations.find(r => r._id === id);
+    if (!bill) {
+      alert('Bill application record not found.');
+      return;
+    }
+    const approverInfo = {
+      name: (user && user.fullName) ? user.fullName : (user && user.role) ? user.role : 'Authorized Admin',
+      role: (user && user.role) ? user.role : 'President'
+    };
+    if (typeof window.generateBillApprovalPDF === 'function') {
+      try {
+        window.generateBillApprovalPDF(bill, approverInfo);
+      } catch (err) {
+        console.error('Error generating bill approval PDF:', err);
+        alert('Failed to generate PDF: ' + err.message);
+      }
+    } else {
+      alert('PDF generator module not available.');
+    }
+  };
 
   const deleteRegistration = async (type, id, name) => {
     // First confirmation

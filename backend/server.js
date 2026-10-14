@@ -334,6 +334,7 @@ const billApplicationSchema = new mongoose.Schema({
   forwardNotes: [{ note: String, authorName: String, authorRole: String, date: { type: Date, default: Date.now } }],
   verifiedBy: [{ name: String, role: String, date: { type: Date, default: Date.now } }],
   issueText: { type: String, default: '' },
+  registrationNo: { type: String, default: null },
   date: { type: Date, default: Date.now },
   createdByAdminId: { type: String, default: null },
   createdByAdminName: { type: String, default: null }
