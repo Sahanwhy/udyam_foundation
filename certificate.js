@@ -520,27 +520,52 @@ function generateBillApprovalPDF(data, approverInfo) {
 
   curY += sec2DetailsH + 4;
 
-  // --- Section 3: Audit Trail & Administrative Sanction ---
-  curY = drawSectionHeader('3. VERIFICATION AUDIT TRAIL & REMARKS', curY);
+  // --- Section 3: Verification Audit Trail & Disbursement Sanction Order ---
+  curY = drawSectionHeader('3. VERIFICATION AUDIT & SANCTION AUTHORIZATION', curY);
 
-  const sec3H = 26;
+  const sec3H = 36;
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(0.3);
   doc.rect(margin, curY, contentWidth, sec3H, 'FD');
 
-  let aY = curY + 5;
-  let verStr = 'Directly submitted for executive sanction.';
+  let aY = curY + 4;
+  let verStr = 'Directly submitted for executive audit and presidential sanction.';
   if (data.verifiedBy && Array.isArray(data.verifiedBy) && data.verifiedBy.length > 0) {
     verStr = data.verifiedBy.map(v => `${v.role || 'Admin'}: ${v.name || ''} (${v.date ? new Date(v.date).toLocaleDateString('en-IN') : 'Verified'})`).join('  |  ');
+  } else if (data.remarks) {
+    verStr = data.remarks;
   }
   drawCardField('Internal Audit & Verification:', verStr, col1X, aY, contentWidth - 8);
 
-  aY += 10.5;
-  const remStr = data.remarks || 'Bill scrutinized, verified against vendor invoice, and authorized for disbursement.';
-  drawCardField('Executive Remarks & Directives:', remStr, col1X, aY, contentWidth - 8);
+  aY += 9;
+  // Official Sanction & Authorization Order Callout Box
+  const authBoxH = 20;
+  doc.setFillColor(254, 252, 232); // Soft warm cream/gold
+  doc.setDrawColor(212, 175, 55);  // Gold border
+  doc.setLineWidth(0.35);
+  doc.roundedRect(col1X, aY, contentWidth - 8, authBoxH, 1, 1, 'FD');
 
-  curY += sec3H + 6;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.2);
+  doc.setTextColor(146, 64, 14); // Amber-800
+  doc.text('OFFICIAL SANCTION & DISBURSEMENT AUTHORIZATION:', col1X + 3, aY + 4.2);
+
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(8);
+  doc.setTextColor(27, 67, 50); // Deep forest green
+  const sanctionText = 'Upon verification of all bills and finding them to be correct, the Secretary is hereby authorized to receive payment of the requested bill amounting to ₹.................. .';
+  const splitSanction = doc.splitTextToSize(sanctionText, contentWidth - 14);
+  doc.text(splitSanction, col1X + 3, aY + 8.2);
+
+  if (totalAmt > 0) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(4, 120, 87);
+    doc.text(`[ Sanctioned & Approved Amount: INR ${totalAmt.toLocaleString('en-IN')}/- | Passed for Disbursement ]`, col1X + 3, aY + 16.5);
+  }
+
+  curY += sec3H + 4;
 
   // --- Official Authorization & Signatures Box ---
   const signH = 38;
@@ -562,7 +587,7 @@ function generateBillApprovalPDF(data, approverInfo) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(100, 116, 139);
-  doc.text('Prepared & Submitted By', sCol1X + 22, curY + 28.5, { align: 'center' });
+  doc.text('Prepared & Submitted By (Secretary)', sCol1X + 22, curY + 28.5, { align: 'center' });
   doc.text('Udyam Social Dev Foundation', sCol1X + 22, curY + 32, { align: 'center' });
 
   // Center Official Seal Badge
@@ -589,32 +614,28 @@ function generateBillApprovalPDF(data, approverInfo) {
   doc.setTextColor(100, 116, 139);
   doc.text(new Date().toLocaleDateString('en-IN'), sealX + (sealW / 2), sealY + 22, { align: 'center' });
 
-  // Right Signature: Approving Authority (President / Secretary)
+  // Right Signature: Approving Authority (President)
   const sCol2X = pageWidth - margin - 56;
-  const isPresidentApproval = Boolean(
-    (approverInfo && approverInfo.hasPresidentSignature) ||
-    (approverRole && approverRole.toLowerCase().includes('president')) ||
-    (approverInfo && approverInfo.role && approverInfo.role.toLowerCase().includes('president')) ||
-    (data && data.status === 'accepted')
-  );
-  const displayApproverRole = (isPresidentApproval && approverRole === 'Secretary / President') ? 'President' : approverRole;
+  const presidentName = (approverRole && approverRole.toLowerCase().includes('president') && approverName && approverName !== 'Authorized Officer')
+    ? approverName
+    : ((approverInfo && approverInfo.name && approverInfo.name !== 'Authorized Officer')
+      ? approverInfo.name
+      : (data.approvedByName || 'President'));
 
-  // Add President's Signature image when approved by President / final approved
-  if (isPresidentApproval) {
-    const sigBase64 = (typeof PRESIDENT_SIGNATURE_BASE64 !== 'undefined' && PRESIDENT_SIGNATURE_BASE64)
-      ? PRESIDENT_SIGNATURE_BASE64
-      : (window.PRESIDENT_SIGNATURE_BASE64 || 'images/signature_president.jpeg');
+  // Always embed President's signature image
+  const sigBase64 = (typeof PRESIDENT_SIGNATURE_BASE64 !== 'undefined' && PRESIDENT_SIGNATURE_BASE64)
+    ? PRESIDENT_SIGNATURE_BASE64
+    : (window.PRESIDENT_SIGNATURE_BASE64 || 'images/signature_president.jpeg');
 
-    if (sigBase64) {
-      try {
-        const sigW = 34;
-        const sigH = 16;
-        const sigX = (sCol2X + 22) - (sigW / 2);
-        const sigY = curY + 20.5 - sigH;
-        doc.addImage(sigBase64, 'JPEG', sigX, sigY, sigW, sigH);
-      } catch (sigErr) {
-        console.error('Failed to add President signature to Bill PDF:', sigErr);
-      }
+  if (sigBase64) {
+    try {
+      const sigW = 34;
+      const sigH = 16;
+      const sigX = (sCol2X + 22) - (sigW / 2);
+      const sigY = curY + 20 - sigH;
+      doc.addImage(sigBase64, 'JPEG', sigX, sigY, sigW, sigH);
+    } catch (sigErr) {
+      console.error('Failed to add President signature to Bill PDF:', sigErr);
     }
   }
 
@@ -625,11 +646,11 @@ function generateBillApprovalPDF(data, approverInfo) {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(27, 67, 50);
-  doc.text(approverName, sCol2X + 22, curY + 24.5, { align: 'center' });
+  doc.text(presidentName, sCol2X + 22, curY + 24.5, { align: 'center' });
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(100, 116, 139);
-  doc.text(`Approved By (${displayApproverRole})`, sCol2X + 22, curY + 28.5, { align: 'center' });
+  doc.text('Approved By (President)', sCol2X + 22, curY + 28.5, { align: 'center' });
   doc.text('Udyam Social Dev Foundation', sCol2X + 22, curY + 32, { align: 'center' });
 
   curY += signH + 5;
