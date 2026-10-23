@@ -2325,12 +2325,7 @@ app.post(
         billDate,
         totalAmount,
         installment,
-        amountPaid,
-        paymentMode,
-        remarks,
-        paymentStatus,
-        transactionId,
-        paymentDate
+        remarks
       } = req.body;
 
       if (!vendorName || !vendorName.trim()) {
@@ -2345,12 +2340,17 @@ app.post(
       if (!billDate) {
         return res.status(400).json({ error: 'Bill Date is required.' });
       }
+      if (!totalAmount || Number(totalAmount) <= 0) {
+        return res.status(400).json({ error: 'Valid Total Bill Amount is required.' });
+      }
       if (!req.file) {
         return res.status(400).json({ error: 'Bill Upload (PDF file only) is required.' });
       }
 
       const billPdfPath = `/uploads/bills/${req.file.filename}`;
 
+      // Only Bill Request details are recorded initially.
+      // Payment details remain locked and pending until final approval by admin.
       const newBill = new BillApplication({
         vendorName: vendorName.trim(),
         billPurpose: billPurpose.trim(),
@@ -2358,14 +2358,14 @@ app.post(
         billNo: billNo.trim(),
         billDate: billDate || '',
         totalAmount: Number(totalAmount) || 0,
-        installment: (installment || '').trim(),
-        amountPaid: Number(amountPaid) || 0,
-        paymentMode: (paymentMode || '').trim(),
+        installment: (installment || 'Full Payment').trim(),
+        amountPaid: 0,
+        paymentMode: '',
         remarks: (remarks || '').trim(),
         billPdf: billPdfPath,
-        paymentStatus: paymentStatus || 'Pending',
-        transactionId: (transactionId || '').trim(),
-        paymentDate: paymentDate || '',
+        paymentStatus: 'Pending',
+        transactionId: '',
+        paymentDate: '',
         status: 'pending',
         assignedToRole: 'Secretary',
         createdByAdminId: req.user.id || null,
@@ -2377,7 +2377,7 @@ app.post(
 
       res.status(201).json({
         success: true,
-        message: 'Bill application created successfully and placed in Pending section.',
+        message: 'Bill application request created successfully and placed in Pending section.',
         data: newBill
       });
     } catch (error) {
@@ -2386,6 +2386,71 @@ app.post(
     }
   }
 );
+
+// Update payment details of an accepted bill application (unlocked in Accepted section)
+app.patch('/api/admin/bills/:id/payment', authMiddleware, async (req, res) => {
+  try {
+    if (!BillApplication) return res.status(503).json({ error: 'Database not ready' });
+
+    const { id } = req.params;
+    const {
+      amountPaid,
+      paymentStatus,
+      paymentMode,
+      transactionId,
+      paymentDate,
+      remarks
+    } = req.body;
+
+    const bill = await BillApplication.findById(id);
+    if (!bill) {
+      return res.status(404).json({ error: 'Bill application not found.' });
+    }
+
+    if (bill.status !== 'accepted') {
+      return res.status(400).json({
+        error: 'Payment details can only be added or updated after the bill application has been finally approved/accepted.'
+      });
+    }
+
+    const paidNum = amountPaid !== undefined ? Math.max(0, Number(amountPaid) || 0) : bill.amountPaid;
+    bill.amountPaid = paidNum;
+
+    if (paymentStatus && ['Paid', 'Pending', 'Partially Paid'].includes(paymentStatus)) {
+      bill.paymentStatus = paymentStatus;
+    } else {
+      if (paidNum >= bill.totalAmount && bill.totalAmount > 0) {
+        bill.paymentStatus = 'Paid';
+      } else if (paidNum > 0 && paidNum < bill.totalAmount) {
+        bill.paymentStatus = 'Partially Paid';
+      } else {
+        bill.paymentStatus = 'Pending';
+      }
+    }
+
+    if (paymentMode !== undefined) bill.paymentMode = (paymentMode || '').trim();
+    if (transactionId !== undefined) bill.transactionId = (transactionId || '').trim();
+    if (paymentDate !== undefined) bill.paymentDate = paymentDate || '';
+    if (remarks !== undefined && remarks.trim()) {
+      bill.remarks = remarks.trim();
+    }
+
+    bill.paymentUpdatedByName = req.user ? (req.user.fullName || req.user.role) : 'Admin';
+    bill.paymentUpdatedByRole = req.user ? req.user.role : 'Admin';
+    bill.paymentUpdatedAt = new Date();
+
+    await bill.save();
+
+    res.json({
+      success: true,
+      message: 'Payment details recorded successfully.',
+      data: bill
+    });
+  } catch (error) {
+    console.error('Error updating bill payment details:', error);
+    res.status(500).json({ error: error.message || 'Failed to update bill payment details' });
+  }
+});
 // --- Gallery API Endpoints ---
 
 // Get all gallery photos (public)

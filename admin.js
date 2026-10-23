@@ -1405,6 +1405,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if ((user.role === 'Secretary' || user.role === 'President') && ['accepted', 'rejected'].includes(currentRegFilter)) {
         if (reg.type === 'bill' && reg.status === 'accepted') {
           rowActionsHtml += `
+            <button type="button" class="excel-act-btn" style="background:#059669; color:white; border:none;" onclick="event.stopPropagation(); window.openBillPaymentModal('${reg._id}')" title="Record / Update Payment Details">💳 Payment</button>
             <button type="button" class="excel-act-btn" style="background:#047857; color:white; border:none;" onclick="event.stopPropagation(); window.downloadBillApprovalPDF('${reg._id}')" title="Download Official Approval PDF Voucher">📄 PDF Voucher</button>
           `;
         }
@@ -1512,19 +1513,96 @@ document.addEventListener('DOMContentLoaded', () => {
         detailFieldsHtml += formatDetail('Bill Date', reg.billDate ? new Date(reg.billDate).toLocaleDateString('en-IN') : 'N/A');
         detailFieldsHtml += formatDetail('Total Bill Amount', `<span style="font-weight:800; color:#1E3A8A; font-size:0.95rem;">₹${Number(reg.totalAmount || 0).toLocaleString('en-IN')}</span>`);
         detailFieldsHtml += formatDetail('Payment Part / Installment', reg.installment || 'Full Payment');
-        detailFieldsHtml += formatDetail('Amount Paid', `<span style="font-weight:800; color:#059669; font-size:0.95rem;">₹${Number(reg.amountPaid || 0).toLocaleString('en-IN')}</span>`);
-        const balanceAmt = Math.max(0, (Number(reg.totalAmount) || 0) - (Number(reg.amountPaid) || 0));
-        detailFieldsHtml += formatDetail('Balance Due', `<span style="font-weight:800; color:${balanceAmt > 0 ? '#DC2626' : '#64748B'};">₹${balanceAmt.toLocaleString('en-IN')}</span>`);
-        detailFieldsHtml += formatDetail('Payment Mode', reg.paymentMode || 'N/A');
-        const pStatusCol = reg.paymentStatus === 'Paid' ? '#059669' : (reg.paymentStatus === 'Partially Paid' ? '#D97706' : '#DC2626');
-        detailFieldsHtml += formatDetail('Payment Status', `<span style="display:inline-block; padding:2px 8px; border-radius:4px; font-weight:700; color:${pStatusCol}; background:#F8FAFC; border:1px solid #CBD5E1;">${reg.paymentStatus || 'Pending'}</span>`);
-        detailFieldsHtml += formatDetail('Transaction / UTR No.', reg.transactionId || 'N/A');
-        detailFieldsHtml += formatDetail('Payment Date', reg.paymentDate ? new Date(reg.paymentDate).toLocaleDateString('en-IN') : 'N/A');
+
+        if (reg.status === 'accepted') {
+          const totalAmt = Number(reg.totalAmount || 0);
+          const paidAmt = Number(reg.amountPaid || 0);
+          const balanceAmt = Math.max(0, totalAmt - paidAmt);
+          detailFieldsHtml += formatDetail('Amount Paid', `<span style="font-weight:800; color:#059669; font-size:0.95rem;">₹${paidAmt.toLocaleString('en-IN')}</span>`);
+          detailFieldsHtml += formatDetail('Balance Due', `<span style="font-weight:800; color:${balanceAmt > 0 ? '#DC2626' : '#059669'};">₹${balanceAmt.toLocaleString('en-IN')}</span>`);
+          detailFieldsHtml += formatDetail('Payment Mode', reg.paymentMode || '<span style="color:#94A3B8;">Pending</span>');
+          const pStatusCol = reg.paymentStatus === 'Paid' ? '#059669' : (reg.paymentStatus === 'Partially Paid' ? '#D97706' : '#DC2626');
+          detailFieldsHtml += formatDetail('Payment Status', `<span style="display:inline-block; padding:2px 8px; border-radius:4px; font-weight:700; color:${pStatusCol}; background:#F8FAFC; border:1px solid #CBD5E1;">${reg.paymentStatus || 'Pending'}</span>`);
+          detailFieldsHtml += formatDetail('Transaction / UTR No.', reg.transactionId || '<span style="color:#94A3B8;">None</span>');
+          detailFieldsHtml += formatDetail('Payment Date', reg.paymentDate ? new Date(reg.paymentDate).toLocaleDateString('en-IN') : '<span style="color:#94A3B8;">None</span>');
+        } else {
+          detailFieldsHtml += formatDetail('Payment Status', `<span style="display:inline-block; padding:2px 8px; border-radius:4px; font-weight:700; color:#B45309; background:#FEF3C7; border:1px solid #FCD34D;">⏳ Locked (Pending Approval)</span>`);
+          detailFieldsHtml += formatDetail('Payment Details', `<span style="color:#64748B; font-size:0.8rem; font-weight:600;">🔒 Unlocks after final approval</span>`);
+        }
+
         detailFieldsHtml += formatDetail('Remarks', reg.remarks || 'None', 'excel-detail-span-2');
         if (reg.billPdf) {
           detailFieldsHtml += formatDetail('Bill Document (PDF)', `<a href="${formatPdfUrl(reg.billPdf)}" target="_blank" style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:#1E3A8A; color:white; text-decoration:none; border-radius:6px; font-weight:700; font-size:0.8rem; box-shadow:0 2px 4px rgba(30,58,138,0.2);">📄 View / Download Bill PDF</a>`, 'excel-detail-span-2');
         }
         detailFieldsHtml += formatDetail('Submitted By', `${reg.submittedByName || 'Secretary'} (${reg.submittedByRole || 'Secretary'})`);
+      }
+
+      // Dedicated Bill Payment Unlocked/Locked Box
+      let billPaymentBoxHtml = '';
+      if (isBill) {
+        if (reg.status === 'accepted') {
+          const totalAmt = Number(reg.totalAmount || 0);
+          const paidAmt = Number(reg.amountPaid || 0);
+          const balAmt = Math.max(0, totalAmt - paidAmt);
+          const pStatusCol = reg.paymentStatus === 'Paid' ? '#059669' : (reg.paymentStatus === 'Partially Paid' ? '#D97706' : '#DC2626');
+          billPaymentBoxHtml = `
+            <div style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 1.5px solid #6EE7B7; border-radius: 10px; padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.75rem;">
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; border-bottom: 1px solid rgba(16,185,129,0.25); padding-bottom: 0.6rem;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 1.25rem;">🔓</span>
+                  <div>
+                    <span style="font-size: 0.85rem; font-weight: 800; color: #065F46; text-transform: uppercase; letter-spacing: 0.04em;">Payment Details (Unlocked)</span>
+                    <div style="font-size: 0.72rem; color: #047857;">Application accepted! Payment information can now be recorded and edited.</div>
+                  </div>
+                </div>
+                <button type="button" onclick="event.stopPropagation(); window.openBillPaymentModal('${reg._id}')" style="padding: 0.45rem 1rem; background: #059669; color: white; border: none; border-radius: 6px; font-weight: 700; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(5,150,105,0.3);">
+                  💳 ${reg.amountPaid > 0 ? '✏️ Edit Payment Details' : '➕ Record Payment Details'}
+                </button>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.65rem;">
+                <div style="background: white; padding: 0.55rem 0.75rem; border-radius: 6px; border: 1px solid #A7F3D0;">
+                  <span style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: #64748B; display: block; margin-bottom: 2px;">Amount Paid</span>
+                  <div style="font-size: 0.95rem; font-weight: 800; color: #059669;">₹${paidAmt.toLocaleString('en-IN')}</div>
+                </div>
+                <div style="background: white; padding: 0.55rem 0.75rem; border-radius: 6px; border: 1px solid #A7F3D0;">
+                  <span style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: #64748B; display: block; margin-bottom: 2px;">Balance Due</span>
+                  <div style="font-size: 0.95rem; font-weight: 800; color: ${balAmt > 0 ? '#DC2626' : '#059669'};">₹${balAmt.toLocaleString('en-IN')}</div>
+                </div>
+                <div style="background: white; padding: 0.55rem 0.75rem; border-radius: 6px; border: 1px solid #A7F3D0;">
+                  <span style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: #64748B; display: block; margin-bottom: 2px;">Payment Status</span>
+                  <div style="font-size: 0.82rem; font-weight: 700; color: ${pStatusCol};">${reg.paymentStatus || 'Pending'}</div>
+                </div>
+                <div style="background: white; padding: 0.55rem 0.75rem; border-radius: 6px; border: 1px solid #A7F3D0;">
+                  <span style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: #64748B; display: block; margin-bottom: 2px;">Payment Mode</span>
+                  <div style="font-size: 0.82rem; font-weight: 700; color: #1E293B;">${reg.paymentMode || 'None'}</div>
+                </div>
+                <div style="background: white; padding: 0.55rem 0.75rem; border-radius: 6px; border: 1px solid #A7F3D0;">
+                  <span style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: #64748B; display: block; margin-bottom: 2px;">Transaction / UTR</span>
+                  <div style="font-size: 0.8rem; font-weight: 700; color: #1E293B; word-break: break-all;">${reg.transactionId || 'None'}</div>
+                </div>
+                <div style="background: white; padding: 0.55rem 0.75rem; border-radius: 6px; border: 1px solid #A7F3D0;">
+                  <span style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: #64748B; display: block; margin-bottom: 2px;">Payment Date</span>
+                  <div style="font-size: 0.8rem; font-weight: 700; color: #1E293B;">${reg.paymentDate ? new Date(reg.paymentDate).toLocaleDateString('en-IN') : 'None'}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          billPaymentBoxHtml = `
+            <div style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 10px; padding: 0.85rem 1.15rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.35rem;">🔒</span>
+                <div>
+                  <div style="font-size: 0.85rem; font-weight: 700; color: #334155;">Payment Details Locked</div>
+                  <div style="font-size: 0.75rem; color: #64748B;">This bill application is awaiting final approval. Payment details will unlock in the Accepted section once approved.</div>
+                </div>
+              </div>
+              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 50px; background: #FEF3C7; color: #B45309; font-size: 0.72rem; font-weight: 700;">
+                ⏳ Locked Until Approved
+              </span>
+            </div>
+          `;
+        }
       }
 
       // Tracking box in detail drawer
@@ -1693,11 +1771,15 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
       } else if ((user.role === 'Secretary' || user.role === 'President') && ['accepted', 'rejected'].includes(currentRegFilter)) {
+        const billPaymentBtn = (reg.type === 'bill' && reg.status === 'accepted')
+          ? `<button onclick="window.openBillPaymentModal('${reg._id}')" style="padding: 0.55rem 1.25rem; background: #059669; color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">💳 ${reg.amountPaid > 0 ? 'Update Payment Details' : 'Record Payment Details'}</button>`
+          : '';
         const billDownloadBtn = (reg.type === 'bill' && reg.status === 'accepted')
           ? `<button onclick="window.downloadBillApprovalPDF('${reg._id}')" style="padding: 0.55rem 1.25rem; background: #047857; color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">📄 Download Approval PDF Voucher</button>`
           : '';
         detailActionButtonsHtml = `
           <div style="display: flex; gap: 0.6rem; justify-content: flex-end; width: 100%; flex-wrap: wrap;">
+            ${billPaymentBtn}
             ${billDownloadBtn}
             <button onclick="window.deleteRegistration('${reg.type}', '${reg._id}', '${safeName}')" style="padding: 0.55rem 1.25rem; background: white; color: #DC2626; border: 1.5px solid #DC2626; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">🗑 Permanently Delete Application</button>
           </div>
@@ -1790,6 +1872,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
               </div>` : ''}
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.65rem;">${detailFieldsHtml}</div>
+              ${billPaymentBoxHtml}
               ${detailTrackingHtml}
               ${detailAttachmentsHtml}
               ${detailNotesHtml}
@@ -1853,6 +1936,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="m-card-drawer" id="m-detail-${reg._id}" style="display: none;">
             <div style="display:flex; flex-direction:column; gap:0.75rem; padding-top:0.75rem; border-top:1px dashed #CBD5E1;">
               <div style="display: grid; grid-template-columns: 1fr; gap: 0.5rem;">${detailFieldsHtml}</div>
+              ${billPaymentBoxHtml}
               ${detailTrackingHtml}
               ${detailAttachmentsHtml}
               ${detailNotesHtml}
@@ -3503,10 +3587,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const billFileSize = document.getElementById('billFileSize');
   const removeBillFileBtn = document.getElementById('removeBillFileBtn');
   const billTotalAmountInput = document.getElementById('billTotalAmount');
-  const billAmountPaidInput = document.getElementById('billAmountPaid');
   const billSummaryTotal = document.getElementById('billSummaryTotal');
-  const billSummaryPaid = document.getElementById('billSummaryPaid');
-  const billSummaryBalance = document.getElementById('billSummaryBalance');
   const resetBillFormBtn = document.getElementById('resetBillFormBtn');
   const submitBillBtn = document.getElementById('submitBillBtn');
 
@@ -3637,39 +3718,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 3. Live Amount & Payment Status Calculation
+  // 3. Live Requested Total Calculation
   const calculateBillSummary = () => {
     const total = parseFloat(billTotalAmountInput ? billTotalAmountInput.value : 0) || 0;
-    const paid = parseFloat(billAmountPaidInput ? billAmountPaidInput.value : 0) || 0;
-    const balance = Math.max(0, total - paid);
-
-    if (billSummaryTotal) billSummaryTotal.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    if (billSummaryPaid) billSummaryPaid.textContent = '₹' + paid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    if (billSummaryBalance) {
-      billSummaryBalance.textContent = '₹' + balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      billSummaryBalance.style.color = balance > 0 ? '#DC2626' : '#059669';
-    }
-
-    // Auto-sync Payment Status radio pills
-    if (total > 0) {
-      if (paid >= total) {
-        const paidRadio = document.querySelector('input[name="billPaymentStatus"][value="Paid"]');
-        if (paidRadio) paidRadio.checked = true;
-      } else if (paid > 0 && paid < total) {
-        const partRadio = document.querySelector('input[name="billPaymentStatus"][value="Partially Paid"]');
-        if (partRadio) partRadio.checked = true;
-      } else if (paid === 0) {
-        const pendRadio = document.querySelector('input[name="billPaymentStatus"][value="Pending"]');
-        if (pendRadio) pendRadio.checked = true;
-      }
+    if (billSummaryTotal) {
+      billSummaryTotal.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
   };
 
   if (billTotalAmountInput) {
     billTotalAmountInput.addEventListener('input', calculateBillSummary);
-  }
-  if (billAmountPaidInput) {
-    billAmountPaidInput.addEventListener('input', calculateBillSummary);
   }
 
   // 4. Reset Form button
@@ -3683,7 +3741,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 5. Submit Bill Application Form
+  // 5. Submit Bill Application Request Form
   if (createBillForm) {
     createBillForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -3712,22 +3770,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const financialYear = document.getElementById('billFinancialYear')?.value;
       const billNo = document.getElementById('billNo')?.value.trim();
       const billDate = document.getElementById('billDate')?.value;
-      const installment = document.getElementById('billInstallment')?.value.trim();
+      const installment = document.getElementById('billInstallment')?.value.trim() || 'Full Payment';
       const totalAmount = document.getElementById('billTotalAmount')?.value;
-      const amountPaid = document.getElementById('billAmountPaid')?.value;
-      const paymentMode = document.querySelector('input[name="billPaymentMode"]:checked')?.value || 'Cash';
       const remarks = document.getElementById('billRemarks')?.value.trim() || '';
-      const paymentStatus = document.querySelector('input[name="billPaymentStatus"]:checked')?.value || 'Pending';
-      const transactionId = document.getElementById('billTransactionId')?.value.trim() || '';
-      const paymentDate = document.getElementById('billPaymentDate')?.value || '';
 
-      if (!vendorName || !billPurpose || !billNo || !billDate || !totalAmount || !amountPaid) {
+      if (!vendorName || !billPurpose || !billNo || !billDate || !totalAmount || Number(totalAmount) <= 0) {
         alert('Please fill in all required fields marked with *');
         return;
       }
 
       // Confirmation
-      const confirmCreate = confirm(`Confirm submission of Bill Application?\n\nVendor: ${vendorName}\nBill No: ${billNo}\nTotal Amount: ₹${Number(totalAmount).toLocaleString('en-IN')}\n\nThis application will be created with "Pending" status and can be forwarded to executive roles.`);
+      const confirmCreate = confirm(`Confirm submission of Bill Application Request?\n\nVendor: ${vendorName}\nBill No: ${billNo}\nRequested Amount: ₹${Number(totalAmount).toLocaleString('en-IN')}\n\nThis application will be submitted for administrative review and approval. Payment details unlock in the Accepted section once approved.`);
       if (!confirmCreate) return;
 
       const formData = new FormData();
@@ -3738,19 +3791,14 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('billDate', billDate);
       formData.append('installment', installment);
       formData.append('totalAmount', totalAmount);
-      formData.append('amountPaid', amountPaid);
-      formData.append('paymentMode', paymentMode);
       formData.append('remarks', remarks);
-      formData.append('paymentStatus', paymentStatus);
-      formData.append('transactionId', transactionId);
-      formData.append('paymentDate', paymentDate);
       formData.append('billPdf', file);
 
       // Submit state
-      const originalBtnHtml = submitBillBtn ? submitBillBtn.innerHTML : 'Create & Submit Bill Application';
+      const originalBtnHtml = submitBillBtn ? submitBillBtn.innerHTML : 'Create & Submit Bill Request';
       if (submitBillBtn) {
         submitBillBtn.disabled = true;
-        submitBillBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;"></span> Submitting Bill...</span>';
+        submitBillBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;"></span> Submitting Request...</span>';
       }
 
       try {
@@ -3766,7 +3814,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
 
         if (res.ok && data.success) {
-          alert(`✅ Bill Application Created Successfully!\n\nBill No: ${data.data?.billNo || billNo}\nVendor: ${data.data?.vendorName || vendorName}\n\nThe application is placed in your Pending review queue. You can now review or forward it to other roles.`);
+          alert(`✅ Bill Application Request Submitted!\n\nBill No: ${data.data?.billNo || billNo}\nVendor: ${data.data?.vendorName || vendorName}\n\nThe application is placed in your Pending review queue for review and approval. Payment details will unlock once accepted.`);
           
           // Reset form
           createBillForm.reset();
@@ -3782,7 +3830,7 @@ document.addEventListener('DOMContentLoaded', () => {
             pendingNav.click();
           }
         } else {
-          alert(data.error || 'Failed to create bill application.');
+          alert(data.error || 'Failed to submit bill application.');
         }
       } catch (err) {
         console.error('Error creating bill application:', err);
@@ -3791,6 +3839,210 @@ document.addEventListener('DOMContentLoaded', () => {
         if (submitBillBtn) {
           submitBillBtn.disabled = false;
           submitBillBtn.innerHTML = originalBtnHtml;
+        }
+      }
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // BILL PAYMENT DETAILS MODAL LOGIC (UNLOCKED IN ACCEPTED SECTION)
+  // ═══════════════════════════════════════════════════════════════
+  const billPaymentModal = document.getElementById('billPaymentModal');
+  const closeBillPaymentModalBtn = document.getElementById('closeBillPaymentModalBtn');
+  const cancelBillPaymentBtn = document.getElementById('cancelBillPaymentBtn');
+  const billPaymentForm = document.getElementById('billPaymentForm');
+  const bpmBillIdInput = document.getElementById('bpmBillId');
+  const bpmVendorName = document.getElementById('bpmVendorName');
+  const bpmBillNo = document.getElementById('bpmBillNo');
+  const bpmTotalAmount = document.getElementById('bpmTotalAmount');
+  const bpmAmountPaid = document.getElementById('bpmAmountPaid');
+  const bpmPayFullBtn = document.getElementById('bpmPayFullBtn');
+  const bpmTransactionId = document.getElementById('bpmTransactionId');
+  const bpmPaymentDate = document.getElementById('bpmPaymentDate');
+  const bpmRemarks = document.getElementById('bpmRemarks');
+  const bpmBalanceDue = document.getElementById('bpmBalanceDue');
+  const bpmBalanceTag = document.getElementById('bpmBalanceTag');
+  const saveBillPaymentBtn = document.getElementById('saveBillPaymentBtn');
+
+  let currentBillForPayment = null;
+
+  const updateBpmBalancePreview = () => {
+    if (!currentBillForPayment) return;
+    const total = Number(currentBillForPayment.totalAmount || 0);
+    const paid = parseFloat(bpmAmountPaid ? bpmAmountPaid.value : 0) || 0;
+    const balance = Math.max(0, total - paid);
+
+    if (bpmBalanceDue) {
+      bpmBalanceDue.textContent = '₹' + balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      bpmBalanceDue.style.color = balance > 0 ? '#DC2626' : '#059669';
+    }
+    if (bpmBalanceTag) {
+      if (balance === 0 && paid > 0) {
+        bpmBalanceTag.textContent = 'Fully Settled';
+        bpmBalanceTag.style.background = '#D1FAE5';
+        bpmBalanceTag.style.color = '#047857';
+      } else if (paid > 0 && balance > 0) {
+        bpmBalanceTag.textContent = 'Partially Settled';
+        bpmBalanceTag.style.background = '#FEF3C7';
+        bpmBalanceTag.style.color = '#B45309';
+      } else {
+        bpmBalanceTag.textContent = 'Unsettled';
+        bpmBalanceTag.style.background = '#FEE2E2';
+        bpmBalanceTag.style.color = '#DC2626';
+      }
+    }
+
+    // Auto-sync status radio
+    if (total > 0) {
+      if (paid >= total) {
+        const r = document.querySelector('input[name="bpmPaymentStatus"][value="Paid"]');
+        if (r) r.checked = true;
+      } else if (paid > 0 && paid < total) {
+        const r = document.querySelector('input[name="bpmPaymentStatus"][value="Partially Paid"]');
+        if (r) r.checked = true;
+      } else {
+        const r = document.querySelector('input[name="bpmPaymentStatus"][value="Pending"]');
+        if (r) r.checked = true;
+      }
+    }
+  };
+
+  if (bpmAmountPaid) {
+    bpmAmountPaid.addEventListener('input', updateBpmBalancePreview);
+  }
+
+  if (bpmPayFullBtn) {
+    bpmPayFullBtn.addEventListener('click', () => {
+      if (currentBillForPayment && bpmAmountPaid) {
+        bpmAmountPaid.value = Number(currentBillForPayment.totalAmount || 0);
+        updateBpmBalancePreview();
+      }
+    });
+  }
+
+  window.openBillPaymentModal = (id) => {
+    const bill = allRegistrations.find(r => r._id === id);
+    if (!bill) {
+      alert('Bill application record not found.');
+      return;
+    }
+
+    if (bill.status !== 'accepted') {
+      alert('Payment details can only be added or updated after the bill application has been finally accepted.');
+      return;
+    }
+
+    currentBillForPayment = bill;
+
+    if (bpmBillIdInput) bpmBillIdInput.value = bill._id;
+    if (bpmVendorName) bpmVendorName.textContent = bill.vendorName || 'Unnamed Vendor';
+    if (bpmBillNo) bpmBillNo.textContent = `Bill No: ${bill.billNo || 'N/A'} · FY: ${bill.financialYear || 'N/A'}`;
+    const total = Number(bill.totalAmount || 0);
+    if (bpmTotalAmount) bpmTotalAmount.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const existingPaid = Number(bill.amountPaid || 0);
+    if (bpmAmountPaid) bpmAmountPaid.value = existingPaid > 0 ? existingPaid : (total > 0 ? total : '');
+
+    // Set Payment Status radio
+    const statusVal = bill.paymentStatus || (existingPaid >= total && total > 0 ? 'Paid' : 'Pending');
+    const statusRadio = document.querySelector(`input[name="bpmPaymentStatus"][value="${statusVal}"]`);
+    if (statusRadio) statusRadio.checked = true;
+
+    // Set Payment Mode radio
+    const modeVal = bill.paymentMode || 'Cash';
+    const modeRadio = document.querySelector(`input[name="bpmPaymentMode"][value="${modeVal}"]`);
+    if (modeRadio) modeRadio.checked = true;
+
+    if (bpmTransactionId) bpmTransactionId.value = bill.transactionId || '';
+    if (bpmPaymentDate) {
+      bpmPaymentDate.value = bill.paymentDate ? bill.paymentDate.slice(0, 10) : new Date().toISOString().slice(0, 10);
+    }
+    if (bpmRemarks) bpmRemarks.value = bill.remarks || '';
+
+    updateBpmBalancePreview();
+
+    if (billPaymentModal) {
+      billPaymentModal.style.display = 'flex';
+    }
+  };
+
+  const closeBillPaymentModal = () => {
+    if (billPaymentModal) billPaymentModal.style.display = 'none';
+    currentBillForPayment = null;
+  };
+
+  if (closeBillPaymentModalBtn) closeBillPaymentModalBtn.addEventListener('click', closeBillPaymentModal);
+  if (cancelBillPaymentBtn) cancelBillPaymentBtn.addEventListener('click', closeBillPaymentModal);
+  if (billPaymentModal) {
+    billPaymentModal.addEventListener('click', (e) => {
+      if (e.target === billPaymentModal) closeBillPaymentModal();
+    });
+  }
+
+  if (billPaymentForm) {
+    billPaymentForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentBillForPayment) return;
+
+      const billId = bpmBillIdInput ? bpmBillIdInput.value : currentBillForPayment._id;
+      const amountPaid = parseFloat(bpmAmountPaid ? bpmAmountPaid.value : 0) || 0;
+      const paymentStatus = document.querySelector('input[name="bpmPaymentStatus"]:checked')?.value || 'Pending';
+      const paymentMode = document.querySelector('input[name="bpmPaymentMode"]:checked')?.value || 'Cash';
+      const transactionId = bpmTransactionId ? bpmTransactionId.value.trim() : '';
+      const paymentDate = bpmPaymentDate ? bpmPaymentDate.value : '';
+      const remarks = bpmRemarks ? bpmRemarks.value.trim() : '';
+
+      const originalBtnText = saveBillPaymentBtn ? saveBillPaymentBtn.innerHTML : 'Save Payment Details';
+      if (saveBillPaymentBtn) {
+        saveBillPaymentBtn.disabled = true;
+        saveBillPaymentBtn.innerHTML = '<span>⏳ Saving Payment Details...</span>';
+      }
+
+      try {
+        const token = getAuthToken();
+        const res = await fetch(`${API_BASE}/api/admin/bills/${billId}/payment`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            amountPaid,
+            paymentStatus,
+            paymentMode,
+            transactionId,
+            paymentDate,
+            remarks
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          // Update in local array
+          const idx = allRegistrations.findIndex(r => r._id === billId);
+          if (idx > -1) {
+            allRegistrations[idx].amountPaid = amountPaid;
+            allRegistrations[idx].paymentStatus = paymentStatus;
+            allRegistrations[idx].paymentMode = paymentMode;
+            allRegistrations[idx].transactionId = transactionId;
+            allRegistrations[idx].paymentDate = paymentDate;
+            if (remarks) allRegistrations[idx].remarks = remarks;
+          }
+
+          alert(`✅ Payment Details Saved Successfully!\n\nVendor: ${currentBillForPayment.vendorName}\nPaid: ₹${amountPaid.toLocaleString('en-IN')}\nStatus: ${paymentStatus}\nMode: ${paymentMode}`);
+          closeBillPaymentModal();
+          updateBillStats();
+          renderRegistrations();
+        } else {
+          alert(data.error || 'Failed to update payment details.');
+        }
+      } catch (err) {
+        console.error('Error saving bill payment details:', err);
+        alert('An unexpected error occurred while saving payment details.');
+      } finally {
+        if (saveBillPaymentBtn) {
+          saveBillPaymentBtn.disabled = false;
+          saveBillPaymentBtn.innerHTML = originalBtnText;
         }
       }
     });

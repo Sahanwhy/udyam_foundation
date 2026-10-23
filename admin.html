@@ -2281,11 +2281,16 @@
       <div class="bill-form-card" style="background: white; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.04); padding: 1.75rem; max-width: 900px; margin: 0 auto;">
         <form id="createBillForm" autocomplete="off">
           
-          <!-- PART 1: BILL REQUEST APPLICATION -->
-          <div style="border-bottom: 1.5px solid #E2E8F0; padding-bottom: 1.25rem; margin-bottom: 1.5rem;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 1.25rem;">
-              <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: #EFF6FF; color: #1D4ED8; font-weight: 800; font-size: 0.85rem;">1</span>
-              <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 0.04em;">Bill Request Application</h3>
+          <!-- BILL REQUEST APPLICATION -->
+          <div style="padding-bottom: 0.5rem; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: #EFF6FF; color: #1D4ED8; font-weight: 800; font-size: 0.85rem;">📋</span>
+                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 0.04em;">Bill Request Application</h3>
+              </div>
+              <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; color: #475569; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 4px 10px; border-radius: 50px;">
+                <span>🔒</span> Payment details unlock after final approval
+              </span>
             </div>
 
             <div class="form-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
@@ -2344,56 +2349,20 @@
               </div>
 
               <!-- Total Bill Amount -->
-              <div>
+              <div style="grid-column: span 2;">
                 <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
                   Total Bill Amount (₹) <span style="color: #EF4444;">*</span>
                 </label>
                 <div style="position: relative;">
                   <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 700; color: #64748B;">₹</span>
-                  <input type="number" step="0.01" min="0" id="billTotalAmount" required placeholder="0.00" style="width: 100%; padding: 0.65rem 0.85rem 0.65rem 2rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.9rem; outline: none; font-family: inherit; font-weight: 600;" />
-                </div>
-              </div>
-
-              <!-- Amount Paid -->
-              <div>
-                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
-                  Amount Paid (₹) <span style="color: #EF4444;">*</span>
-                </label>
-                <div style="position: relative;">
-                  <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 700; color: #64748B;">₹</span>
-                  <input type="number" step="0.01" min="0" id="billAmountPaid" required placeholder="0.00" style="width: 100%; padding: 0.65rem 0.85rem 0.65rem 2rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.9rem; outline: none; font-family: inherit; font-weight: 600;" />
-                </div>
-              </div>
-
-              <!-- Payment Mode -->
-              <div style="grid-column: span 2;">
-                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 6px;">
-                  Payment Mode <span style="color: #EF4444;">*</span>
-                </label>
-                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                  <label class="custom-radio-pill">
-                    <input type="radio" name="billPaymentMode" value="Cash" checked />
-                    <span>💵 Cash</span>
-                  </label>
-                  <label class="custom-radio-pill">
-                    <input type="radio" name="billPaymentMode" value="NEFT" />
-                    <span>🏦 NEFT</span>
-                  </label>
-                  <label class="custom-radio-pill">
-                    <input type="radio" name="billPaymentMode" value="Cheque" />
-                    <span>🧾 Cheque</span>
-                  </label>
-                  <label class="custom-radio-pill">
-                    <input type="radio" name="billPaymentMode" value="UPI" />
-                    <span>📱 UPI</span>
-                  </label>
+                  <input type="number" step="0.01" min="0" id="billTotalAmount" required placeholder="0.00" style="width: 100%; padding: 0.65rem 0.85rem 0.65rem 2rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.95rem; outline: none; font-family: inherit; font-weight: 700; color: #0F172A;" />
                 </div>
               </div>
 
               <!-- Remarks -->
               <div style="grid-column: span 2;">
                 <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
-                  Remarks
+                  Remarks / Justification
                 </label>
                 <textarea id="billRemarks" rows="2" placeholder="Any additional remarks or justification..." style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.88rem; outline: none; font-family: inherit; resize: vertical;"></textarea>
               </div>
@@ -2424,61 +2393,12 @@
             </div>
           </div>
 
-          <!-- PART 2: PAYMENT DETAILS -->
-          <div style="padding-bottom: 1.25rem; margin-bottom: 1.5rem;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 1.25rem;">
-              <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: #ECFDF5; color: #059669; font-weight: 800; font-size: 0.85rem;">2</span>
-              <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 0.04em;">Payment Details</h3>
-            </div>
-
-            <div class="form-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
-              
-              <!-- Payment Status -->
-              <div style="grid-column: span 2;">
-                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 6px;">
-                  Payment Status <span style="color: #EF4444;">*</span>
-                </label>
-                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                  <label class="custom-radio-pill status-pill-paid">
-                    <input type="radio" name="billPaymentStatus" value="Paid" />
-                    <span>✓ Paid</span>
-                  </label>
-                  <label class="custom-radio-pill status-pill-pending">
-                    <input type="radio" name="billPaymentStatus" value="Pending" checked />
-                    <span>⏳ Pending</span>
-                  </label>
-                  <label class="custom-radio-pill status-pill-partially">
-                    <input type="radio" name="billPaymentStatus" value="Partially Paid" />
-                    <span>⚖️ Partially Paid</span>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Transaction / UTR No. -->
-              <div>
-                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
-                  Transaction / UTR No.
-                </label>
-                <input type="text" id="billTransactionId" placeholder="e.g. UTR392819284729 / Cheque #123456" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.9rem; outline: none; font-family: inherit;" />
-              </div>
-
-              <!-- Payment Date -->
-              <div>
-                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">
-                  Payment Date
-                </label>
-                <input type="date" id="billPaymentDate" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.9rem; outline: none; font-family: inherit;" />
-              </div>
-
-            </div>
-          </div>
-
           <!-- SUBMISSION & SUMMARY BAR -->
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding-top: 1.25rem; border-top: 1.5px solid #E2E8F0;">
-            <div id="billBalanceSummary" style="font-size: 0.85rem; color: #475569; font-weight: 600;">
-              Total: <span id="billSummaryTotal" style="color:#0F172A; font-weight:700;">₹0</span> &nbsp;|&nbsp;
-              Paid: <span id="billSummaryPaid" style="color:#059669; font-weight:700;">₹0</span> &nbsp;|&nbsp;
-              Balance: <span id="billSummaryBalance" style="color:#DC2626; font-weight:700;">₹0</span>
+            <div id="billBalanceSummary" style="font-size: 0.88rem; color: #334155; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+              <span>Total Bill Requested:</span>
+              <span id="billSummaryTotal" style="color:#1E3A8A; font-weight:800; font-size:1.05rem;">₹0.00</span>
+              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 50px; background: #FEF3C7; color: #B45309; font-size: 0.72rem; font-weight: 700;">⏳ Initial Request</span>
             </div>
 
             <div style="display: flex; gap: 0.75rem; align-items: center;">
@@ -2486,7 +2406,7 @@
                 Reset
               </button>
               <button type="submit" id="submitBillBtn" style="padding: 0.65rem 1.75rem; background: #1E3A8A; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(30,58,138,0.25); transition: all 0.2s;">
-                <span>➕ Create & Submit Bill Application</span>
+                <span>➕ Create & Submit Bill Request</span>
               </button>
             </div>
           </div>
@@ -2928,6 +2848,151 @@
       </div>
     </div>
   </div>
+
+  <!-- ══════════════════════════════════════════
+       BILL PAYMENT DETAILS MODAL (Unlocked in Accepted section)
+  ═══════════════════════════════════════════ -->
+  <div id="billPaymentModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px); padding: 1rem; box-sizing: border-box;">
+    <div style="background: white; padding: 1.75rem; border-radius: 16px; width: 100%; max-width: 540px; box-shadow: 0 20px 40px rgba(0,0,0,0.18); max-height: calc(100vh - 2rem); overflow-y: auto; box-sizing: border-box;">
+      
+      <!-- Modal Header -->
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="width: 38px; height: 38px; border-radius: 10px; background: #ECFDF5; display: flex; align-items: center; justify-content: center; color: #059669; font-size: 1.25rem; flex-shrink: 0; border: 1px solid #A7F3D0;">
+            💳
+          </div>
+          <div>
+            <h3 style="margin: 0; color: #0F172A; font-size: 1.15rem; font-weight: 700;">Record Payment Details</h3>
+            <p style="margin: 2px 0 0; color: #64748B; font-size: 0.78rem;">Add or update disbursement and transaction details for this approved bill.</p>
+          </div>
+        </div>
+        <button type="button" id="closeBillPaymentModalBtn" style="background: none; border: none; font-size: 1.25rem; color: #94A3B8; cursor: pointer; padding: 4px; line-height: 1;">✕</button>
+      </div>
+
+      <!-- Bill Summary Highlight Box -->
+      <div id="bpmBillSummaryBox" style="background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); border: 1.5px solid #93C5FD; border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.4rem;">
+          <div>
+            <div id="bpmVendorName" style="font-weight: 800; color: #1E3A8A; font-size: 0.95rem;">Vendor Name</div>
+            <div id="bpmBillNo" style="font-size: 0.75rem; color: #3B82F6; font-family: monospace;">Bill #</div>
+          </div>
+          <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 50px; background: #D1FAE5; color: #047857; font-size: 0.72rem; font-weight: 700;">
+            ✓ Approved &amp; Unlocked
+          </span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.4rem; border-top: 1px dashed rgba(59, 130, 246, 0.3); font-size: 0.85rem;">
+          <span style="color: #475569; font-weight: 600;">Sanctioned Total:</span>
+          <strong id="bpmTotalAmount" style="font-size: 1.05rem; color: #1E3A8A;">₹0.00</strong>
+        </div>
+      </div>
+
+      <form id="billPaymentForm" autocomplete="off">
+        <input type="hidden" id="bpmBillId" />
+
+        <!-- Amount Paid -->
+        <div style="margin-bottom: 1.15rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <label for="bpmAmountPaid" style="font-weight: 600; font-size: 0.82rem; color: #334155;">Amount Paid (₹) <span style="color: #EF4444;">*</span></label>
+            <button type="button" id="bpmPayFullBtn" style="background: #EFF6FF; border: 1px solid #BFDBFE; color: #1D4ED8; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; cursor: pointer;">
+              ⚡ Pay Full Amount
+            </button>
+          </div>
+          <div style="position: relative;">
+            <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 700; color: #64748B;">₹</span>
+            <input type="number" step="0.01" min="0" id="bpmAmountPaid" required placeholder="0.00" style="width: 100%; padding: 0.65rem 0.85rem 0.65rem 2rem; border-radius: 8px; border: 1.5px solid #CBD5E1; font-size: 0.95rem; outline: none; font-family: inherit; font-weight: 700; color: #0F172A;" />
+          </div>
+        </div>
+
+        <!-- Payment Status Radio Pills -->
+        <div style="margin-bottom: 1.15rem;">
+          <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 6px;">
+            Payment Status <span style="color: #EF4444;">*</span>
+          </label>
+          <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+            <label class="custom-radio-pill status-pill-paid">
+              <input type="radio" name="bpmPaymentStatus" value="Paid" />
+              <span>✓ Paid</span>
+            </label>
+            <label class="custom-radio-pill status-pill-partially">
+              <input type="radio" name="bpmPaymentStatus" value="Partially Paid" />
+              <span>⚖️ Partially Paid</span>
+            </label>
+            <label class="custom-radio-pill status-pill-pending">
+              <input type="radio" name="bpmPaymentStatus" value="Pending" checked />
+              <span>⏳ Pending</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Payment Mode -->
+        <div style="margin-bottom: 1.15rem;">
+          <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 6px;">
+            Payment Mode <span style="color: #EF4444;">*</span>
+          </label>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <label class="custom-radio-pill">
+              <input type="radio" name="bpmPaymentMode" value="Cash" checked />
+              <span>💵 Cash</span>
+            </label>
+            <label class="custom-radio-pill">
+              <input type="radio" name="bpmPaymentMode" value="NEFT" />
+              <span>🏦 NEFT</span>
+            </label>
+            <label class="custom-radio-pill">
+              <input type="radio" name="bpmPaymentMode" value="Cheque" />
+              <span>🧾 Cheque</span>
+            </label>
+            <label class="custom-radio-pill">
+              <input type="radio" name="bpmPaymentMode" value="UPI" />
+              <span>📱 UPI</span>
+            </label>
+            <label class="custom-radio-pill">
+              <input type="radio" name="bpmPaymentMode" value="Bank Transfer" />
+              <span>🏛️ Bank Transfer</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 1.15rem;">
+          <!-- Transaction / UTR No. -->
+          <div>
+            <label for="bpmTransactionId" style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">Transaction / UTR No.</label>
+            <input type="text" id="bpmTransactionId" placeholder="e.g. UTR392819284729 / Cheque #12" style="width: 100%; padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.88rem; outline: none; font-family: inherit;" />
+          </div>
+
+          <!-- Payment Date -->
+          <div>
+            <label for="bpmPaymentDate" style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">Payment Date</label>
+            <input type="date" id="bpmPaymentDate" style="width: 100%; padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.88rem; outline: none; font-family: inherit;" />
+          </div>
+        </div>
+
+        <!-- Remarks / Note -->
+        <div style="margin-bottom: 1.25rem;">
+          <label for="bpmRemarks" style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 5px;">Payment Remarks / Notes</label>
+          <input type="text" id="bpmRemarks" placeholder="e.g. Paid in full via official current account" style="width: 100%; padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 0.88rem; outline: none; font-family: inherit;" />
+        </div>
+
+        <!-- Live Balance Calculation Preview -->
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;">
+          <div>
+            <span style="color: #64748B;">Balance Due:</span>
+            <strong id="bpmBalanceDue" style="margin-left: 6px; font-size: 0.95rem; color: #DC2626;">₹0.00</strong>
+          </div>
+          <span id="bpmBalanceTag" style="font-size: 0.75rem; font-weight: 700; color: #DC2626; background: #FEE2E2; padding: 2px 8px; border-radius: 4px;">Unsettled</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end; padding-top: 0.75rem; border-top: 1px solid var(--border);">
+          <button type="button" id="cancelBillPaymentBtn" style="padding: 0.6rem 1.25rem; background: transparent; border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 600; color: var(--text-muted); transition: all 0.2s;">Cancel</button>
+          <button type="submit" id="saveBillPaymentBtn" style="padding: 0.6rem 1.5rem; background: #059669; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(5,150,105,0.25); transition: all 0.2s;">
+            <span>💾 Save Payment Details</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ══════════════════════════════════════════
        EXPORT REPORT MODAL
   ═══════════════════════════════════════════ -->
